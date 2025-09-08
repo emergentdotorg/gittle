@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.emergent.maven.parent</groupId>
     <artifactId>emergent-parent</artifactId>
-    <version>0.5.8</version>
+    <version>0.5.9</version>
   </parent>
 
   <groupId>org.emergent.maven.plugins</groupId>
@@ -45,8 +45,7 @@
   </issueManagement>
 
   <properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <version.lombok>1.18.38</version.lombok>
