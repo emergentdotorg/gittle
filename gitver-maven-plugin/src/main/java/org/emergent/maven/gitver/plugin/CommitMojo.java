@@ -2,12 +2,15 @@ package org.emergent.maven.gitver.plugin;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.git.GitUtil;
+
+import java.util.Objects;
 
 public abstract class CommitMojo extends AbstractGitverMojo {
 
@@ -19,6 +22,9 @@ public abstract class CommitMojo extends AbstractGitverMojo {
     PATCH,
   }
 
+  @Parameter(defaultValue = "${session}", required = true, readonly = true)
+  protected MavenSession mavenSession;
+
   @Setter
   @Parameter(name = "message", property = "gitver.commit.message", defaultValue = "chore(release): " + KEYWORD_TOKEN)
   private String message;
@@ -28,15 +34,14 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
   public CommitMojo(IncrementType incrementType) {
     this.incrementType = incrementType;
-    
   }
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-//    if (!mavenProject.isExecutionRoot()) {
-//      getLog().info("Skipping CommitMojo in child module: " + mavenProject.getArtifactId());
-//      return;
-//    }
+    if (!Objects.equals(mavenSession.getTopLevelProject(), mavenProject)) {
+      getLog().debug("Skipping CommitMojo in child module: " + mavenProject.getArtifactId());
+      return;
+    }
     String typeName = switch (getIncrementType()) {
       case MAJOR -> getMajorKey();
       case MINOR -> getMinorKey();
