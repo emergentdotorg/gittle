@@ -1,12 +1,6 @@
 package org.emergent.maven.gitver.extension;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.Map;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import org.apache.maven.building.Source;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.DefaultModelProcessor;
 import org.apache.maven.model.building.ModelProcessor;
@@ -14,6 +8,14 @@ import org.eclipse.sisu.Priority;
 import org.eclipse.sisu.Typed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.Map;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 @Priority(1)
 @Named("core-default")
@@ -45,6 +47,24 @@ public class GitverModelProcessor extends DefaultModelProcessor {
       LOGGER.info("GitverModelProcessor.processModel: disabled");
       return projectModel;
     }
+
+    File projDir = projectModel.getProjectDirectory();
+    if (projDir == null) {
+      File projPom = projectModel.getPomFile();
+      if (projPom != null) {
+        projDir = projPom.getAbsoluteFile().getParentFile();
+      } else {
+        Source pomSource = (Source)options.get(ModelProcessor.SOURCE);
+        if (pomSource != null) {
+          projPom = new File(pomSource.getLocation());
+          projDir = projPom.getAbsoluteFile().getParentFile();
+        }
+      }
+    }
+    if (projDir != null) {
+      Util.writePom(projectModel, projDir.toPath().resolve("original.pom.xml"));
+    }
+
     return processingContext.processModel(projectModel, options);
   }
 }

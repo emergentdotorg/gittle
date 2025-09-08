@@ -1,8 +1,5 @@
 package org.emergent.maven.gitver.extension;
 
-import java.nio.file.Path;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
@@ -11,8 +8,15 @@ import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
 /**
- * Handles creating the updated pom file, and assigning it to the project model.
+ * Handles creating the updated pom file and assigning it to the project model.
  */
 @Named("gitver-lifecycle-participant")
 @Singleton
@@ -46,9 +50,23 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
     }
 
     Model model = project.getModel();
+    String version = model.getVersion();
+
+    Properties properties = model.getProperties();
+
+    Map<String, String> newprops = new TreeMap<>();
+
+    properties.entrySet().stream().filter(e -> String.valueOf(e.getKey()).startsWith("gitver."))
+      .forEach(e -> { newprops.put(String.valueOf(e.getKey()), String.valueOf(e.getValue())); });
+
     Path oldPom = model.getPomFile().toPath();
     Path newPom = oldPom.resolveSibling(Util.GITVER_POM_XML);
-    Util.writePomx(model, newPom);
+
+    Model updated = Util.readPom(oldPom);
+    updated.setVersion(version);
+    updated.getProperties().putAll(newprops);
+
+    Util.writePomx(updated, newPom);
     LOGGER.info("Generated gitver pom at {}", newPom.toAbsolutePath());
     if (newPom.toFile().exists()) {
       LOGGER.info("Updating project with gitver pom {}", newPom.toAbsolutePath());
