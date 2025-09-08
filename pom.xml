@@ -11,7 +11,10 @@
   <description>Tools for generating and manipulating maven project versions from Git logs</description>
   <url>https://github.com/emergentdotorg/gitver-maven-tools</url>
   <inceptionYear>2025</inceptionYear>
-
+  <organization>
+    <name>Emergent.org</name>
+    <url>https://github.com/emergentdotorg</url>
+  </organization>
   <licenses>
     <license>
       <name>MIT</name>
@@ -19,12 +22,6 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-
-  <organization>
-    <name>Emergent.org</name>
-    <url>https://github.com/emergentdotorg</url>
-  </organization>
-
   <developers>
     <developer>
       <id>pwoodworth</id>
@@ -217,7 +214,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
   <build>
     <resources>
       <resource>
@@ -315,7 +311,6 @@
       </plugin>
     </plugins>
   </build>
-
   <profiles>
     <profile>
       <id>run-its</id>
@@ -363,7 +358,6 @@
         </plugins>
       </build>
     </profile>
-
     <profile>
       <id>deploy</id>
       <!--
@@ -377,7 +371,6 @@
         <repository>
           <id>build-stage</id>
           <url>file://${project.build.directory}/staging-deploy</url>
-          <layout>default</layout>
         </repository>
       </distributionManagement>
       <properties>
@@ -385,7 +378,6 @@
         <skipTests>true</skipTests>
       </properties>
     </profile>
-
     <profile>
       <id>release</id>
       <build>
@@ -409,9 +401,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <notimestamp>true</notimestamp>
-            </configuration>
             <executions>
               <execution>
                 <id>attach-javadocs</id>
@@ -420,11 +409,13 @@
                 </goals>
               </execution>
             </executions>
+            <configuration>
+              <notimestamp>true</notimestamp>
+            </configuration>
           </plugin>
         </plugins>
       </build>
     </profile>
-
     <profile>
       <id>central-distmgt</id>
       <activation>
@@ -443,7 +434,6 @@
         </plugins>
       </build>
     </profile>
-
     <profile>
       <id>flatten</id>
       <build>
@@ -452,7 +442,6 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>flatten-maven-plugin</artifactId>
             <version>1.7.2</version>
-            <inherited>false</inherited>
             <executions>
               <execution>
                 <id>flatten</id>
@@ -475,10 +464,10 @@
                 </goals>
               </execution>
             </executions>
+            <inherited>false</inherited>
           </plugin>
         </plugins>
       </build>
     </profile>
-
   </profiles>
 </project>

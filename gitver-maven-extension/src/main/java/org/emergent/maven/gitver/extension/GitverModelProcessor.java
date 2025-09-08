@@ -1,6 +1,5 @@
 package org.emergent.maven.gitver.extension;
 
-import org.apache.maven.building.Source;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.DefaultModelProcessor;
 import org.apache.maven.model.building.ModelProcessor;
@@ -13,8 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -27,7 +24,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GitverModelProcessor.class);
 
-  private final ModelProcessingContext processingContext = new ModelProcessingContext();
+  private final ModelProcessingContext processingContext = ModelProcessingContext.getInstance();
 
   @Override
   public Model read(File input, Map<String, ?> options) throws IOException {
@@ -45,21 +42,10 @@ public class GitverModelProcessor extends DefaultModelProcessor {
   }
 
   private Model processModel(Model projectModel, Map<String, ?> options) {
-    if (Util.isDisabled()) {
-      LOGGER.info("GitverModelProcessor.processModel: disabled");
-      return projectModel;
-    }
-
-    Source pomSource = (Source)options.get(ModelProcessor.SOURCE);
-    if (pomSource != null) {
-      String pomLocation = pomSource.getLocation();
-      // Only source poms are with .xml dependency poms are with .pom
-      if (pomSource.getLocation().endsWith(".xml")) {
-        Path pomFile = Paths.get(pomLocation);
-        Path altFile = pomFile.resolveSibling("original.pom.xml");
-        Util.writePom(projectModel, altFile);
-      }
-    }
+     if (Util.isDisabled()) {
+       LOGGER.info("GitverModelProcessor.processModel: disabled");
+       return projectModel;
+     }
 
     return processingContext.processModel(projectModel, options);
   }

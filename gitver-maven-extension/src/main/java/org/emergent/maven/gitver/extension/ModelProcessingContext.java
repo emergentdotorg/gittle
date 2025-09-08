@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,19 +46,31 @@ import static org.emergent.maven.gitver.extension.Util.DOT_MVN;
  */
 public class ModelProcessingContext {
 
+  private static final ModelProcessingContext INSTANCE = new ModelProcessingContext();
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ModelProcessingContext.class);
 
   private final Set<Path> relatedPoms = new HashSet<>();
   private final AtomicReference<VersionStrategy> strategyRef = new AtomicReference<>();
 
-  public ModelProcessingContext() {
+  private final Map<Path, Model> originalModelCache = new HashMap<>();
+
+  public static ModelProcessingContext getInstance() {
+    return INSTANCE;
+  }
+
+  public Model getModelForPomFile(Path pomFile) {
+    return originalModelCache.get(pomFile);
+  }
+
+  private ModelProcessingContext() {
   }
 
   public Model processModel(Model projectModel, Map<String, ?> options) {
-    if (Util.isDisabled()) {
-      LOGGER.info("GitverModelProcessor.processModel: disabled");
-      return projectModel;
-    }
+     if (Util.isDisabled()) {
+       LOGGER.info("GitverModelProcessor.processModel: disabled");
+       return projectModel;
+     }
 
     final Source pomSource = (Source)options.get(ModelProcessor.SOURCE);
 
@@ -69,6 +82,8 @@ public class ModelProcessingContext {
     if (pomSource == null || !pomSource.getLocation().endsWith(".xml")) {
       return projectModel;
     }
+
+    originalModelCache.put(projectModel.getPomFile().toPath(), projectModel);
 
     // This model processor is invoked for every POM on the classpath, including the plugins.
     // The first execution is with the project's pom though. Use first initialized flag to avoid processing other poms.
