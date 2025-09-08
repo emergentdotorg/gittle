@@ -50,23 +50,24 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
     }
 
     Model model = project.getModel();
-    String version = model.getVersion();
 
-    Properties properties = model.getProperties();
-
-    Map<String, String> newprops = new TreeMap<>();
-
-    properties.entrySet().stream().filter(e -> String.valueOf(e.getKey()).startsWith("gitver."))
-      .forEach(e -> { newprops.put(String.valueOf(e.getKey()), String.valueOf(e.getValue())); });
+    if (false) {
+      String version = model.getVersion();
+      Properties properties = model.getProperties();
+      Map<String, String> newprops = new TreeMap<>();
+      properties.entrySet().stream().filter(e -> String.valueOf(e.getKey()).startsWith("gitver."))
+        .forEach(e -> { newprops.put(String.valueOf(e.getKey()), String.valueOf(e.getValue())); });
+      Path oldPom = model.getPomFile().toPath();
+      Path newPom = oldPom.resolveSibling(Util.GITVER_POM_XML);
+      Model updated = Util.readPom(oldPom);
+      updated.setVersion(version);
+      updated.getProperties().putAll(newprops);
+      Util.writePomx(updated, newPom);
+    }
 
     Path oldPom = model.getPomFile().toPath();
     Path newPom = oldPom.resolveSibling(Util.GITVER_POM_XML);
-
-    Model updated = Util.readPom(oldPom);
-    updated.setVersion(version);
-    updated.getProperties().putAll(newprops);
-
-    Util.writePomx(updated, newPom);
+    Util.writePomx(model, newPom);
     LOGGER.info("Generated gitver pom at {}", newPom.toAbsolutePath());
     if (newPom.toFile().exists()) {
       LOGGER.info("Updating project with gitver pom {}", newPom.toAbsolutePath());

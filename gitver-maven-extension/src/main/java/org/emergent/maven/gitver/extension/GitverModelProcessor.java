@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -48,21 +50,15 @@ public class GitverModelProcessor extends DefaultModelProcessor {
       return projectModel;
     }
 
-    File projDir = projectModel.getProjectDirectory();
-    if (projDir == null) {
-      File projPom = projectModel.getPomFile();
-      if (projPom != null) {
-        projDir = projPom.getAbsoluteFile().getParentFile();
-      } else {
-        Source pomSource = (Source)options.get(ModelProcessor.SOURCE);
-        if (pomSource != null) {
-          projPom = new File(pomSource.getLocation());
-          projDir = projPom.getAbsoluteFile().getParentFile();
-        }
+    Source pomSource = (Source)options.get(ModelProcessor.SOURCE);
+    if (pomSource != null) {
+      String pomLocation = pomSource.getLocation();
+      // Only source poms are with .xml dependency poms are with .pom
+      if (pomSource.getLocation().endsWith(".xml")) {
+        Path pomFile = Paths.get(pomLocation);
+        Path altFile = pomFile.resolveSibling("original.pom.xml");
+        Util.writePom(projectModel, altFile);
       }
-    }
-    if (projDir != null) {
-      Util.writePom(projectModel, projDir.toPath().resolve("original.pom.xml"));
     }
 
     return processingContext.processModel(projectModel, options);
