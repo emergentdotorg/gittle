@@ -33,7 +33,7 @@ import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.emergent.maven.gitver.core.ArtifactCoordinates;
 import org.emergent.maven.gitver.core.GitverException;
-import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.GitVerConfig;
 import org.emergent.maven.gitver.core.git.GitUtil;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 import org.slf4j.Logger;
@@ -83,8 +83,8 @@ public class ModelProcessingContext {
 
     VersionStrategy strategy = strategyRef.updateAndGet(curStrat -> {
       if (curStrat != null) return curStrat;
-      Path dotmvnDirectory = getDOTMVNDirectory(projectModel.getProjectDirectory().toPath());
-      VersionConfig config = loadConfig(dotmvnDirectory);
+      Path dotmvnDirectory = ModelProcessingContext.getDOTMVNDirectory(projectModel.getProjectDirectory().toPath());
+      GitVerConfig config = ModelProcessingContext.loadConfig(dotmvnDirectory);
       return getVersionStrategy(projectModel, config);
     });
 
@@ -100,7 +100,7 @@ public class ModelProcessingContext {
     pomPathToModelCache.put(model.getPomFile().toPath().toAbsolutePath(), model);
   }
 
-  private VersionStrategy getVersionStrategy(Model projectModel, VersionConfig versionConfig) {
+  private VersionStrategy getVersionStrategy(Model projectModel, GitVerConfig versionConfig) {
     ArtifactCoordinates extensionGAV = Util.extensionArtifact();
     LOGGER.info(
       MessageUtils.buffer()
@@ -178,7 +178,7 @@ public class ModelProcessingContext {
     addGitverProperties(projectModel, versionStrategy);
   }
 
-  private VersionConfig loadConfig(Path dotmvnDirectory) {
+  public static GitVerConfig loadConfig(Path dotmvnDirectory) {
     Properties fileProps = loadExtensionProperties(dotmvnDirectory);
     try (StringWriter writer = new StringWriter()) {
       fileProps.store(writer, null);
@@ -187,10 +187,10 @@ public class ModelProcessingContext {
       throw new GitverException(e.getMessage(), e);
     }
 
-    return VersionConfig.from(fileProps);
+    return GitVerConfig.from(fileProps);
   }
 
-  private Properties loadExtensionProperties(Path dotmvnDirectory) {
+  private static Properties loadExtensionProperties(Path dotmvnDirectory) {
     Properties props = new Properties();
     Path propertiesPath = dotmvnDirectory.resolve(Util.GITVER_EXTENSION_PROPERTIES);
     if (propertiesPath.toFile().exists()) {
@@ -214,7 +214,7 @@ public class ModelProcessingContext {
     projectModel.getProperties().putAll(flattened);
   }
 
-  private static Path getDOTMVNDirectory(Path currentDir) {
+  public static Path getDOTMVNDirectory(Path currentDir) {
     LOGGER.info("Finding .mvn in {}", currentDir);
     Path refDir = currentDir;
     while (refDir != null && !Files.exists(refDir.resolve(DOT_MVN))) {
@@ -229,7 +229,7 @@ public class ModelProcessingContext {
       : projectModel.getGroupId();
   }
 
-  private void addVersionerBuildPlugin(Model projectModel, VersionConfig versionConfigz) {
+  private void addVersionerBuildPlugin(Model projectModel, GitVerConfig versionConfigz) {
     ArtifactCoordinates extensionGAV = Util.extensionArtifact();
     LOGGER.debug("Adding build plugin version {}", extensionGAV);
     if (projectModel.getBuild() == null) {
@@ -275,7 +275,7 @@ public class ModelProcessingContext {
     if (existing == null) projectModel.getBuild().getPlugins().add(0, plugin);
   }
 
-  private void addPluginConfiguration(Plugin plugin, VersionConfig versionConfig) {
+  private void addPluginConfiguration(Plugin plugin, GitVerConfig versionConfig) {
     // Version keywords are used by version commit goals.
     String config = String.format(//language=xml
       """

@@ -10,13 +10,12 @@ public abstract class AbstractMojoTest {
   protected MavenSession mavenSession;
 
   @RegisterExtension
-  public ProjectMojoRule rule =
-    new ProjectMojoRule() {
+  public ProjectMojoRule rule = new ProjectMojoRule() {
 
-      @Override
-      public Mojo lookupConfiguredMojo(MavenSession session, MojoExecution execution) throws Exception {
-        mavenSession = session;
-        return super.lookupConfiguredMojo(session, execution);
-      }
-    };
+    @Override
+    public Mojo lookupConfiguredMojo(MavenSession session, MojoExecution execution) throws Exception {
+      mavenSession = session;
+      return super.lookupConfiguredMojo(session, execution);
+    }
+  };
 }

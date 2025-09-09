@@ -25,11 +25,12 @@ public class TagMojo extends AbstractGitverMojo {
   private String tagNamePattern = "v%v";
 
   @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
+  public void execute0() throws MojoExecutionException, MojoFailureException {
     VersionStrategy versionStrategy = getVersionStrategy();
-    String tagName = replaceTokens(getTagNamePattern(), versionStrategy);
-    String tagMessage = replaceTokens(getTagMessagePattern(), versionStrategy);
-    getLog().info("Current Version: " + versionStrategy.toVersionString());
+    String versionString = versionStrategy.toVersionString();
+    getLog().info("Current Version: " + versionString);
+    String tagName = replaceTokens(tagNamePattern, versionString);
+    String tagMessage = replaceTokens(tagMessagePattern, versionString);
     getLog().info(String.format("Tag Version '%s' with message '%s'", tagName, tagMessage));
     if (GitUtil.tagExists(mavenProject.getBasedir().getAbsoluteFile(), tagName)) {
       getLog().error(String.format("Tag already exist: %s", tagName));
@@ -38,5 +39,9 @@ public class TagMojo extends AbstractGitverMojo {
       String tagId = GitUtil.createTag(mavenProject.getBasedir().getAbsoluteFile(), tagName, tagMessage);
       getLog().info(String.format("Created tag: '%s'", tagId));
     }
+  }
+
+  protected String replaceTokens(String pattern, String versionString) {
+    return pattern.replace("%v", versionString);
   }
 }

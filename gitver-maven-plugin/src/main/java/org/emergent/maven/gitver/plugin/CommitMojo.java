@@ -12,6 +12,15 @@ import org.emergent.maven.gitver.core.git.GitUtil;
 
 import java.util.Objects;
 
+import static org.emergent.maven.gitver.core.GitVerConfig.GV_KEYWORDS_MAJOR;
+import static org.emergent.maven.gitver.core.GitVerConfig.GV_KEYWORDS_MINOR;
+import static org.emergent.maven.gitver.core.GitVerConfig.GV_KEYWORDS_PATCH;
+import static org.emergent.maven.gitver.core.GitVerConfig.GV_KEYWORDS_REGEX;
+import static org.emergent.maven.gitver.core.GitVerConfig.KEY_MAJOR;
+import static org.emergent.maven.gitver.core.GitVerConfig.KEY_MINOR;
+import static org.emergent.maven.gitver.core.GitVerConfig.KEY_PATCH;
+
+@Getter
 public abstract class CommitMojo extends AbstractGitverMojo {
 
   public static final String KEYWORD_TOKEN = "[%k]";
@@ -21,34 +30,33 @@ public abstract class CommitMojo extends AbstractGitverMojo {
     MINOR,
     PATCH,
   }
-
-  @Parameter(defaultValue = "${session}", required = true, readonly = true)
-  protected MavenSession mavenSession;
-
   @Setter
   @Parameter(name = "message", property = "gitver.commit.message", defaultValue = "chore(release): " + KEYWORD_TOKEN)
   private String message;
 
-  @Getter
-  private final IncrementType incrementType;
+  @Parameter(name = "majorKey", defaultValue = KEY_MAJOR, property = GV_KEYWORDS_MAJOR)
+  protected String majorKey = KEY_MAJOR;
 
-  public CommitMojo(IncrementType incrementType) {
-    this.incrementType = incrementType;
-  }
+  @Parameter(name = "minorKey", defaultValue = KEY_MINOR, property = GV_KEYWORDS_MINOR)
+  protected String minorKey = KEY_MINOR;
+
+  @Parameter(name = "patchKey", defaultValue = KEY_PATCH, property = GV_KEYWORDS_PATCH)
+  protected String patchKey = KEY_PATCH;
+
+  @Parameter(name = "useRegex", defaultValue = "false", property = GV_KEYWORDS_REGEX)
+  protected boolean useRegex = false;
+
+  @Parameter(defaultValue = "${session}", required = true, readonly = true)
+  protected MavenSession mavenSession;
 
   @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
+  public void execute0() throws MojoExecutionException, MojoFailureException {
     if (!Objects.equals(mavenSession.getTopLevelProject(), mavenProject)) {
       getLog().debug("Skipping CommitMojo in child module: " + mavenProject.getArtifactId());
       return;
     }
-    String typeName = switch (getIncrementType()) {
-      case MAJOR -> getMajorKey();
-      case MINOR -> getMinorKey();
-      case PATCH -> getPatchKey();
-    };
     if (!message.contains(KEYWORD_TOKEN)) message = message.concat(" " + KEYWORD_TOKEN);
-    String resolvedMessage = message.replace(KEYWORD_TOKEN, typeName);
+    String resolvedMessage = message.replace(KEYWORD_TOKEN, getKeyword());
     try {
       boolean completed = GitUtil.executeCommit(mavenProject.getBasedir(), resolvedMessage);
       if (!completed) {
@@ -59,24 +67,29 @@ public abstract class CommitMojo extends AbstractGitverMojo {
     }
   }
 
+  protected abstract String getKeyword();
+
   @Mojo(name = "commit-major")
   public static class VersionCommitMajorMojo extends CommitMojo {
-    public VersionCommitMajorMojo() {
-      super(IncrementType.MAJOR);
+    @Override
+    protected String getKeyword() {
+      return getMajorKey();
     }
   }
 
   @Mojo(name = "commit-minor")
   public static class VersionCommitMinorMojo extends CommitMojo {
-    public VersionCommitMinorMojo() {
-      super(IncrementType.MINOR);
+    @Override
+    protected String getKeyword() {
+      return getMinorKey();
     }
   }
 
   @Mojo(name = "commit-patch")
   public static class VersionCommitPatchMojo extends CommitMojo {
-    public VersionCommitPatchMojo() {
-      super(IncrementType.PATCH);
+    @Override
+    protected String getKeyword() {
+      return getPatchKey();
     }
   }
 }

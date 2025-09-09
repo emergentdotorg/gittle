@@ -1,6 +1,7 @@
 package org.emergent.maven.gitver.plugin;
 
 import java.io.File;
+import org.emergent.maven.gitver.core.version.OverrideStrategy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,6 +17,7 @@ public class TagMojoTest extends AbstractMojoTest {
     assertThat(tag.getTagNamePattern()).isEqualTo("v%v");
     assertThat(tag.getTagMessagePattern()).isEqualTo("Release version %v");
     assertThat(tag.isFailWhenTagExist()).isTrue();
+    assertThat(tag.replaceTokens("v%v", new OverrideStrategy("1.2.3").toVersionString())).isEqualTo("v1.2.3");
   }
 
   @Test

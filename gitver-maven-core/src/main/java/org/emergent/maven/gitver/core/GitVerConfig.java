@@ -4,13 +4,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Tolerate;
 
 @Value
 @lombok.Builder(toBuilder = true, setterPrefix = "set", builderClassName = "Builder")
-public class VersionConfig {
+public class GitVerConfig {
+
+  public static final String EXTENSION_DISABLED_ENV_VAR = "GITVER_EXTENSION_DISABLED";
+  public static final String EXTENSION_DISABLED_SYSPROP = "gitver.extension.disabled";
+
+  public static final String VERSION_OVERRIDE_ENV_VAR = "GITVER_VERSION_OVERRIDE";
+  public static final String VERSION_OVERRIDE_SYSPROP = "gitver.version.override";
 
   public static final String GV_DISABLED = "gitver.disabled";
   private static final String PROPERTY_PREFIX = "gitver.";
@@ -22,7 +29,7 @@ public class VersionConfig {
   public static final String GV_KEYWORDS_PATCH = "gitver.keywords.patch";
   public static final String GV_KEYWORDS_REGEX = "gitver.keywords.regex";
   public static final String GV_VERSION_PATTERN = "gitver.version.pattern";
-  public static final String GV_VERSION_OVERRIDE = "gitver.version.override";
+  public static final String GV_VERSION_OVERRIDE = "gitver.override";
   public static final String KEY_MAJOR = "[major]";
   public static final String KEY_MINOR = "[minor]";
   public static final String KEY_PATCH = "[patch]";
@@ -76,11 +83,9 @@ public class VersionConfig {
   @lombok.Builder.Default
   String versionPattern = DEFAULT_VERSION_PATTERN;
 
-  @NonNull
-  @lombok.Builder.Default
-  String versionOverride = "";
+  String versionOverride;
 
-  public VersionConfig(
+  public GitVerConfig(
     boolean disabled,
     int initialMajor, int initialMinor, int initialPatch,
     String majorKey, String minorKey, String patchKey, boolean useRegex,
@@ -100,14 +105,52 @@ public class VersionConfig {
 
   public Map<String, String> toProperties() {
     Map<String, Object> properties = new TreeMap<>();
-    properties.put(GV_KEYWORDS_MAJOR, getMajorKey());
-    properties.put(GV_KEYWORDS_MINOR, getMinorKey());
-    properties.put(GV_KEYWORDS_PATCH, getPatchKey());
-    properties.put(GV_KEYWORDS_REGEX, isUseRegex());
+    Beeboop b = Beeboop.wrap(properties);
+    if (b.put(GV_VERSION_OVERRIDE, getVersionOverride())) {
+      return Util.flatten(properties);
+    }
+
+    b.apply(GV_VERSION_PATTERN, getVersionPattern())
+        .apply(GV_KEYWORDS_MAJOR, getMajorKey())
+        .apply(GV_KEYWORDS_MINOR, getMinorKey())
+        .apply(GV_KEYWORDS_PATCH, getPatchKey())
+        .apply(GV_KEYWORDS_REGEX, isUseRegex());
     return Util.flatten(properties);
   }
 
-  public static VersionConfig from(Properties props) {
+  private static boolean isEmpty(Object o) {
+    return o == null || o.toString().isEmpty();
+  }
+
+  private static boolean nonEmpty(Object o) {
+    return !isEmpty(o);
+  }
+
+  private interface Beeboop extends BiFunction<String, Object, Beeboop> {
+
+    boolean put(String key, Object val);
+
+    static Beeboop wrap(Map<String, Object> props) {
+      return new Beeboop() {
+        @Override
+        public Beeboop apply(String key, Object val) {
+          put(key, val);
+          return this;
+        }
+
+        @Override
+        public boolean put(String key, Object val) {
+          Optional<String> opt = Optional.ofNullable(val)
+            .map(String::valueOf)
+            .filter(v -> !v.isEmpty());
+          opt.ifPresent(v -> props.put(key, v));
+          return opt.isPresent();
+        }
+      };
+    }
+  }
+
+  public static GitVerConfig from(Properties props) {
     return builder()
       .setDisabled(Boolean.parseBoolean(props.getProperty(GV_DISABLED)))
       .setInitialMajor(props.getProperty(GV_INITIAL_MAJOR, "0"))
@@ -126,7 +169,7 @@ public class VersionConfig {
     return Optional.ofNullable(value).filter(v -> !v.isBlank());
   }
 
-  public static VersionConfig create() {
+  public static GitVerConfig create() {
     return builder().build();
   }
 

@@ -1,6 +1,6 @@
 package org.emergent.maven.gitver.core.git;
 
-import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.GitVerConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -17,7 +17,7 @@ public class GitUtilTest {
     "Update: improved performance, [minor], false"
   })
   public void testHasValueWithRegex(String commitMessage, String keyword, boolean expected) {
-    VersionConfig versionConfig = VersionConfig.builder()
+    GitVerConfig versionConfig = GitVerConfig.builder()
       .setUseRegex(true)
       .build();
 
@@ -26,7 +26,7 @@ public class GitUtilTest {
 
   @Test
   public void testHasValueWithoutRegex() {
-    VersionConfig versionConfig = VersionConfig.builder()
+    GitVerConfig versionConfig = GitVerConfig.builder()
       .setUseRegex(false)
       .build();
 

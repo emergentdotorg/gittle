@@ -3,13 +3,15 @@ package org.emergent.maven.gitver.core.version;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import lombok.Getter;
-import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.Util;
+import org.emergent.maven.gitver.core.GitVerConfig;
 
 @Getter
-public class VersionPatternStrategy implements VersionStrategy {
+public class PatternStrategy implements VersionStrategy {
 
-  private final VersionConfig versionConfig;
+  private final GitVerConfig versionConfig;
   private final String branch;
   private final String hash;
   private int major;
@@ -17,11 +19,11 @@ public class VersionPatternStrategy implements VersionStrategy {
   private int patch;
   private int commit;
 
-  public static VersionPatternStrategy create(String branch, String hash, VersionConfig versionConfig) {
-    return new VersionPatternStrategy(branch, hash, versionConfig);
+  public static PatternStrategy create(String branch, String hash, GitVerConfig versionConfig) {
+    return new PatternStrategy(branch, hash, versionConfig);
   }
 
-  private VersionPatternStrategy(String branch, String hash, VersionConfig versionConfig) {
+  private PatternStrategy(String branch, String hash, GitVerConfig versionConfig) {
     this.versionConfig = versionConfig;
     this.branch = branch;
     this.hash = hash;
@@ -31,7 +33,7 @@ public class VersionPatternStrategy implements VersionStrategy {
     this.commit = 0;
   }
 
-  public RefVersionData getRefVersionData() {
+  private RefVersionData getRefVersionData() {
     return RefVersionData.builder()
       .setBranch(branch)
       .setHash(hash)
@@ -76,8 +78,17 @@ public class VersionPatternStrategy implements VersionStrategy {
     return toString(getRefVersionData(), getVersionPattern());
   }
 
+  @Override
+  public Map<String, String> toProperties() {
+    Map<String, Object> properties = new TreeMap<>();
+    properties.put(GITVER_VERSION_FULL, toVersionString());
+    properties.putAll(versionConfig.toProperties());
+    properties.putAll(getRefVersionData().toProperties());
+    return Util.flatten(properties);
+  }
+
   private String getVersionPattern() {
-    return getVersionConfig().getVersionPattern();
+    return versionConfig.getVersionPattern();
   }
 
   @Override

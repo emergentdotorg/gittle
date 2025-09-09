@@ -27,9 +27,10 @@ import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevTag;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
-import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.GitVerConfig;
+import org.emergent.maven.gitver.core.version.OverrideStrategy;
+import org.emergent.maven.gitver.core.version.PatternStrategy;
 import org.emergent.maven.gitver.core.version.SemVer;
-import org.emergent.maven.gitver.core.version.VersionPatternStrategy;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 
 public class GitUtil {
@@ -77,15 +78,20 @@ public class GitUtil {
     }
   }
 
-  public static VersionStrategy getVersionStrategy(File basePath, VersionConfig versionConfig) {
+  public static VersionStrategy getVersionStrategy(File basePath, GitVerConfig versionConfig) {
     return getVersionStrategy(basePath.toPath(), versionConfig);
   }
 
-  public static VersionStrategy getVersionStrategy(Path basePath, VersionConfig versionConfig) {
+  public static VersionStrategy getVersionStrategy(Path basePath, GitVerConfig versionConfig) {
     return getVersionStrategy0(basePath, versionConfig);
   }
 
-  public static VersionStrategy getVersionStrategy0(Path basePath, VersionConfig versionConfig) {
+  public static VersionStrategy getVersionStrategy0(Path basePath, GitVerConfig versionConfig) {
+    Optional<OverrideStrategy> overrideStrategy = OverrideStrategy.from(versionConfig);
+    if (overrideStrategy.isPresent()) {
+      return overrideStrategy.get();
+    }
+
     return GitExec.execOp(
       basePath.toAbsolutePath(),
       git -> {
@@ -107,7 +113,7 @@ public class GitUtil {
             Collectors.mapping(ref -> ref, Collectors.toList())
           ));
 
-        VersionPatternStrategy versionStrategy = VersionPatternStrategy.create(branch, hash, versionConfig);
+        PatternStrategy versionStrategy = PatternStrategy.create(branch, hash, versionConfig);
 
         Iterable<RevCommit> commits = git.log().call();
         List<RevCommit> revCommits =
@@ -231,23 +237,24 @@ public class GitUtil {
     return ref.isPeeled() ? ref.getPeeledObjectId() : ref.getObjectId();
   }
 
-  static boolean hasMajorKeyword(VersionConfig versionConfig, String commitMessage) {
+  static boolean hasMajorKeyword(GitVerConfig versionConfig, String commitMessage) {
     return hasValue(versionConfig, commitMessage, versionConfig.getMajorKey());
   }
 
-  static boolean hasMinorKeyword(VersionConfig versionConfig, String commitMessage) {
+  static boolean hasMinorKeyword(GitVerConfig versionConfig, String commitMessage) {
     return hasValue(versionConfig, commitMessage, versionConfig.getMinorKey());
   }
 
-  static boolean hasPatchKeyword(VersionConfig versionConfig, String commitMessage) {
+  static boolean hasPatchKeyword(GitVerConfig versionConfig, String commitMessage) {
     return hasValue(versionConfig, commitMessage, versionConfig.getPatchKey());
   }
 
-  static boolean hasValue(VersionConfig versionConfig, String commitMessage, String keyword) {
+  static boolean hasValue(GitVerConfig versionConfig, String commitMessage, String keyword) {
     if (versionConfig.isUseRegex()) {
       return commitMessage.matches(keyword);
     } else {
       return commitMessage.contains(keyword);
     }
   }
+
 }

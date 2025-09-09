@@ -3,6 +3,7 @@ package org.emergent.maven.gitver.plugin;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 import org.apache.maven.plugin.testing.SilentLog;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class PrintMojoTest extends AbstractMojoTest {
 
+  @Getter
   public static class TestLog extends SilentLog {
     List<String> messages = new ArrayList<>();
 
@@ -28,10 +30,6 @@ public class PrintMojoTest extends AbstractMojoTest {
     public void info(CharSequence content) {
       super.info(content);
       messages.add(content.toString());
-    }
-
-    public List<String> getMessages() {
-      return messages;
     }
   }
 

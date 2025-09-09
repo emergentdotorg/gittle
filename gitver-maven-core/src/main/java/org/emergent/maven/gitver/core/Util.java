@@ -9,7 +9,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.emergent.maven.gitver.core.version.VersionStrategy;
 
 public final class Util {
 
@@ -97,13 +96,5 @@ public final class Util {
     Properties props = new Properties();
     props.putAll(flattened);
     return props;
-  }
-
-  public static Map<String, String> toProperties(VersionStrategy versionStrategy) {
-    Map<String, Object> properties = new TreeMap<>();
-    properties.put("gitver.version", versionStrategy.toVersionString());
-    properties.putAll(versionStrategy.getVersionConfig().toProperties());
-    properties.putAll(versionStrategy.getRefVersionData().toProperties());
-    return flatten(properties);
   }
 }

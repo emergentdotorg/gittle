@@ -18,9 +18,6 @@
         <artifactId>gitver-maven-plugin</artifactId>
         <version>@project.version@</version>
         <configuration>
-          <initialMajor>1</initialMajor>
-          <initialMinor>3</initialMinor>
-          <initialPatch>4</initialPatch>
         </configuration>
       </plugin>
     </plugins>

@@ -5,11 +5,11 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-public class VersionConfigTest {
+public class GitVerConfigTest {
 
   @Test
   public void getDefaults() {
-    VersionConfig config = VersionConfig.builder().build();
+    GitVerConfig config = GitVerConfig.builder().build();
     assertThat(config)
       .extracting(
         "disabled",
@@ -19,13 +19,13 @@ public class VersionConfigTest {
       .containsExactly(
         false,
         0, 0, 0,
-        VersionConfig.KEY_MAJOR, VersionConfig.KEY_MINOR, VersionConfig.KEY_PATCH,
-        false, VersionConfig.DEFAULT_VERSION_PATTERN, "");
+        GitVerConfig.KEY_MAJOR, GitVerConfig.KEY_MINOR, GitVerConfig.KEY_PATCH,
+        false, GitVerConfig.DEFAULT_VERSION_PATTERN, null);
   }
 
   @Test
   public void setInitialValues() {
-    VersionConfig config = VersionConfig.builder()
+    GitVerConfig config = GitVerConfig.builder()
       .setInitialMajor(1)
       .setInitialMinor(2)
       .setInitialPatch(3)
@@ -37,7 +37,7 @@ public class VersionConfigTest {
 
   @Test
   public void setKeywordValues() {
-    VersionConfig versionConfig = VersionConfig.builder()
+    GitVerConfig versionConfig = GitVerConfig.builder()
       .setMajorKey("[TEST1]")
       .setMinorKey("[TEST2]")
       .setPatchKey("[TEST3]")
@@ -50,7 +50,7 @@ public class VersionConfigTest {
 
   @Test
   public void setMiscellaneous() {
-    VersionConfig config = VersionConfig.builder()
+    GitVerConfig config = GitVerConfig.builder()
       .setDisabled(true)
       .setVersionPattern("%M.%m.%p(-%c)")
       .setVersionOverride("1.2.3-SNAPSHOT")
@@ -62,7 +62,7 @@ public class VersionConfigTest {
 
   @Test
   public void setInitialMajor_negative() {
-    Throwable ex = catchThrowable(() -> VersionConfig.builder().setInitialMajor(-1).build());
+    Throwable ex = catchThrowable(() -> GitVerConfig.builder().setInitialMajor(-1).build());
     assertThat(ex)
       .isNotNull()
       .isInstanceOf(IllegalArgumentException.class)
@@ -71,7 +71,7 @@ public class VersionConfigTest {
 
   @Test
   public void setInitialMinor_negative() {
-    Throwable ex = catchThrowable(() -> VersionConfig.builder().setInitialMinor(-1).build());
+    Throwable ex = catchThrowable(() -> GitVerConfig.builder().setInitialMinor(-1).build());
     assertThat(ex)
       .isNotNull()
       .isInstanceOf(IllegalArgumentException.class)
@@ -80,7 +80,7 @@ public class VersionConfigTest {
 
   @Test
   public void setInitialPatch_negative() {
-    Throwable ex = catchThrowable(() -> VersionConfig.builder().setInitialPatch(-1).build());
+    Throwable ex = catchThrowable(() -> GitVerConfig.builder().setInitialPatch(-1).build());
     assertThat(ex)
       .isNotNull()
       .isInstanceOf(IllegalArgumentException.class)

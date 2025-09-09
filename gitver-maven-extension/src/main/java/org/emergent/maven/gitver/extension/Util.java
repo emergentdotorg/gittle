@@ -13,11 +13,13 @@ import java.util.stream.Stream;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.apache.maven.shared.utils.StringUtils;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.emergent.maven.gitver.core.ArtifactCoordinates;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
+
+import static org.emergent.maven.gitver.core.GitVerConfig.EXTENSION_DISABLED_ENV_VAR;
+import static org.emergent.maven.gitver.core.GitVerConfig.EXTENSION_DISABLED_SYSPROP;
 
 class Util {
 
@@ -25,14 +27,12 @@ class Util {
   public static final String DOT_MVN = ".mvn";
   public static final String GITVER_POM_XML = ".gitver.pom.xml";
   public static final String GITVER_PROPERTIES = "gitver.properties";
-  public static final String DISABLED_ENV_VAR = "GITVER_EXTENSION_DISABLED";
-  public static final String DISABLED_SYSPROP = "gitver.extension.disabled";
 
   private Util() {}
 
   public static boolean isDisabled() {
-    return Stream.of(System.getProperty(DISABLED_SYSPROP), System.getenv(DISABLED_ENV_VAR))
-      .filter(StringUtils::isNotBlank).findFirst().map(Boolean::valueOf).orElse(false);
+    return Stream.of(System.getProperty(EXTENSION_DISABLED_SYSPROP), System.getenv(EXTENSION_DISABLED_ENV_VAR))
+      .filter(Util::isNotBlank).findFirst().map(Boolean::valueOf).orElse(false);
   }
 
   public static Path resolveGitVerPom(File basedir) {
@@ -87,6 +87,22 @@ class Util {
   }
 
   public static Map<String, String> toProperties(VersionStrategy versionStrategy) {
-    return org.emergent.maven.gitver.core.Util.toProperties(versionStrategy);
+    return versionStrategy.toProperties();
+  }
+
+  public static boolean isBlank(String s) {
+    return org.emergent.maven.gitver.core.Util.isBlank(s);
+  }
+
+  public static boolean isNotBlank(String s) {
+    return org.emergent.maven.gitver.core.Util.isNotBlank(s);
+  }
+
+  public static boolean isEmpty(String s) {
+    return org.emergent.maven.gitver.core.Util.isEmpty(s);
+  }
+
+  public static boolean isNotEmpty(String s) {
+    return org.emergent.maven.gitver.core.Util.isNotEmpty(s);
   }
 }

@@ -12,14 +12,16 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.project.MavenProject;
 import org.emergent.maven.gitver.core.ArtifactCoordinates;
+import org.emergent.maven.gitver.core.GitVerConfig;
 import org.emergent.maven.gitver.core.GitverException;
-import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.git.GitUtil;
+import org.emergent.maven.gitver.core.version.VersionStrategy;
 
 class Util {
 
   public static final String GITVER_POM_XML = ".gitver.pom.xml";
   public static final String GITVER_PROPERTIES = "gitver.properties";
-  private static final String GITVER_EXTENSION_PROPERTIES = "gitver-maven-extension.properties";
+  public static final String GITVER_EXTENSION_PROPERTIES = "gitver-maven-extension.properties";
   private static final String DOT_MVN = ".mvn";
 
   private Util() {}
@@ -56,32 +58,19 @@ class Util {
     }
   }
 
-  private VersionConfig loadConfig(Path dotmvnDirectory) {
+  static VersionStrategy getVersionStrategy(MavenProject mavenProject) {
+    Path projectDirectory = mavenProject.getBasedir().toPath();
+//    File projectDirectory = mavenProject.getModel().getProjectDirectory().toPath();
+    Path dotmvnDirectory = getDOTMVNDirectory(projectDirectory).orElse(projectDirectory);
     Properties fileProps = loadExtensionProperties(dotmvnDirectory);
-    Properties fqFileProps = new Properties();
-    fileProps.forEach((key, value) -> {
-      String k = String.valueOf(key);
-      if (!k.startsWith("gitver.")) {
-        k = "gitver." + k;
-      }
-      fqFileProps.put(k, value);
-    });
-    Properties props = new Properties(fqFileProps);
-    System.getenv().forEach((k, v) -> {
-      if (k.startsWith("GITVER_")) {
-        String propKey = k.replace("GITVER_", "gitver.").replaceAll("_", ".");
-        props.setProperty(propKey, v);
-      }
-    });
-    props.putAll(System.getProperties());
-    return VersionConfig.from(props);
+    GitVerConfig config = GitVerConfig.from(fileProps);
+    return GitUtil.getVersionStrategy(projectDirectory, config);
   }
 
-  private Properties loadExtensionProperties(Path dotmvnDirectory) {
+  private static Properties loadExtensionProperties(Path dotmvnDirectory) {
     Properties props = new Properties();
     Path propertiesPath = dotmvnDirectory.resolve(GITVER_EXTENSION_PROPERTIES);
-    if (propertiesPath.toFile().exists()) {
-      //LOGGER.debug("Reading gitver properties from {}", propertiesPath);
+    if (Files.exists(propertiesPath)) {
       try (Reader reader = Files.newBufferedReader(propertiesPath)) {
         props.load(reader);
       } catch (IOException e) {
@@ -92,12 +81,10 @@ class Util {
   }
 
   private static Optional<Path> getDOTMVNDirectory(Path currentDir) {
-    //LOGGER.info("Finding .mvn in {}", currentDir);
     Path refDir = currentDir;
     while (refDir != null && !Files.exists(refDir.resolve(DOT_MVN))) {
       refDir = refDir.getParent();
     }
     return Optional.ofNullable(refDir).map(r -> r.resolve(DOT_MVN));
   }
-
 }

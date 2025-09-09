@@ -26,9 +26,8 @@ public class ProjectMojoRule extends MojoRule implements BeforeEachCallback, Aft
 
   @Override
   public MavenProject readMavenProject(File basedir) throws Exception {
-    // Manual project instantiation is to avoid
-    // Invalid repository system session: Local Repository Manager is not set.
-    // when using default implementation.
+    // Manual project instantiation is to avoid Invalid repository system session:
+    // Local Repository Manager is not set. when using default implementation.
     File pom = new File(basedir, "pom.xml");
     MavenXpp3Reader mavenReader = new MavenXpp3Reader();
     try (FileReader reader = new FileReader(pom)) {

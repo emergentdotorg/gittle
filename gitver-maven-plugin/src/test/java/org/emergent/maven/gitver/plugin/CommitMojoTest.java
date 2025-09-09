@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -34,10 +33,8 @@ public class CommitMojoTest extends AbstractMojoTest {
       assertThat(commit).isNotNull();
       commit.execute();
       Iterable<RevCommit> commits = git.log().call();
-      List<RevCommit> revCommits =
-        StreamSupport.stream(commits.spliterator(), false).collect(Collectors.toList());
-      assertThat(revCommits.get(0).getShortMessage())
-        .isEqualTo(String.format("chore(release): [%s]", keyword));
+      List<RevCommit> revCommits = StreamSupport.stream(commits.spliterator(), false).toList();
+      assertThat(revCommits.get(0).getShortMessage()).isEqualTo(String.format("chore(release): [%s]", keyword));
     }
   }
 
@@ -52,10 +49,8 @@ public class CommitMojoTest extends AbstractMojoTest {
       assertThat(commit).isNotNull();
       commit.execute();
       Iterable<RevCommit> commits = git.log().call();
-      List<RevCommit> revCommits =
-        StreamSupport.stream(commits.spliterator(), false).collect(Collectors.toList());
-      assertThat(revCommits.get(0).getShortMessage())
-        .isEqualTo(String.format("chore: releasing [%s]", keyword));
+      List<RevCommit> revCommits = StreamSupport.stream(commits.spliterator(), false).toList();
+      assertThat(revCommits.get(0).getShortMessage()).isEqualTo(String.format("chore: releasing [%s]", keyword));
     }
   }
 
