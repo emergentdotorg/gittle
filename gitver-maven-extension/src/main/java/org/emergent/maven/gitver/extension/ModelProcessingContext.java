@@ -52,23 +52,16 @@ public class ModelProcessingContext {
 
   private final Set<Path> relatedPoms = new HashSet<>();
   private final AtomicReference<VersionStrategy> strategyRef = new AtomicReference<>();
+  private final Map<Path, Model> pomPathToModelCache = new HashMap<>();
 
-  private final Map<Path, Model> originalModelCache = new HashMap<>();
+  private ModelProcessingContext() {}
 
   public static ModelProcessingContext getInstance() {
     return INSTANCE;
   }
 
-  public Model getModelForPomFile(Path pomFile) {
-    return originalModelCache.get(pomFile);
-  }
-
-  private ModelProcessingContext() {
-  }
-
   public Model processModel(Model projectModel, Map<String, ?> options) {
      if (Util.isDisabled()) {
-       LOGGER.info("GitverModelProcessor.processModel: disabled");
        return projectModel;
      }
 
@@ -83,7 +76,7 @@ public class ModelProcessingContext {
       return projectModel;
     }
 
-    originalModelCache.put(projectModel.getPomFile().toPath(), projectModel);
+    cacheOriginalModel(projectModel);
 
     // This model processor is invoked for every POM on the classpath, including the plugins.
     // The first execution is with the project's pom though. Use first initialized flag to avoid processing other poms.
@@ -97,6 +90,14 @@ public class ModelProcessingContext {
 
     processRelatedProjects(projectModel, strategy);
     return projectModel;
+  }
+
+  public Model lookupOriginalModel(Model model) {
+    return pomPathToModelCache.get(model.getPomFile().toPath().toAbsolutePath());
+  }
+
+  private void cacheOriginalModel(Model model) {
+    pomPathToModelCache.put(model.getPomFile().toPath().toAbsolutePath(), model);
   }
 
   private VersionStrategy getVersionStrategy(Model projectModel, VersionConfig versionConfig) {

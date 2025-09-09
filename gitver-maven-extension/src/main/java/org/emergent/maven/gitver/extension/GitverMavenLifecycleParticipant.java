@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Handles creating the updated pom file, and assigning it to the project model.
+ * Handles creating the updated pom file and assigning it to the project model.
  */
 @Named("gitver-lifecycle-participant")
 @Singleton
@@ -43,22 +43,20 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
 
   private void updateProject(MavenProject project) {
     if (Util.isDisabled()) {
-      LOGGER.info("GitverMavenLifecycleParticipant.updateProject: disabled");
       return;
     }
 
     Model model = project.getModel();
     Path oldPom = model.getPomFile().toPath();
     Path newPom = oldPom.resolveSibling(Util.GITVER_POM_XML);
-
-    Optional.ofNullable(ModelProcessingContext.getInstance().getModelForPomFile(oldPom))
-      .ifPresent(ogm -> Util.writePomx(ogm, newPom));
-
-    Util.writePomx(model, newPom);
-    LOGGER.info("Generated gitver pom at {}", newPom.toAbsolutePath());
-    if (newPom.toFile().exists()) {
-      LOGGER.info("Updating project with gitver pom {}", newPom.toAbsolutePath());
+    if (Util.writePomx(getModelForWriting(model), newPom)) {
+      LOGGER.info("Generated gitver pom at {}", newPom.toAbsolutePath());
       project.setPomFile(newPom.toFile());
     }
+  }
+
+  private static Model getModelForWriting(Model model) {
+    ModelProcessingContext context = ModelProcessingContext.getInstance();
+    return Optional.ofNullable(context.lookupOriginalModel(model)).orElse(model);
   }
 }

@@ -9,9 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Stream;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.apache.maven.shared.utils.StringUtils;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.emergent.maven.gitver.core.ArtifactCoordinates;
 import org.emergent.maven.gitver.core.GitverException;
@@ -23,12 +25,14 @@ class Util {
   public static final String DOT_MVN = ".mvn";
   public static final String GITVER_POM_XML = ".gitver.pom.xml";
   public static final String GITVER_PROPERTIES = "gitver.properties";
-  public static final String DISABLED_SYSTEM_PROPERTY = "gitver.disableExtension";
+  public static final String DISABLED_ENV_VAR = "GITVER_EXTENSION_DISABLED";
+  public static final String DISABLED_SYSPROP = "gitver.extension.disabled";
 
   private Util() {}
 
   public static boolean isDisabled() {
-    return Boolean.getBoolean(DISABLED_SYSTEM_PROPERTY);
+    return Stream.of(System.getProperty(DISABLED_SYSPROP), System.getenv(DISABLED_ENV_VAR))
+      .filter(StringUtils::isNotBlank).findFirst().map(Boolean::valueOf).orElse(false);
   }
 
   public static Path resolveGitVerPom(File basedir) {
@@ -41,17 +45,18 @@ class Util {
 
   public static Path writePom(Model projectModel, Path originalPomPath) {
     Path newPomPath = originalPomPath.resolveSibling(GITVER_POM_XML);
-    return writePomx(projectModel, newPomPath);
+    writePomx(projectModel, newPomPath);
+    return newPomPath;
   }
 
-  public static Path writePomx(Model projectModel, Path newPomPath) {
+  public static boolean writePomx(Model projectModel, Path newPomPath) {
     try (Writer fileWriter = Files.newBufferedWriter(newPomPath, Charset.defaultCharset())) {
       MavenXpp3Writer writer = new MavenXpp3Writer();
       writer.write(fileWriter, projectModel);
     } catch (IOException e) {
       throw new GitverException(e.getMessage(), e);
     }
-    return newPomPath;
+    return Files.exists(newPomPath);
   }
 
   public static Model readPom(Path pomPath) {
