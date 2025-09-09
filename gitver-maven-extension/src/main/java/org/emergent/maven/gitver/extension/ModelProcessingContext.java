@@ -201,7 +201,7 @@ public class ModelProcessingContext {
         throw new GitverException("Failed to load extensions properties file", e);
       }
     } else {
-      LOGGER.warn("Unfound gitver properties at {}", propertiesPath);
+      LOGGER.debug("Unfound gitver properties at {}", propertiesPath);
     }
     return props;
   }

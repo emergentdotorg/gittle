@@ -367,7 +367,7 @@
       <id>release</id>
       <activation>
         <property>
-          <name>publishingServerId</name>
+          <name>env.DEPLOY_SERVER</name>
         </property>
       </activation>
       <build>
@@ -392,6 +392,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
+              <doclint>all,-missing</doclint>
               <notimestamp>true</notimestamp>
             </configuration>
             <executions>
