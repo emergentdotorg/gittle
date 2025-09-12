@@ -1,6 +1,9 @@
 package org.emergent.maven.gitver.extension;
 
+import com.google.common.collect.Maps;
 import java.nio.file.Path;
+import java.util.Optional;
+import java.util.Properties;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
@@ -47,11 +50,24 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
 
     Model model = project.getModel();
     Path oldPom = model.getPomFile().toPath();
+    Model newModel = Util.readPom(oldPom);
+    Optional.ofNullable(newModel.getVersion()).ifPresent(v -> {
+      newModel.setVersion(model.getVersion());
+    });
+    Optional.ofNullable(newModel.getParent()).ifPresent(p -> {
+      p.setVersion(model.getParent().getVersion());
+    });
+    Properties props = model.getProperties();
+    props.entrySet().stream()
+      .filter(entry -> entry.getKey() instanceof String && entry.getValue() instanceof String)
+      .map(entry -> Maps.immutableEntry(String.valueOf(entry.getKey()), String.valueOf(entry.getValue())))
+      .filter(entry -> entry.getKey() != null && entry.getKey().startsWith("gitver."))
+      .forEach(entry -> newModel.addProperty(entry.getKey(), entry.getValue()));
     Path newPom = oldPom.resolveSibling(Util.GITVER_POM_XML);
-    Util.writePomx(model, newPom);
-    LOGGER.info("Generated gitver pom at {}", newPom.toAbsolutePath());
+    Util.writePomx(newModel, newPom);
+    LOGGER.debug("Generated gitver pom at {}", newPom.toAbsolutePath());
     if (newPom.toFile().exists()) {
-      LOGGER.info("Updating project with gitver pom {}", newPom.toAbsolutePath());
+      LOGGER.debug("Updating project with gitver pom {}", newPom.toAbsolutePath());
       project.setPomFile(newPom.toFile());
     }
   }

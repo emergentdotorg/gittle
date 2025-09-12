@@ -7,7 +7,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
 import org.apache.maven.building.Source;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.Parent;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.apache.maven.model.building.ModelProcessor;
@@ -55,18 +53,14 @@ public class ModelProcessingContext {
 
   public Model processModel(Model projectModel, Map<String, ?> options) {
     if (Util.isDisabled()) {
-      LOGGER.info("GitverModelProcessor.processModel: disabled");
       return projectModel;
     }
 
     final Source pomSource = (Source)options.get(ModelProcessor.SOURCE);
-
-    if (pomSource != null) {
-      projectModel.setPomFile(new File(pomSource.getLocation()));
-    }
-
-    // Only source poms are with .xml dependency poms are with .pom
-    if (pomSource == null || !pomSource.getLocation().endsWith(".xml")) {
+    Optional<String> pomLoc = Optional.ofNullable(pomSource).map(Source::getLocation);
+    pomLoc.ifPresent(loc -> projectModel.setPomFile(new File(loc)));
+    if (pomLoc.filter(loc -> loc.endsWith(".xml")).isEmpty()) {
+      // Source poms end with .xml but dependency poms end with .pom
       return projectModel;
     }
 
@@ -75,16 +69,16 @@ public class ModelProcessingContext {
 
     VersionStrategy strategy = strategyRef.updateAndGet(curStrat -> {
       if (curStrat != null) return curStrat;
-      Path dotmvnDirectory = getDOTMVNDirectory(projectModel.getProjectDirectory().toPath());
-      VersionConfig config = loadConfig(dotmvnDirectory);
-      return getVersionStrategy(projectModel, config);
+      return getVersionStrategy(projectModel);
     });
 
     processRelatedProjects(projectModel, strategy);
     return projectModel;
   }
 
-  private VersionStrategy getVersionStrategy(Model projectModel, VersionConfig versionConfig) {
+  private VersionStrategy getVersionStrategy(Model projectModel) {
+    Path dotmvnDirectory = getDOTMVNDirectory(projectModel.getProjectDirectory().toPath());
+    VersionConfig versionConfig = loadConfig(dotmvnDirectory);
     ArtifactCoordinates extensionGAV = Util.extensionArtifact();
     LOGGER.info(
       MessageUtils.buffer()
@@ -96,77 +90,68 @@ public class ModelProcessingContext {
         .build());
     VersionStrategy versionStrategy = GitUtil.getVersionStrategy(projectModel.getPomFile(), versionConfig);
     findRelatedProjects(projectModel);
+    printProperties(Util.toProperties(versionStrategy));
     return versionStrategy;
   }
 
   private void findRelatedProjects(Model projectModel) {
-    LOGGER.debug("Finding related projects for {}", projectModel.getArtifactId());
+    Path projectPath = projectModel.getProjectDirectory().toPath();
+    LOGGER.debug("Finding related projects for {} {}", projectModel.getArtifactId(), projectPath);
 
     // Add main project
     relatedPoms.add(projectModel.getPomFile().toPath());
 
     // Find modules
-    List<Path> modulePoms =
-      projectModel.getModules().stream()
-        .map(
-          module ->
-            projectModel
-              .getProjectDirectory()
-              .toPath()
-              .resolve(module)
-              .resolve("pom.xml")
-              .toAbsolutePath())
-        .collect(Collectors.toList());
-    LOGGER.debug("Modules found: {}", modulePoms);
+    List<Path> modulePoms = projectModel.getModules().stream()
+        .map(module -> projectPath.resolve(module).resolve("pom.xml"))
+        .toList();
+    LOGGER.debug("Modules found: {}", modulePoms.stream().map(Path::toString)
+      .collect(Collectors.joining("\n", "\n", "")));
     relatedPoms.addAll(modulePoms);
   }
 
   private void processRelatedProjects(Model projectModel, VersionStrategy versionStrategy) {
-    File modelPomFile = projectModel.getPomFile();
-    LOGGER.info("Processing model for {}", modelPomFile.getAbsolutePath());
+    String versionString = versionStrategy.toVersionString();
+    Map<String, String> strategyProperties = Util.toProperties(versionStrategy);
 
-    if (!relatedPoms.contains(modelPomFile.toPath())) return;
-    LOGGER.info(
-      "Project {}:{}, Computed version: {}",
+    Path modelPath = projectModel.getProjectDirectory().toPath();
+    File modelPomFile = projectModel.getPomFile();
+    Path modelPomPath = modelPomFile.toPath();
+    LOGGER.debug("Processing model for {}", modelPomPath);
+
+    if (!relatedPoms.contains(modelPomPath)) return;
+    if (projectModel.getProperties().contains("gitver.version")) {
+      LOGGER.warn("Skipping repeat of {}", modelPomPath);
+      return;
+    }
+
+    LOGGER.debug("Project {}:{}, Computed version: {}",
       getGroupId(projectModel),
       projectModel.getArtifactId(),
-      MessageUtils.buffer().strong(versionStrategy.toVersionString()));
-    projectModel.setVersion(versionStrategy.toVersionString());
+      MessageUtils.buffer().strong(versionString));
 
-    Parent parent = projectModel.getParent();
-    if (parent != null) {
-      Path path = Paths.get(parent.getRelativePath());
-      // Parent is part of this build
-      try {
-        Path parentPomPath =
-          Paths.get(
-            modelPomFile
-              .getParentFile()
-              .toPath()
-              .resolve(path)
-              .toFile()
-              .getCanonicalPath());
-        LOGGER.debug("Looking for parent pom {}", parentPomPath);
-        if (Files.exists(parentPomPath) && relatedPoms.contains(parentPomPath)) {
-          LOGGER.info("Setting parent {} version to {}", parent,
-            versionStrategy.toVersionString());
-          parent.setVersion(versionStrategy.toVersionString());
-        } else {
-          LOGGER.debug(
-            "Parent {} is not part of this build. Skipping version change for parent.", parent);
-        }
-      } catch (IOException e) {
-        throw new GitverException(e.getMessage(), e);
-      }
+    if (projectModel.getVersion() != null) {
+      projectModel.setVersion(versionString);
     }
-    addGitverProperties(projectModel, versionStrategy);
+
+    Optional.ofNullable(projectModel.getParent()).ifPresent(parent -> {
+      Path parentPomPath = modelPath.resolve(parent.getRelativePath()).normalize();
+      if (Files.exists(parentPomPath) && relatedPoms.contains(parentPomPath)) {
+        LOGGER.info("Setting parent {} version to {}", parent, versionString);
+        parent.setVersion(versionString);
+      } else {
+        LOGGER.debug("Parent {} is not part of this build. Skipping version change for parent.", parent);
+      }
+    });
+
+    addGitverProperties(projectModel, strategyProperties);
   }
 
   private VersionConfig loadConfig(Path dotmvnDirectory) {
     Properties fileProps = loadExtensionProperties(dotmvnDirectory);
     try (StringWriter writer = new StringWriter()) {
       fileProps.store(writer, null);
-      LOGGER.warn(String.format("VersionConfig:%n%s%n", writer));
+      LOGGER.debug(String.format("VersionConfig:%n%s%n", writer));
     } catch (IOException e) {
       throw new GitverException(e.getMessage(), e);
     }
@@ -185,17 +170,19 @@ public class ModelProcessingContext {
         throw new GitverException("Failed to load extensions properties file", e);
       }
     } else {
-      LOGGER.warn("Unfound gitver properties at {}", propertiesPath);
+      LOGGER.debug("Unfound gitver properties at {}", propertiesPath);
     }
     return props;
   }
 
-  private void addGitverProperties(Model projectModel, VersionStrategy versionStrategy) {
-    Map<String, String> flattened = Util.toProperties(versionStrategy);
+  private void addGitverProperties(Model projectModel, Map<String, String> properties) {
+    projectModel.getProperties().putAll(properties);
+  }
+
+  private static void printProperties(Map<String, String> flattened) {
     MessageBuilder builder = MessageUtils.buffer().a("properties:");
-    flattened.forEach((k,v) -> builder.newline().format("	%s=%s", k, v));
+    flattened.forEach((k, v) -> builder.newline().format("  %s=%s", k, v));
     LOGGER.info("Adding generated properties to project model: {}", builder);
-    projectModel.getProperties().putAll(flattened);
   }
 
   private static Path getDOTMVNDirectory(Path currentDir) {

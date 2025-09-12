@@ -88,6 +88,9 @@
   <profiles>
     <profile>
       <id>shaded-extension</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <build>
         <plugins>
           <plugin>
@@ -99,7 +102,7 @@
                   <goal>shade</goal>
                 </goals>
                 <configuration>
-                  <shadedArtifactAttached>true</shadedArtifactAttached>
+                  <!--<shadedArtifactAttached>true</shadedArtifactAttached>-->
                   <useDependencyReducedPomInJar>true</useDependencyReducedPomInJar>
                   <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                   <transformers>

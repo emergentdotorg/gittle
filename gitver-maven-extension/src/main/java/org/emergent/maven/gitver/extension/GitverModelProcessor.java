@@ -42,7 +42,6 @@ public class GitverModelProcessor extends DefaultModelProcessor {
 
   private Model processModel(Model projectModel, Map<String, ?> options) {
     if (Util.isDisabled()) {
-      LOGGER.info("GitverModelProcessor.processModel: disabled");
       return projectModel;
     }
     return processingContext.processModel(projectModel, options);
