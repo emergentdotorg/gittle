@@ -60,7 +60,7 @@ public class Util {
     return vc;
   }
 
-  private static Properties loadExtensionProperties(Path dotmvnDirectory) {
+  public static Properties loadExtensionProperties(Path dotmvnDirectory) {
     Properties props = new Properties();
     Path propertiesPath = dotmvnDirectory.resolve(GITVER_EXTENSION_PROPERTIES);
     if (propertiesPath.toFile().exists()) {
