@@ -28,8 +28,8 @@ import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.emergent.maven.gitver.core.ArtifactCoordinates;
 import org.emergent.maven.gitver.core.GitverException;
+import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.VersionConfig;
-import org.emergent.maven.gitver.core.git.GitExec;
 import org.emergent.maven.gitver.core.git.GitUtil;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 import org.slf4j.Logger;
@@ -74,9 +74,8 @@ public class ModelProcessingContext {
   }
 
   private VersionStrategy getVersionStrategy(Model projectModel) {
-    Path dotmvnDirectory = getDOTMVNDirectory(projectModel.getProjectDirectory().toPath());
-    VersionConfig versionConfig = loadConfig(dotmvnDirectory);
-    ArtifactCoordinates extensionGAV = Util.extensionArtifact();
+    VersionConfig versionConfig = loadConfig(projectModel);
+    ArtifactCoordinates extensionGAV = Util.getExtensionCoordinates();
     LOGGER.info(
       MessageUtils.buffer()
         .a("--- ")
@@ -85,10 +84,24 @@ public class ModelProcessingContext {
         .strong("[core-extension]")
         .a(" ---")
         .build());
-    VersionStrategy versionStrategy = GitUtil.getVersionStrategy(projectModel.getProjectDirectory(), versionConfig);
+    GitUtil gitUtil = GitUtil.getInstance(projectModel.getProjectDirectory());
+    projectModel.getProjectDirectory();
+    VersionStrategy versionStrategy = gitUtil.getVersionStrategy(versionConfig);
     findRelatedProjects(projectModel);
     printProperties(versionStrategy.toProperties());
     return versionStrategy;
+  }
+
+  private VersionConfig loadConfig(Model projectModel) {
+    Path dotmvnDirectory = getDOTMVNDirectory(projectModel.getProjectDirectory().toPath());
+    Properties fileProps = loadExtensionProperties(dotmvnDirectory);
+//    VersionConfig versionConfig = loadConfig(dotmvnDirectory);
+//    Properties fallback = new Properties();
+//    versionConfig.toProperties().forEach(fallback::setProperty);
+    Properties props = new Properties(fileProps);
+    props.putAll(Util.flatten(projectModel.getProperties()));
+    VersionConfig vc = VersionConfig.from(props);
+    return vc;
   }
 
   private void findRelatedProjects(Model projectModel) {
@@ -195,8 +208,8 @@ public class ModelProcessingContext {
   }
 
   private void addVersionerBuildPlugin(Model projectModel) {
-    ArtifactCoordinates extensionGAV = Util.extensionArtifact();
-    LOGGER.debug("Adding build plugin version {}", extensionGAV);
+    ArtifactCoordinates coordinates = Util.getPluginCoordinates();
+    LOGGER.debug("Adding build plugin version {}", coordinates);
     if (projectModel.getBuild() == null) {
       projectModel.setBuild(new Build());
     }
@@ -205,21 +218,21 @@ public class ModelProcessingContext {
     }
     Plugin plugin = new Plugin();
 
-    plugin.setGroupId(extensionGAV.getGroupId());
-    plugin.setArtifactId(extensionGAV.getArtifactId().replace("-extension", "-plugin"));
-    plugin.setVersion(extensionGAV.getVersion());
+    plugin.setGroupId(coordinates.getGroupId());
+    plugin.setArtifactId(coordinates.getArtifactId());
+    plugin.setVersion(coordinates.getVersion());
     Plugin existing = projectModel.getBuild().getPluginsAsMap().get(plugin.getKey());
     boolean addExecution = false;
 
     if (existing != null) {
       plugin = existing;
       LOGGER.info("Found existing plugin configuration for {}", plugin.getKey());
-      if (!existing.getVersion().equals(extensionGAV.getVersion())) {
+      if (!existing.getVersion().equals(coordinates.getVersion())) {
         LOGGER.warn(
           MessageUtils.buffer()
             .mojo(plugin)
             .warning(" version is different than ")
-            .mojo(extensionGAV)
+            .mojo(coordinates)
             .newline()
             .a("This can introduce unexpected behaviors.")
             .build());

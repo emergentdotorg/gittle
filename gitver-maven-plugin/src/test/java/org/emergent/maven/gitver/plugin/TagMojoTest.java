@@ -13,9 +13,9 @@ public class TagMojoTest extends AbstractMojoTest {
     assertThat(pom).as("POM file").isNotNull().exists();
     TagMojo tag = (TagMojo)rule.lookupConfiguredMojo(pom, "tag");
     assertThat(tag).isNotNull();
-    assertThat(tag.getTagNamePattern()).isEqualTo("v%v");
-    assertThat(tag.getTagMessagePattern()).isEqualTo("Release version %v");
-    assertThat(tag.isFailWhenTagExist()).isTrue();
+    assertThat(tag.getNamePattern()).isEqualTo("v%v");
+    assertThat(tag.getMessagePattern()).isEqualTo("Release version %v");
+    assertThat(tag.isFailWhenExists()).isTrue();
   }
 
   @Test
@@ -24,8 +24,8 @@ public class TagMojoTest extends AbstractMojoTest {
     assertThat(pom).as("POM file").isNotNull().exists();
     TagMojo tag = (TagMojo)rule.lookupConfiguredMojo(pom, "tag");
     assertThat(tag).isNotNull();
-    assertThat(tag.getTagNamePattern()).isEqualTo("version-%v");
-    assertThat(tag.getTagMessagePattern()).isEqualTo("Release message %v");
-    assertThat(tag.isFailWhenTagExist()).isFalse();
+    assertThat(tag.getNamePattern()).isEqualTo("version-%v");
+    assertThat(tag.getMessagePattern()).isEqualTo("Release message %v");
+    assertThat(tag.isFailWhenExists()).isFalse();
   }
 }

@@ -12,7 +12,7 @@ import org.apache.maven.shared.utils.logging.MessageUtils;
 public class PrintMojo extends AbstractGitverMojo {
 
   @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
+  protected void execute0() throws MojoExecutionException, MojoFailureException {
     Map<String, String> properties = getGitverProperties(getVersionStrategy());
     MessageBuilder builder = MessageUtils.buffer().a("properties:");
     properties.forEach((k,v) -> builder.newline().format("	%s=%s", k, v));

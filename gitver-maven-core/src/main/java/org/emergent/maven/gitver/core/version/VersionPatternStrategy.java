@@ -4,11 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import lombok.Builder;
 import lombok.Getter;
 import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.VersionConfig;
 
 @Getter
+@Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
 public class VersionPatternStrategy implements VersionStrategy {
 
   private final VersionConfig versionConfig;
@@ -18,20 +20,6 @@ public class VersionPatternStrategy implements VersionStrategy {
   private int minor;
   private int patch;
   private int commit;
-
-  public static VersionPatternStrategy create(String branch, String hash, VersionConfig versionConfig) {
-    return new VersionPatternStrategy(branch, hash, versionConfig);
-  }
-
-  private VersionPatternStrategy(String branch, String hash, VersionConfig versionConfig) {
-    this.versionConfig = versionConfig;
-    this.branch = branch;
-    this.hash = hash;
-    this.major = versionConfig.getInitialMajor();
-    this.minor = versionConfig.getInitialMinor();
-    this.patch = versionConfig.getInitialPatch();
-    this.commit = 0;
-  }
 
   private RefVersionData getRefVersionData() {
     return RefVersionData.builder()
@@ -87,6 +75,10 @@ public class VersionPatternStrategy implements VersionStrategy {
     Map<String, Object> properties = new TreeMap<>();
     properties.put("gitver.version", toVersionString());
     properties.putAll(versionConfig.toProperties());
+//    properties.put(GV_KEYWORDS_MAJOR, versionConfig.getMajorKey());
+//    properties.put(GV_KEYWORDS_MINOR, versionConfig.getMinorKey());
+//    properties.put(GV_KEYWORDS_PATCH, versionConfig.getPatchKey());
+//    properties.put(GV_KEYWORDS_REGEX, versionConfig.isUseRegex());
     properties.putAll(getRefVersionData().toProperties());
     return Util.flatten(properties);
   }
@@ -148,5 +140,42 @@ public class VersionPatternStrategy implements VersionStrategy {
     public String toString() {
       return getToken();
     }
+  }
+
+  public static class Builder {
+
+    public Builder resetVersion(int major, int minor, int patch) {
+      return this
+        .setMajor(major)
+        .setMinor(minor)
+        .setPatch(patch)
+        .setCommit(0);
+    }
+
+    public Builder incrementMajor() {
+      return this
+        .setMajor(major + 1)
+        .setMinor(0)
+        .setPatch(0)
+        .setCommit(0);
+    }
+
+    public Builder incrementMinor() {
+      return this
+        .setMinor(minor + 1)
+        .setPatch(0)
+        .setCommit(0);
+    }
+
+    public Builder incrementPatch() {
+      return this
+        .setPatch(patch + 1)
+        .setCommit(0);
+    }
+
+    public Builder incrementCommit() {
+      return setCommit(commit + 1);
+    }
+
   }
 }

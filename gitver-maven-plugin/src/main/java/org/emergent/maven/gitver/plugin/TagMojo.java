@@ -15,29 +15,35 @@ import org.emergent.maven.gitver.core.version.VersionStrategy;
 @Mojo(name = "tag")
 public class TagMojo extends AbstractGitverMojo {
 
-  @Parameter(name = "failWhenTagExist", defaultValue = "true", property = "tag.failWhenTagExist")
-  private boolean failWhenTagExist = true;
+  @Parameter(name = "messagePattern", defaultValue = "Release version %v", property = "tag.messagePattern")
+  private String messagePattern = "Release version %v";
 
-  @Parameter(name = "tagMessagePattern", defaultValue = "Release version %v", property = "tag.messagePattern")
-  private String tagMessagePattern = "Release version %v";
+  @Parameter(name = "namePattern", defaultValue = "v%v", property = "tag.namePattern")
+  private String namePattern = "v%v";
 
-  @Parameter(name = "tagNamePattern", defaultValue = "v%v", property = "tag.namePattern")
-  private String tagNamePattern = "v%v";
+  @Parameter(name = "force", defaultValue = "false", property = "tag.force")
+  private boolean force;
+
+  @Parameter(name = "failWhenExists", defaultValue = "true", property = "tag.failWhenExists")
+  private boolean failWhenExists;
 
   @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
+  protected void execute0() throws MojoExecutionException, MojoFailureException {
     VersionStrategy versionStrategy = getVersionStrategy();
-    String tagName = replaceTokens(getTagNamePattern(), versionStrategy);
-    String tagMessage = replaceTokens(getTagMessagePattern(), versionStrategy);
+    String tagName = replaceTokens(getNamePattern(), versionStrategy);
+    String tagMessage = replaceTokens(getMessagePattern(), versionStrategy);
     getLog().info("Current Version: " + versionStrategy.toVersionString());
     getLog().info(String.format("Tag Version '%s' with message '%s'", tagName, tagMessage));
-    GitUtil gitUtil = GitUtil.getInstance();
-    if (gitUtil.tagExists(mavenProject.getBasedir().getAbsoluteFile(), tagName)) {
+    GitUtil gitUtil = getGitUtil();
+    if (!force && gitUtil.tagExists(tagName)) {
       getLog().error(String.format("Tag already exist: %s", tagName));
-      if (isFailWhenTagExist()) throw new GitverException("Tag already exist: " + tagName);
-    } else {
-      String tagId = gitUtil.createTag(mavenProject.getBasedir().getAbsoluteFile(), tagName, tagMessage);
-      getLog().info(String.format("Created tag: '%s'", tagId));
+      if (failWhenExists) {
+        throw new GitverException("Tag already exist: " + tagName);
+      } else {
+        return;
+      }
     }
+    String tagId = gitUtil.createTag(tagName, tagMessage, force);
+    getLog().info(String.format("Created tag: '%s'", tagId));
   }
 }

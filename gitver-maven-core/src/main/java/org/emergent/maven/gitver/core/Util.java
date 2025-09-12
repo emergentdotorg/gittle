@@ -2,6 +2,8 @@ package org.emergent.maven.gitver.core;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -12,9 +14,24 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 
-public final class Util {
+public class Util {
+
+//  public static final String GITVER_EXTENSION_PROPERTIES = "gitver-maven-extension.properties";
+//  public static final String DOT_MVN = ".mvn";
+//  public static final String GITVER_POM_XML = ".gitver.pom.xml";
+//  public static final String GITVER_PROPERTIES = "gitver.properties";
+
+  public static final String DISABLED_ENV_VAR = "GV_EXTENSION_DISABLED";
+  public static final String DISABLED_SYSPROP = "gv.extensionDisabled";
+
+  public static final String GITVER_POM_XML = ".gitver.pom.xml";
+
+  public static final String GITVER_EXTENSION_PROPERTIES = "gitver-maven-extension.properties";
+
+  public static final String GITVER_PROPERTIES = "gitver.properties";
 
   public static final String VERSION_REGEX_STRING =
     "^(refs/tags/)?(?<tag>v?(?<version>(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<patch>[0-9]+)))$";
@@ -26,7 +43,35 @@ public final class Util {
 
   public static final String DOT_MVN = ".mvn";
 
-  private Util() {}
+  public static boolean isDisabled() {
+    return Stream.of(System.getProperty(DISABLED_SYSPROP), System.getenv(DISABLED_ENV_VAR))
+      .filter(Util::isNotEmpty).findFirst().map(Boolean::parseBoolean).orElse(false);
+  }
+
+  public static VersionConfig loadConfig(Path currentDir) {
+    Path dotmvnDirectory = getDOTMVNDirectory(currentDir);
+    Properties fileProps = loadExtensionProperties(dotmvnDirectory);
+//    VersionConfig versionConfig = loadConfig(dotmvnDirectory);
+//    Properties fallback = new Properties();
+//    versionConfig.toProperties().forEach(fallback::setProperty);
+    Properties props = new Properties(fileProps);
+//    props.putAll(Util.flatten(projectModel.getProperties()));
+    VersionConfig vc = VersionConfig.from(props);
+    return vc;
+  }
+
+  private static Properties loadExtensionProperties(Path dotmvnDirectory) {
+    Properties props = new Properties();
+    Path propertiesPath = dotmvnDirectory.resolve(GITVER_EXTENSION_PROPERTIES);
+    if (propertiesPath.toFile().exists()) {
+      try (Reader reader = Files.newBufferedReader(propertiesPath)) {
+        props.load(reader);
+      } catch (IOException e) {
+        throw new GitverException("Failed to load extensions properties file", e);
+      }
+    }
+    return props;
+  }
 
   public static Path getDOTMVNDirectory(Path currentDir) {
     Path refDir = currentDir;
@@ -94,6 +139,16 @@ public final class Util {
     if (!condition) throw new IllegalStateException(message);
   }
 
+  public static Map<String, String> flatten(Properties properties) {
+    return properties.entrySet().stream()
+      .collect(Collectors.toMap(
+        e -> String.valueOf(e.getKey()),
+        e -> String.valueOf(e.getValue()),
+        (u, v) -> { throw new IllegalStateException("Duplicate key"); },
+        TreeMap::new
+      ));
+  }
+
   public static Map<String, String> flatten(Map<String, ?> properties) {
     return properties.entrySet().stream()
       .collect(Collectors.toMap(
@@ -115,4 +170,29 @@ public final class Util {
   public static Map<String, String> toProperties(VersionStrategy versionStrategy) {
     return versionStrategy.toProperties();
   }
+
+  public static ArtifactCoordinates getCoreCoordinates() {
+    try (InputStream is = Util.class.getResourceAsStream(GITVER_PROPERTIES)) {
+      Properties props = new Properties();
+      props.load(is);
+      return ArtifactCoordinates.builder()
+        .setGroupId(props.getProperty("projectGroupId"))
+        .setArtifactId(props.getProperty("projectArtifactId"))
+        .setVersion(props.getProperty("projectVersion"))
+        .build();
+    } catch (Exception e) {
+      throw new GitverException(e.getMessage(), e);
+    }
+  }
+
+  public static ArtifactCoordinates getExtensionCoordinates() {
+    ArtifactCoordinates core = getCoreCoordinates();
+    return core.toBuilder().setArtifactId(core.getArtifactId().replace("-core", "-extension")).build();
+  }
+
+  public static ArtifactCoordinates getPluginCoordinates() {
+    ArtifactCoordinates core = getCoreCoordinates();
+    return core.toBuilder().setArtifactId(core.getArtifactId().replace("-core", "-plugin")).build();
+  }
+
 }

@@ -39,42 +39,48 @@ public class GitUtil {
 
   private static final File NULL_FILE = new File(IS_WINDOWS ? "NUL" : "/dev/null");
 
+  private final Path basedir;
   private final boolean useNative;
   private final Duration timeout;
 
-  public GitUtil(boolean useNative) {
+  private GitUtil(Path basedir) {
+    this(basedir, false);
+  }
+
+  private GitUtil(Path basedir, boolean useNative) {
+    this.basedir = basedir.toAbsolutePath();
     this.useNative = useNative;
     this.timeout = Duration.ofSeconds(5);
   }
 
-  public static GitUtil getInstance() {
-    return getInstance(false);
+  public static GitUtil getInstance(File dir) {
+    return getInstance(dir.toPath());
   }
 
-  public static GitUtil getInstance(boolean useNative) {
-    return new GitUtil(useNative);
+  public static GitUtil getInstance(Path dir) {
+    return new GitUtil(dir);
   }
 
-  public String createTag(File basePath, String tagName, String tagMessage) {
-    return GitExec.execOp(basePath, git -> {
-        Ref tag = git.tag().setName(tagName).setMessage(tagMessage).call();
+  public String createTag(String tagName, String tagMessage, boolean force) {
+    return GitExec.execOp(basedir, git -> {
+        Ref tag = git.tag().setName(tagName).setMessage(tagMessage).setForceUpdate(force).call();
         return String.format("%s@%s", tag.getName(), tag.getObjectId().getName());
       });
   }
 
-  public boolean tagExists(File basePath, String tagName) {
-    return GitExec.execOp(basePath, git -> null != git.getRepository().findRef("refs/tags/" + tagName));
+  public boolean tagExists(String tagName) {
+    return GitExec.execOp(basedir, git -> null != git.getRepository().findRef("refs/tags/" + tagName));
   }
 
-  public void executeCommit(File basedir, String message) {
+  public void executeCommit(String message) {
     if (useNative) {
-      executeCommitNative(basedir, message);
+      executeCommitNative(message);
     } else {
-      executeCommitJava(basedir, message);
+      executeCommitJava(message);
     }
   }
 
-  private void executeCommitNative(File basedir, String message) {
+  private void executeCommitNative(String message) {
     try {
       Process process = new ProcessBuilder()
         .command("git", "--git-dir", getGitDir(basedir), "commit", "--allow-empty", "-m", message)
@@ -94,8 +100,8 @@ public class GitUtil {
     }
   }
 
-  private static void executeCommitJava(File basedir, String message) {
-    GitExec.execOp(basedir.getAbsoluteFile(), git -> {
+  private void executeCommitJava(String message) {
+    GitExec.execOp(basedir.toAbsolutePath(), git -> {
       try (FileOutputStream nos = new FileOutputStream(NULL_FILE, true);
            PrintStream ps = new PrintStream(nos)) {
         RevCommit revCommit = git.commit()
@@ -114,12 +120,12 @@ public class GitUtil {
     return GitExec.findGitDir(mavenBasedir.getAbsoluteFile());
   }
 
-  public static VersionStrategy getVersionStrategy(File basePath, VersionConfig versionConfig) {
-    return getVersionStrategy(basePath.toPath(), versionConfig);
+  private static String getGitDir(Path mavenBasedir) {
+    return GitExec.findGitDir(mavenBasedir.toFile().getAbsoluteFile());
   }
 
-  public static VersionStrategy getVersionStrategy(Path basePath, VersionConfig versionConfig) {
-    return getVersionStrategy0(basePath, versionConfig);
+  public VersionStrategy getVersionStrategy(VersionConfig versionConfig) {
+    return getVersionStrategy0(basedir, versionConfig);
   }
 
   public static VersionStrategy getVersionStrategy0(Path basePath, VersionConfig versionConfig) {
@@ -139,11 +145,16 @@ public class GitUtil {
             Collectors.mapping(ref -> ref, Collectors.toList())
           ));
 
-        VersionPatternStrategy versionStrategy = VersionPatternStrategy.create(branch, hash, versionConfig);
+        VersionPatternStrategy.Builder versionStrategy = VersionPatternStrategy.builder()
+          .setBranch(branch)
+          .setHash(hash)
+          .setVersionConfig(versionConfig)
+          .setMajor(versionConfig.getInitialMajor())
+          .setMinor(versionConfig.getInitialMinor())
+          .setPatch(versionConfig.getInitialPatch());
 
         Iterable<RevCommit> commits = git.log().call();
-        List<RevCommit> revCommits =
-          StreamSupport.stream(commits.spliterator(), false).collect(Collectors.toList());
+        List<RevCommit> revCommits = StreamSupport.stream(commits.spliterator(), false).collect(Collectors.toList());
         Collections.reverse(revCommits);
 
         for (RevCommit commit : revCommits) {
@@ -157,15 +168,14 @@ public class GitUtil {
               if (!matcher.matches()) {
                 return null;
               }
-              return SemVer.of(
-                Integer.parseInt(matcher.group("major")),
-                Integer.parseInt(matcher.group("minor")),
-                Integer.parseInt(matcher.group("patch")));
+              return SemVer.builder()
+                .setMajor(matcher.group("major"))
+                .setMinor(matcher.group("minor"))
+                .setPatch(matcher.group("patch"))
+                .build();
             })
             .filter(Objects::nonNull)
-            .max(Comparator.comparing(SemVer::getMajor)
-              .thenComparing(SemVer::getMinor)
-              .thenComparing(SemVer::getPatch));
+            .max(Comparator.naturalOrder());
 
           if (semVer.isPresent()) {
             SemVer sv = semVer.get();
@@ -182,7 +192,7 @@ public class GitUtil {
             }
           }
         }
-        return versionStrategy;
+        return versionStrategy.build();
       });
   }
 

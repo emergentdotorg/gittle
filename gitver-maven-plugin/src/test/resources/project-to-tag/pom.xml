@@ -14,7 +14,7 @@
   <properties>
     <tag.namePattern>version-%v</tag.namePattern>
     <tag.messagePattern>Release message %v</tag.messagePattern>
-    <tag.failWhenTagExist>false</tag.failWhenTagExist>
+    <tag.failWhenExists>skip</tag.failWhenExists>
   </properties>
 
   <build>
@@ -30,9 +30,9 @@
               <goal>tag</goal>
             </goals>
             <configuration>
-              <failWhenTagExist>true</failWhenTagExist>
-              <tagNamePattern>v%v</tagNamePattern>
-              <tagMessagePattern>Release version %v</tagMessagePattern>
+              <failWhenExists>true</failWhenExists>
+              <namePattern>v%v</namePattern>
+              <messagePattern>Release version %v</messagePattern>
             </configuration>
           </execution>
         </executions>

@@ -12,6 +12,7 @@ import org.apache.maven.model.building.DefaultModelProcessor;
 import org.apache.maven.model.building.ModelProcessor;
 import org.eclipse.sisu.Priority;
 import org.eclipse.sisu.Typed;
+import org.emergent.maven.gitver.core.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

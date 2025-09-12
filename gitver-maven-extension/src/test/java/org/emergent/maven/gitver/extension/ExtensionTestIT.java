@@ -13,6 +13,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.emergent.maven.gitver.core.Util;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.emergent.maven.gitver.extension.Util.DOT_MVN;
-import static org.emergent.maven.gitver.extension.Util.GITVER_EXTENSION_PROPERTIES;
 
 public class ExtensionTestIT {
 
@@ -55,7 +54,7 @@ public class ExtensionTestIT {
       String expectedVersion = "0.0.0-1-SNAPSHOT";
       verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
       verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
-      assertThat(Util.resolveGitVerPom(tempProject).toFile())
+      assertThat(resolveGitVerPom(tempProject).toFile())
         .as("Git versioner pom file")
         .exists();
     }
@@ -76,7 +75,7 @@ public class ExtensionTestIT {
       String expectedVersion = "0.0.0-3-SNAPSHOT";
       verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
       verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
-      assertThat(Util.resolveGitVerPom(tempProject).toFile())
+      assertThat(resolveGitVerPom(tempProject).toFile())
         .as("Git versioner pom file")
         .exists();
     }
@@ -339,20 +338,20 @@ public class ExtensionTestIT {
       testProject.resolve("pom.xml"),
       tempProject.toPath().resolve("pom.xml"),
       StandardCopyOption.REPLACE_EXISTING);
-    Path mvnDir = tempProject.toPath().resolve(DOT_MVN);
+    Path mvnDir = tempProject.toPath().resolve(Util.DOT_MVN);
     Files.createDirectory(mvnDir);
     Files.copy(
-      testProject.resolve(DOT_MVN).resolve("extensions.xml"),
+      testProject.resolve(Util.DOT_MVN).resolve("extensions.xml"),
       mvnDir.resolve("extensions.xml"),
       StandardCopyOption.REPLACE_EXISTING);
     if (copyProperties) {
       Files.copy(
         testProject
-          .resolve(DOT_MVN)
-          .resolve(propPrefix.concat(GITVER_EXTENSION_PROPERTIES)),
-        mvnDir.resolve(GITVER_EXTENSION_PROPERTIES),
+          .resolve(Util.DOT_MVN)
+          .resolve(propPrefix.concat(Util.GITVER_EXTENSION_PROPERTIES)),
+        mvnDir.resolve(Util.GITVER_EXTENSION_PROPERTIES),
         StandardCopyOption.REPLACE_EXISTING);
-      assertThat(mvnDir.toFile().list()).contains(GITVER_EXTENSION_PROPERTIES);
+      assertThat(mvnDir.toFile().list()).contains(Util.GITVER_EXTENSION_PROPERTIES);
     }
     assertThat(tempProject.list()).contains("pom.xml");
     assertThat(mvnDir.toFile().list()).contains("extensions.xml");
@@ -363,4 +362,13 @@ public class ExtensionTestIT {
     //    return "src/test/resources";
     return "target/test-classes/";
   }
+
+  private static Path resolveGitVerPom(File basedir) {
+    return resolveGitVerPom(basedir.toPath());
+  }
+
+  private static Path resolveGitVerPom(Path basedir) {
+    return basedir.resolve(Util.GITVER_POM_XML);
+  }
+
 }

@@ -14,6 +14,7 @@ public class VersionConfig {
 
   public static final String GV_DISABLED = "gitver.disabled";
   private static final String PROPERTY_PREFIX = "gitver.";
+  public static final String GITVER_VERSION = "gitver.version";
   public static final String GV_INITIAL_MAJOR = "gitver.initial.major";
   public static final String GV_INITIAL_MINOR = "gitver.initial.minor";
   public static final String GV_INITIAL_PATCH = "gitver.initial.patch";
@@ -100,6 +101,12 @@ public class VersionConfig {
 
   public Map<String, String> toProperties() {
     Map<String, Object> properties = new TreeMap<>();
+    properties.put(GV_DISABLED, isDisabled());
+    properties.put(GV_VERSION_PATTERN, getVersionPattern());
+    properties.put(GV_VERSION_OVERRIDE, getVersionOverride());
+    properties.put(GV_INITIAL_MAJOR, getInitialMajor());
+    properties.put(GV_INITIAL_MINOR, getInitialMinor());
+    properties.put(GV_INITIAL_PATCH, getInitialPatch());
     properties.put(GV_KEYWORDS_MAJOR, getMajorKey());
     properties.put(GV_KEYWORDS_MINOR, getMinorKey());
     properties.put(GV_KEYWORDS_PATCH, getPatchKey());
