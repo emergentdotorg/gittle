@@ -84,9 +84,9 @@ You can add following properties to `.mvn/gitver-maven-extension.properties` fil
 .Example configuration for initial version for extension mode
 
 ```properties
-gitver.initial.major=1
-gitver.initial.minor=3
-gitver.initial.patch=4
+gv.initial.major=1
+gv.initial.minor=3
+gv.initial.patch=4
 ```
 
 With above initial version configuration, the first version calculated by this extension will be -
@@ -141,7 +141,7 @@ The following example will generate versions as `major.minor.patch+shorthash`, e
 .Example configuration for version pattern in extension mode
 
 ```properties
-gitver.version.pattern=%M.%m.%p+%h
+gv.version.pattern=%M.%m.%p+%h
 ```
 
 Available Tokens for Version Pattern
@@ -167,9 +167,9 @@ the configuration. To use different keywords, you can add following properties t
 Example configuration for initial version for extension mode
 
 ```properties
-gitver.keywords.major=[BIG]
-gitver.keywords.minor=[SMALL]
-gitver.keywords.patch=[FIX]
+gv.keywords.major=[BIG]
+gv.keywords.minor=[SMALL]
+gv.keywords.patch=[FIX]
 ```
 
 ## Keyword Regex
@@ -183,10 +183,10 @@ To use regex for version keywords, you can add following properties to `.mvn/git
 Example configuration for regex version keywords
 
 ```properties
-gitver.keywords.regex=true
-gitver.keywords.major=^\\[major\\].*
-gitver.keywords.minor=^\\[minor\\].*
-gitver.keywords.patch=^\\[patch\\].*
+gv.keywords.regex=true
+gv.keywords.major=^\\[major\\].*
+gv.keywords.minor=^\\[minor\\].*
+gv.keywords.patch=^\\[patch\\].*
 ```
 
 ## Generated Version Access

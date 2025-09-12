@@ -66,7 +66,7 @@ public class VersionConfigTest {
     assertThat(ex)
       .isNotNull()
       .isInstanceOf(IllegalArgumentException.class)
-      .hasMessage("InitialVersion.major must be a non-negative integer");
+      .hasMessage("gv.initial.major must be a non-negative integer");
   }
 
   @Test
@@ -75,7 +75,7 @@ public class VersionConfigTest {
     assertThat(ex)
       .isNotNull()
       .isInstanceOf(IllegalArgumentException.class)
-      .hasMessage("InitialVersion.minor must be a non-negative integer");
+      .hasMessage("gv.initial.minor must be a non-negative integer");
   }
 
   @Test
@@ -84,7 +84,7 @@ public class VersionConfigTest {
     assertThat(ex)
       .isNotNull()
       .isInstanceOf(IllegalArgumentException.class)
-      .hasMessage("InitialVersion.patch must be a non-negative integer");
+      .hasMessage("gv.initial.patch must be a non-negative integer");
   }
 
 }

@@ -74,12 +74,12 @@ public class VersionPatternStrategy implements VersionStrategy {
   public Map<String, String> toProperties() {
     Map<String, Object> properties = new TreeMap<>();
     properties.put("gitver.version", toVersionString());
+    properties.putAll(getRefVersionData().toProperties());
     properties.putAll(versionConfig.toProperties());
 //    properties.put(GV_KEYWORDS_MAJOR, versionConfig.getMajorKey());
 //    properties.put(GV_KEYWORDS_MINOR, versionConfig.getMinorKey());
 //    properties.put(GV_KEYWORDS_PATCH, versionConfig.getPatchKey());
 //    properties.put(GV_KEYWORDS_REGEX, versionConfig.isUseRegex());
-    properties.putAll(getRefVersionData().toProperties());
     return Util.flatten(properties);
   }
 
