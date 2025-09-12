@@ -8,7 +8,6 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,6 @@ import org.apache.maven.building.Source;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginExecution;
 import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.shared.utils.logging.MessageBuilder;
 import org.apache.maven.shared.utils.logging.MessageUtils;
@@ -35,8 +33,6 @@ import org.emergent.maven.gitver.core.git.GitUtil;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.emergent.maven.gitver.extension.Util.DOT_MVN;
 
 /**
  * Handles calculating version properties from the Git history.
@@ -145,6 +141,7 @@ public class ModelProcessingContext {
     });
 
     addGitverProperties(projectModel, strategyProperties);
+    addVersionerBuildPlugin(projectModel);
   }
 
   private VersionConfig loadConfig(Path dotmvnDirectory) {
@@ -187,11 +184,7 @@ public class ModelProcessingContext {
 
   private static Path getDOTMVNDirectory(Path currentDir) {
     LOGGER.info("Finding .mvn in {}", currentDir);
-    Path refDir = currentDir;
-    while (refDir != null && !Files.exists(refDir.resolve(DOT_MVN))) {
-      refDir = refDir.getParent();
-    }
-    return Optional.ofNullable(refDir).map(r -> r.resolve(DOT_MVN)).orElse(currentDir);
+    return Util.getDOTMVNDirectory(currentDir);
   }
 
   private static String getGroupId(Model projectModel) {
@@ -200,7 +193,7 @@ public class ModelProcessingContext {
       : projectModel.getGroupId();
   }
 
-  private void addVersionerBuildPlugin(Model projectModel, VersionConfig versionConfigz) {
+  private void addVersionerBuildPlugin(Model projectModel) {
     ArtifactCoordinates extensionGAV = Util.extensionArtifact();
     LOGGER.debug("Adding build plugin version {}", extensionGAV);
     if (projectModel.getBuild() == null) {
@@ -210,14 +203,16 @@ public class ModelProcessingContext {
       projectModel.getBuild().setPlugins(new ArrayList<>());
     }
     Plugin plugin = new Plugin();
+
     plugin.setGroupId(extensionGAV.getGroupId());
     plugin.setArtifactId(extensionGAV.getArtifactId().replace("-extension", "-plugin"));
     plugin.setVersion(extensionGAV.getVersion());
     Plugin existing = projectModel.getBuild().getPluginsAsMap().get(plugin.getKey());
-    boolean addExecution = true;
+    boolean addExecution = false;
+
     if (existing != null) {
       plugin = existing;
-      LOGGER.warn("Found existing plugin configuration for {}", plugin.getKey());
+      LOGGER.info("Found existing plugin configuration for {}", plugin.getKey());
       if (!existing.getVersion().equals(extensionGAV.getVersion())) {
         LOGGER.warn(
           MessageUtils.buffer()
@@ -228,22 +223,25 @@ public class ModelProcessingContext {
             .a("This can introduce unexpected behaviors.")
             .build());
       }
-      Optional<PluginExecution> setGoal =
-        existing.getExecutions().stream().filter(e -> e.getGoals().contains("set")).findFirst();
-      if (setGoal.isPresent()) {
-        LOGGER.info("Using existing plugin execution with id {}", setGoal.get().getId());
-        addExecution = false;
-      }
+//      Optional<PluginExecution> setGoal =
+//        existing.getExecutions().stream().filter(e -> e.getGoals().contains("set")).findFirst();
+//      if (setGoal.isPresent()) {
+//        LOGGER.info("Using existing plugin execution with id {}", setGoal.get().getId());
+//        addExecution = false;
+//      }
+    } else {
+//      addPluginConfiguration(plugin, versionConfig);
+      projectModel.getBuild().getPlugins().add(0, plugin);
     }
-    addPluginConfiguration(plugin, versionConfigz);
-    if (addExecution) {
-      LOGGER.debug("Adding build plugin execution for {}", plugin.getKey());
-      PluginExecution execution = new PluginExecution();
-      execution.setId("gitver-set");
-      execution.setGoals(Collections.singletonList("set"));
-      plugin.addExecution(execution);
-    }
-    if (existing == null) projectModel.getBuild().getPlugins().add(0, plugin);
+
+//    if (addExecution) {
+//      LOGGER.debug("Adding build plugin execution for {}", plugin.getKey());
+//      PluginExecution execution = new PluginExecution();
+//      execution.setId("gitver-set");
+//      execution.setGoals(Collections.singletonList("set"));
+//      plugin.addExecution(execution);
+//    }
+//    if (existing == null) projectModel.getBuild().getPlugins().add(0, plugin);
   }
 
   private void addPluginConfiguration(Plugin plugin, VersionConfig versionConfig) {

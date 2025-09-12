@@ -1,7 +1,9 @@
 package org.emergent.maven.gitver.plugin;
 
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -28,15 +30,17 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
   public CommitMojo(IncrementType incrementType) {
     this.incrementType = incrementType;
-    
   }
+
+  @Parameter(defaultValue = "${session}", required = true, readonly = true)
+  protected MavenSession mavenSession;
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-//    if (!mavenProject.isExecutionRoot()) {
-//      getLog().info("Skipping CommitMojo in child module: " + mavenProject.getArtifactId());
-//      return;
-//    }
+    if (!Objects.equals(mavenSession.getTopLevelProject(), mavenProject)) {
+      getLog().debug("Skipping CommitMojo in child module: " + mavenProject.getArtifactId());
+      return;
+    }
     String typeName = switch (getIncrementType()) {
       case MAJOR -> getMajorKey();
       case MINOR -> getMinorKey();

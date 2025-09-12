@@ -27,6 +27,10 @@ class Util {
 
   private Util() {}
 
+  public static Path getDOTMVNDirectory(Path currentDir) {
+    return org.emergent.maven.gitver.core.Util.getDOTMVNDirectory(currentDir);
+  }
+
   public static boolean isDisabled() {
     return Boolean.getBoolean(DISABLED_SYSTEM_PROPERTY);
   }

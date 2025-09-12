@@ -6,7 +6,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.Properties;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -91,13 +90,8 @@ class Util {
     return props;
   }
 
-  private static Optional<Path> getDOTMVNDirectory(Path currentDir) {
-    //LOGGER.info("Finding .mvn in {}", currentDir);
-    Path refDir = currentDir;
-    while (refDir != null && !Files.exists(refDir.resolve(DOT_MVN))) {
-      refDir = refDir.getParent();
-    }
-    return Optional.ofNullable(refDir).map(r -> r.resolve(DOT_MVN));
+  public static Path getDOTMVNDirectory(Path currentDir) {
+    return org.emergent.maven.gitver.core.Util.getDOTMVNDirectory(currentDir);
   }
 
 }

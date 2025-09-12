@@ -2,7 +2,10 @@ package org.emergent.maven.gitver.core;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeMap;
 import java.util.function.Predicate;
@@ -21,7 +24,17 @@ public final class Util {
   public static final Pattern VERSION_REGEX2 = Pattern.compile(
     "^(?<version>(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<patch>[0-9]+)(-(?<prerelease>([1-9][0-9]*|[0-9A-Za-z-]+)))?(\\+(?<buildmeta>[0-9A-Za-z-]+))?)$");
 
+  public static final String DOT_MVN = ".mvn";
+
   private Util() {}
+
+  public static Path getDOTMVNDirectory(Path currentDir) {
+    Path refDir = currentDir;
+    while (refDir != null && !Files.exists(refDir.resolve(DOT_MVN))) {
+      refDir = refDir.getParent();
+    }
+    return Optional.ofNullable(refDir).map(r -> r.resolve(DOT_MVN)).orElse(currentDir);
+  }
 
   public static String toShortHash(String hash) {
     return hash != null ? hash.substring(0, 8) : null;
