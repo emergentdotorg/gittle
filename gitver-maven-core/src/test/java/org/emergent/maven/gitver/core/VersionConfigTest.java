@@ -19,8 +19,8 @@ public class VersionConfigTest {
       .containsExactly(
         false,
         0, 0, 0,
-        VersionConfig.KEY_MAJOR, VersionConfig.KEY_MINOR, VersionConfig.KEY_PATCH,
-        false, VersionConfig.DEFAULT_VERSION_PATTERN, "");
+        Constants.DEFAULT_MAJOR_KEYWORD, Constants.DEFAULT_MINOR_KEYWORD, Constants.DEFAULT_PATCH_KEYWORD,
+        false, Constants.DEFAULT_VERSION_PATTERN, "");
   }
 
   @Test

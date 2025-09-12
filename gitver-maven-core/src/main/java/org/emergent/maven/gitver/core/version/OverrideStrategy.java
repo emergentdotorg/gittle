@@ -2,7 +2,7 @@ package org.emergent.maven.gitver.core.version;
 
 import java.util.Map;
 import java.util.TreeMap;
-import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.Constants;
 
 public class OverrideStrategy implements VersionStrategy {
 
@@ -20,7 +20,7 @@ public class OverrideStrategy implements VersionStrategy {
   @Override
   public Map<String, String> toProperties() {
     TreeMap<String, String> map = new TreeMap<>();
-    map.put(VersionConfig.GITVER_VERSION, toVersionString());
+    map.put(Constants.GITVER_VERSION, toVersionString());
     return map;
   }
 }

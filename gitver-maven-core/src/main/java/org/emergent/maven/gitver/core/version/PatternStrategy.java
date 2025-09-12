@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import lombok.Builder;
 import lombok.Getter;
+import org.emergent.maven.gitver.core.Constants;
 import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.VersionConfig;
 
@@ -43,7 +44,7 @@ public class PatternStrategy implements VersionStrategy {
 
   public Map<String, String> toProperties() {
     Map<String, Object> properties = new TreeMap<>();
-    properties.put(VersionConfig.GITVER_VERSION, toVersionString());
+    properties.put(Constants.GITVER_VERSION, toVersionString());
     properties.putAll(getRefVersionData().toProperties());
     properties.putAll(versionConfig.toProperties());
     return Util.flatten(properties);

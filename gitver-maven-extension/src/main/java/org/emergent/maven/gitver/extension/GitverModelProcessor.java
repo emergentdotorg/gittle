@@ -72,6 +72,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
 
   public Model processModel(Model projectModel, Map<String, ?> options) {
     if (Util.isDisabled()) {
+      LOGGER.debug("{} is disabled", getClass().getSimpleName());
       return projectModel;
     }
 
@@ -177,7 +178,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
     });
 
     addGitverProperties(projectModel, strategyProperties);
-    addBuildPlugin(projectModel);
+//    addBuildPlugin(projectModel);
   }
 
   private VersionConfig loadConfig(Path dotmvnDirectory) {

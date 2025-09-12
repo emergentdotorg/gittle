@@ -32,19 +32,9 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
   private static final Logger LOGGER = LoggerFactory.getLogger(GitverMavenLifecycleParticipant.class);
 
   @Override
-  public void afterSessionStart(MavenSession session) throws MavenExecutionException {
-    super.afterSessionStart(session);
-  }
-
-  @Override
   public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
     super.afterProjectsRead(session);
     updateProjects(session);
-  }
-
-  @Override
-  public void afterSessionEnd(MavenSession session) throws MavenExecutionException {
-    super.afterSessionEnd(session);
   }
 
   private void updateProjects(MavenSession session) {
@@ -53,6 +43,7 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
 
   private void updateProject(MavenProject project) {
     if (Util.isDisabled()) {
+      LOGGER.debug("{} is disabled", getClass().getSimpleName());
       return;
     }
 
