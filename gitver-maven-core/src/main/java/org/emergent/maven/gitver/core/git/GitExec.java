@@ -27,6 +27,19 @@ public class GitExec {
     }
   }
 
+  public static void execOp(Path basePath, ExecConsumer<Git> work) throws GitverException {
+    execOp(basePath.toFile(), work);
+  }
+
+  public static void execOp(File basePath, ExecConsumer<Git> work) throws GitverException {
+    try (Repository repository = getRepository(basePath);
+         Git git = new Git(repository)) {
+      work.accept(git);
+    } catch (Exception e) {
+      throw new GitverException(e);
+    }
+  }
+
   public static String findGitDir(File basePath) {
     try (Repository repository = getRepository(basePath)) {
       return repository.getDirectory().getAbsolutePath();
@@ -42,5 +55,10 @@ public class GitExec {
   @FunctionalInterface
   public interface Operation<T, R> {
     R apply(T t) throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface ExecConsumer<T> {
+    void accept(T t) throws Exception;
   }
 }

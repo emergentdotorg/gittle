@@ -1,15 +1,18 @@
 package org.emergent.maven.gitver.plugin;
 
 import java.io.File;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.VersionConfig;
-import org.emergent.maven.gitver.core.version.SemVer;
 import org.emergent.maven.gitver.core.version.RefVersionData;
+import org.emergent.maven.gitver.core.version.SemVer;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 import org.junit.jupiter.api.Test;
 
@@ -17,17 +20,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class AbstractGitverMojoTest {
 
-  private AbstractGitverMojo testMojo =
-    new AbstractGitverMojo() {
+  AbstractGitverMojo testMojo = new AbstractGitverMojo() {
 
-      {
-        mavenProject = new MavenProject();
-        mavenProject.setFile(new File("my/pom.xml"));
-      }
+    {
+      mavenProject = new MavenProject();
+      mavenProject.setFile(new File("my/pom.xml"));
+    }
 
-      @Override
-      public void execute() throws MojoExecutionException, MojoFailureException {}
-    };
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {}
+  };
 
   @Test
   public void getVersionConfig() {
@@ -91,7 +93,7 @@ public class AbstractGitverMojoTest {
                           String branch,
                           String hash,
                           VersionConfig versionConfig) {
-      this(branch, hash, SemVer.of(major, minor, patch), versionConfig);
+      this(branch, hash, SemVer.builder().setMajor(major).setMinor(minor).setPatch(patch).build(), versionConfig);
     }
 
     public SemVerStrategy(String branch, String hash, SemVer semVer, VersionConfig versionConfig) {
@@ -106,8 +108,15 @@ public class AbstractGitverMojoTest {
       return semVer.toString();
     }
 
-    @Override
-    public RefVersionData getRefVersionData() {
+    public Map<String, String> toProperties() {
+      Map<String, Object> properties = new TreeMap<>();
+      properties.put("gitver.version", toVersionString());
+      properties.putAll(versionConfig.toProperties());
+      properties.putAll(getRefVersionData().toProperties());
+      return Util.flatten(properties);
+    }
+
+    private RefVersionData getRefVersionData() {
       return RefVersionData.builder()
         .setBranch(branch)
         .setHash(hash)
@@ -121,7 +130,7 @@ public class AbstractGitverMojoTest {
     @Override
     public String toString() {
       return String.format("%s [branch: %s, version: %s, hash: %s]",
-          getClass().getSimpleName(), branch, toVersionString(), hash);
+        getClass().getSimpleName(), branch, toVersionString(), hash);
     }
   }
 }

@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Stream;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -23,7 +24,9 @@ class Util {
   public static final String DOT_MVN = ".mvn";
   public static final String GITVER_POM_XML = ".gitver.pom.xml";
   public static final String GITVER_PROPERTIES = "gitver.properties";
-  public static final String DISABLED_SYSTEM_PROPERTY = "gitver.disableExtension";
+
+  public static final String DISABLED_ENV_VAR = "GV_EXTENSION_DISABLED";
+  public static final String DISABLED_SYSPROP = "gv.extensionDisabled";
 
   private Util() {}
 
@@ -32,7 +35,8 @@ class Util {
   }
 
   public static boolean isDisabled() {
-    return Boolean.getBoolean(DISABLED_SYSTEM_PROPERTY);
+    return Stream.of(System.getProperty(DISABLED_SYSPROP), System.getenv(DISABLED_ENV_VAR))
+        .filter(Util::isNotEmpty).findFirst().map(Boolean::parseBoolean).orElse(false);
   }
 
   public static Path resolveGitVerPom(File basedir) {
@@ -87,5 +91,21 @@ class Util {
 
   public static Map<String, String> toProperties(VersionStrategy versionStrategy) {
     return org.emergent.maven.gitver.core.Util.toProperties(versionStrategy);
+  }
+
+  public static boolean isBlank(String value) {
+    return org.emergent.maven.gitver.core.Util.isBlank(value);
+  }
+
+  public static boolean isNotBlank(String value) {
+    return org.emergent.maven.gitver.core.Util.isNotBlank(value);
+  }
+
+  public static boolean isEmpty(String value) {
+    return org.emergent.maven.gitver.core.Util.isEmpty(value);
+  }
+
+  public static boolean isNotEmpty(String value) {
+    return org.emergent.maven.gitver.core.Util.isNotEmpty(value);
   }
 }

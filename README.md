@@ -110,7 +110,7 @@ CAUTION: Use `--non-recursive` flag when running commit goal in a multi-module m
 per included module.
 
 The default message pattern is `chore(release): [%k]` where `[%k]` is the keyword token. To change the default message
-pattern, you could pass `-Dgitver.commit.message=<message>` argument when running the goal.
+pattern, you could pass `-gv.commitMessage=<message>` argument when running the goal.
 
 NOTE: When this extension is configured, it automatically makes `gitver` plugin goals available
 with *NO* any additional configuration.
@@ -118,7 +118,7 @@ with *NO* any additional configuration.
 .Example commit patch with a custom message
 
 ```shell
-mvn gitver:commit-patch "-Dgitver.commit.message=chore: [%k] release" --non-recursive
+mvn gitver:commit-patch "-Dgv.commitMessage=chore: [%k] release" --non-recursive
 ```
 
 Of course, you can also add commits manually with appropriate version keywords.

@@ -10,7 +10,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.Singular;
 import lombok.Value;
@@ -28,19 +27,13 @@ public class SemVer implements Comparable<SemVer> {
 
   private static final SemVer ZERO = SemVer.builder().build();
 
-  @Default
-  int major = 0;
-  @Default
-  int minor = 0;
-  @Default
-  int patch = 0;
-  @Singular
-  List<Prerelease> prereleases;
-  @Singular
-  List<BuildMeta> buildmetas;
+  int major;
+  int minor;
+  int patch;
+  @Singular List<Prerelease> prereleases;
+  @Singular List<Buildmeta> buildmetas;
 
-  private SemVer(
-    int major, int minor, int patch, List<Prerelease> prereleases, List<BuildMeta> buildmetas) {
+  private SemVer(int major, int minor, int patch, List<Prerelease> prereleases, List<Buildmeta> buildmetas) {
     this.major = Util.assertNotNegative(major);
     this.minor = Util.assertNotNegative(minor);
     this.patch = Util.assertNotNegative(patch);
@@ -54,21 +47,21 @@ public class SemVer implements Comparable<SemVer> {
       return Optional.empty();
     }
     String prerelease = matcher.group("prerelease");
-    List<Prerelease> prereleaseArr = Arrays.stream(prerelease.split("\\."))
-      .map(Prerelease::new).toList();
+//    List<Prerelease> prereleaseArr = Arrays.stream(prerelease.split("\\."))
+//      .map(Prerelease::new).toList();
     String buildmeta = matcher.group("buildmeta");
-    List<BuildMeta> buildmetaArr = Arrays.stream(buildmeta.split("\\."))
-      .map(BuildMeta::new).toList();
+//    List<Buildmeta> buildmetaArr = Arrays.stream(buildmeta.split("\\."))
+//      .map(Buildmeta::new).toList();
 
-    return Optional.of(SemVer.builder()
+    Builder builder = SemVer.builder()
       .setMajor(Integer.parseInt(matcher.group("major")))
       .setMinor(Integer.parseInt(matcher.group("major")))
       .setPatch(Integer.parseInt(matcher.group("major")))
-      .setPrereleases(prereleaseArr)
-      .setBuildmetas(buildmetaArr)
-      .build());
-  }
+      .setPrerelease(prerelease.split("\\."))
+      .setBuildmeta(buildmeta.split("\\."));
 
+    return Optional.of(builder.build());
+  }
   public static SemVer of(int major, int minor, int patch) {
     return builder().setMajor(major).setMinor(minor).setPatch(patch).build();
   }
@@ -86,11 +79,11 @@ public class SemVer implements Comparable<SemVer> {
   }
 
   public SemVer withBuild(String build) {
-    return toBuilder().setBuildMeta(build).build();
+    return toBuilder().setBuildmeta(build).build();
   }
 
   public SemVer withNewBuild(String build) {
-    return toBuilder().clearBuildmetas().setBuildMeta(build).build();
+    return toBuilder().clearBuildmetas().setBuildmeta(build).build();
   }
 
   public SemVer incrementMajor() {
@@ -136,7 +129,7 @@ public class SemVer implements Comparable<SemVer> {
         StringJoiner::add,
         StringJoiner::merge)
       + buildmetas.stream()
-      .map(BuildMeta::getLabel)
+      .map(Buildmeta::getLabel)
       .collect(
         () -> new StringJoiner(".", "+", "").setEmptyValue(""),
         StringJoiner::add,
@@ -215,8 +208,8 @@ public class SemVer implements Comparable<SemVer> {
     public int compareTo(Prerelease o) {
       String l1 = getLabel();
       String l2 = o.getLabel();
-      boolean numeric = isNumeric(l1);
-      if (numeric != isNumeric(l2)) {
+      boolean numeric = isNumeric();
+      if (numeric != o.isNumeric()) {
         return numeric ? -1 : 1;
       } else if (numeric) {
         return Integer.compare(Integer.parseInt(l1), Integer.parseInt(l2));
@@ -241,13 +234,13 @@ public class SemVer implements Comparable<SemVer> {
   /**
    * SemVer <a href="https://semver.org/spec/v2.0.0.html#spec-item-10">Build Metadata</a>
    */
-  public static class BuildMeta extends Identifier {
-    private BuildMeta(String label) {
+  public static class Buildmeta extends Identifier {
+    private Buildmeta(String label) {
       super(label);
     }
 
-    public static BuildMeta of(String label) {
-      return new BuildMeta(label);
+    public static Buildmeta of(String label) {
+      return new Buildmeta(label);
     }
   }
 
@@ -255,13 +248,73 @@ public class SemVer implements Comparable<SemVer> {
   public static class Builder {
 
     @Tolerate
+    public Builder setMajor(String major) {
+      return setMajor(Integer.parseInt(major));
+    }
+
+    @Tolerate
+    public Builder setMinor(String minor) {
+      return setMinor(Integer.parseInt(minor));
+    }
+
+    @Tolerate
+    public Builder setPatch(String patch) {
+      return setPatch(Integer.parseInt(patch));
+    }
+
+    @Tolerate
     public Builder setPrerelease(String... value) {
       return setPrereleases(Arrays.stream(value).map(Prerelease::of).collect(Collectors.toList()));
     }
 
     @Tolerate
-    public Builder setBuildMeta(String... value) {
-      return setBuildmetas(Arrays.stream(value).map(BuildMeta::of).collect(Collectors.toList()));
+    public Builder setBuildmeta(String... value) {
+      return setBuildmetas(Arrays.stream(value).map(Buildmeta::of).collect(Collectors.toList()));
+    }
+
+    public Builder withPrerelease(String prerelease) {
+      return setPrerelease(prerelease);
+    }
+
+    public Builder withNewPrerelease(String prerelease) {
+      return clearPrereleases().setPrerelease(prerelease);
+    }
+
+    public Builder withBuildmeta(String build) {
+      return setBuildmeta(build);
+    }
+
+    public Builder withNewBuildmeta(String build) {
+      return clearBuildmetas().setBuildmeta(build);
+    }
+
+    public Builder incrementMajor() {
+      return this
+        .setMajor(major + 1)
+        .setMinor(0)
+        .setPatch(0)
+        .clearPrereleases()
+        .clearBuildmetas();
+    }
+
+    public Builder incrementMinor() {
+      return this
+        .setMinor(minor + 1)
+        .setPatch(0)
+        .clearPrereleases()
+        .clearBuildmetas();
+    }
+
+    public Builder incrementPatch() {
+      return this
+        .setPatch(patch + 1)
+        .clearPrereleases()
+        .clearBuildmetas();
+    }
+
+    @Override
+    public String toString() {
+      return build().toString();
     }
   }
 }

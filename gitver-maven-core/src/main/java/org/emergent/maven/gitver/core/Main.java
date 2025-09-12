@@ -9,7 +9,8 @@ import org.emergent.maven.gitver.core.version.VersionStrategy;
 public class Main {
 
   public static void main(String[] args) {
-    VersionStrategy strategy = GitUtil.getVersionStrategy(Paths.get("."), VersionConfig.builder().build());
+    String path = args.length > 0 ? args[0] : ".";
+    VersionStrategy strategy = GitUtil.getVersionStrategy(Paths.get(path), VersionConfig.builder().build());
     System.out.printf("version: %s%n", strategy.toVersionString());
   }
 }

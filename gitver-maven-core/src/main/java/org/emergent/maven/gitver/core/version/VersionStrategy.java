@@ -1,12 +1,10 @@
 package org.emergent.maven.gitver.core.version;
 
-import org.emergent.maven.gitver.core.VersionConfig;
+import java.util.Map;
 
 public interface VersionStrategy {
 
-  VersionConfig getVersionConfig();
-
-  RefVersionData getRefVersionData();
-
   String toVersionString();
+
+  Map<String, String> toProperties();
 }

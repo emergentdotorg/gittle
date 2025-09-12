@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.VersionConfig;
 import org.emergent.maven.gitver.core.git.GitUtil;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
@@ -77,7 +76,7 @@ public abstract class AbstractGitverMojo extends org.apache.maven.plugin.Abstrac
   }
 
   protected Map<String, String> getGitverProperties(VersionStrategy versionStrategy) {
-    return Util.toProperties(versionStrategy);
+    return versionStrategy.toProperties();
   }
 
   protected VersionStrategy getVersionStrategy() {

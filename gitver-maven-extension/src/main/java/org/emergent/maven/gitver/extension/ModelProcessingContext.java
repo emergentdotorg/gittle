@@ -29,6 +29,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.emergent.maven.gitver.core.ArtifactCoordinates;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.git.GitExec;
 import org.emergent.maven.gitver.core.git.GitUtil;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 import org.slf4j.Logger;
@@ -84,9 +85,9 @@ public class ModelProcessingContext {
         .strong("[core-extension]")
         .a(" ---")
         .build());
-    VersionStrategy versionStrategy = GitUtil.getVersionStrategy(projectModel.getPomFile(), versionConfig);
+    VersionStrategy versionStrategy = GitUtil.getVersionStrategy(projectModel.getProjectDirectory(), versionConfig);
     findRelatedProjects(projectModel);
-    printProperties(Util.toProperties(versionStrategy));
+    printProperties(versionStrategy.toProperties());
     return versionStrategy;
   }
 
@@ -108,7 +109,7 @@ public class ModelProcessingContext {
 
   private void processRelatedProjects(Model projectModel, VersionStrategy versionStrategy) {
     String versionString = versionStrategy.toVersionString();
-    Map<String, String> strategyProperties = Util.toProperties(versionStrategy);
+    Map<String, String> strategyProperties = versionStrategy.toProperties();
 
     Path modelPath = projectModel.getProjectDirectory().toPath();
     File modelPomFile = projectModel.getPomFile();

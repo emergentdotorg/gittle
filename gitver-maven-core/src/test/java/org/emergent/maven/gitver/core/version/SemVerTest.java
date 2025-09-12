@@ -5,6 +5,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import lombok.Value;
 import org.assertj.core.api.Assertions;
+import org.emergent.maven.gitver.core.version.SemVer.Builder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,7 +21,7 @@ class SemVerTest {
   @Test
   void mutatingSingulars() {
     SemVer semVer1 = SemVer.zero();
-    SemVer semVer2 = semVer1.withPrerelease("SNAPSHOT").withBuild("f0e1d2");
+    SemVer semVer2 = semVer1.toBuilder().withPrerelease("SNAPSHOT").withBuildmeta("f0e1d2").build();
     assertThat(semVer1).asString().isEqualTo("0.0.0");
     assertThat(semVer2).asString().isEqualTo("0.0.0-SNAPSHOT+f0e1d2");
   }
@@ -37,7 +38,7 @@ class SemVerTest {
   @Test
   @DisplayName("Core version components extracted")
   void coreSemVerComponents() {
-    assertThat(semver())
+    assertThat(semver().build())
       .as("Semver 1.2.3")
       .extracting(SemVer::getMajor, SemVer::getMinor, SemVer::getPatch)
       .containsExactly(1, 2, 3);
@@ -120,7 +121,7 @@ class SemVerTest {
   @Test
   @DisplayName("Prerelease indicator")
   void isPrerelease() {
-    assertThat(semver().withPrerelease("Al-pha01"))
+    assertThat(semver().withPrerelease("Al-pha01").build())
       .as("Prerelease Version with all allowed characters")
       .extracting(SemVer::isPrerelease)
       .isEqualTo(true);
@@ -129,7 +130,7 @@ class SemVerTest {
   @Test
   @DisplayName("Not Prerelease indicator")
   void isNotPrerelease() {
-    assertThat(semver().isPrerelease()).as("Not a prerelease").isFalse();
+    assertThat(semver().build().isPrerelease()).as("Not a prerelease").isFalse();
   }
 
   @Test
@@ -162,13 +163,13 @@ class SemVerTest {
   @Test
   @DisplayName("Is not initial development version")
   void isNotInitialDevelopment() {
-    assertThat(semver().isInitialDevelopment()).as("Semver non-Zero Version").isFalse();
+    assertThat(semver().build().isInitialDevelopment()).as("Semver non-Zero Version").isFalse();
   }
 
   @Test
   @DisplayName("Single Build identifier with allowed characters")
   void withSingleBuildIdentifier() {
-    assertThat(semver().withBuild("Some-01"))
+    assertThat(semver().withBuildmeta("Some-01"))
       .as("Build Version with all allowed characters")
       .asString()
       .isEqualTo("1.2.3+Some-01");
@@ -177,7 +178,7 @@ class SemVerTest {
   @Test
   @DisplayName("New Build identifier removing existing")
   void withNewBuildIdentifierOverridingPrevious() {
-    assertThat(semver().withBuild("Some-01").withNewBuild("Some-New-01"))
+    assertThat(semver().withBuildmeta("Some-01").withNewBuildmeta("Some-New-01"))
       .as("New build version overriding previous")
       .asString()
       .isEqualTo("1.2.3+Some-New-01");
@@ -186,7 +187,7 @@ class SemVerTest {
   @Test
   @DisplayName("Build Identifier with prerelease identifier")
   void buildWithPrereleaseIdentifier() {
-    assertThat(semver().withPrerelease("Alpha-01").withBuild("Some-01"))
+    assertThat(semver().withPrerelease("Alpha-01").withBuildmeta("Some-01"))
       .as("Build Identifier with prerelease identifier")
       .asString()
       .isEqualTo("1.2.3-Alpha-01+Some-01");
@@ -196,7 +197,7 @@ class SemVerTest {
   @DisplayName("Multiple build and prerelease identifiers")
   void multipleBuildWithPrereleaseIdentifier() {
     assertThat(
-      semver().withPrerelease("Alpha").withPrerelease("1").withBuild("Some").withBuild("001"))
+      semver().withPrerelease("Alpha").withPrerelease("1").withBuildmeta("Some").withBuildmeta("001"))
       .as("Multiple build and prerelease identifiers")
       .asString()
       .isEqualTo("1.2.3-Alpha.1+Some.001");
@@ -205,7 +206,7 @@ class SemVerTest {
   @Test
   @DisplayName("Single Build identifier with disallowed characters")
   void withBuildInvalidIdentifier() {
-    Throwable exception = catchThrowable(() -> semver().withBuild("Some-01#"));
+    Throwable exception = catchThrowable(() -> semver().withBuildmeta("Some-01#"));
     assertThat(exception)
       .isNotNull()
       .isInstanceOf(IllegalArgumentException.class)
@@ -221,52 +222,52 @@ class SemVerTest {
   @ParameterizedTest
   @DisplayName("Parameterized version increment")
   @MethodSource("versionProvider")
-  void verifyVersionIncrement(Wrapped process, SemVer semVer, String toStringValue) {
+  void verifyVersionIncrement(Wrapped process, Builder semVer, String toStringValue) {
     assertThat(process.getProcessor().apply(semVer)).asString().isEqualTo(toStringValue);
   }
 
   public static Stream<Arguments> versionProvider() {
     return Stream.of(
-      Arguments.of(new Wrapped(SemVer::incrementMajor, "incrementMajor"), semver(), "2.0.0"),
-      Arguments.of(new Wrapped(SemVer::incrementMinor, "incrementMinor"), semver(), "1.3.0"),
-      Arguments.of(new Wrapped(SemVer::incrementPatch, "incrementPatch"), semver(), "1.2.4"),
+      Arguments.of(new Wrapped(Builder::incrementMajor, "incrementMajor"), semver(), "2.0.0"),
+      Arguments.of(new Wrapped(Builder::incrementMinor, "incrementMinor"), semver(), "1.3.0"),
+      Arguments.of(new Wrapped(Builder::incrementPatch, "incrementPatch"), semver(), "1.2.4"),
       Arguments.of(
-        new Wrapped(SemVer::incrementMajor, "incrementMajor with build"),
-        semver().withBuild("hash1"),
+        new Wrapped(Builder::incrementMajor, "incrementMajor with build"),
+        semver().withBuildmeta("hash1"),
         "2.0.0"),
       Arguments.of(
-        new Wrapped(SemVer::incrementMinor, "incrementMinor with build"),
-        semver().withBuild("hash1"),
+        new Wrapped(Builder::incrementMinor, "incrementMinor with build"),
+        semver().withBuildmeta("hash1"),
         "1.3.0"),
       Arguments.of(
-        new Wrapped(SemVer::incrementPatch, "incrementPatch with build"),
-        semver().withBuild("hash1"),
+        new Wrapped(Builder::incrementPatch, "incrementPatch with build"),
+        semver().withBuildmeta("hash1"),
         "1.2.4"),
       Arguments.of(
-        new Wrapped(SemVer::incrementMajor, "incrementMajor with prerelease"),
+        new Wrapped(Builder::incrementMajor, "incrementMajor with prerelease"),
         semver().withPrerelease("alpha1"),
         "2.0.0"),
       Arguments.of(
-        new Wrapped(SemVer::incrementMinor, "incrementMinor with prerelease"),
+        new Wrapped(Builder::incrementMinor, "incrementMinor with prerelease"),
         semver().withPrerelease("alpha1"),
         "1.3.0"),
       Arguments.of(
-        new Wrapped(SemVer::incrementPatch, "incrementPatch with prerelease"),
+        new Wrapped(Builder::incrementPatch, "incrementPatch with prerelease"),
         semver().withPrerelease("alpha1"),
         "1.2.4"));
   }
 
-  private static SemVer semver() {
+  private static Builder semver() {
     return semver(1, 2, 3);
   }
 
-  private static SemVer semver(int major, int minor, int patch) {
-    return SemVer.of(major, minor, patch);
+  private static Builder semver(int major, int minor, int patch) {
+    return SemVer.builder().setMajor(major).setMinor(minor).setPatch(patch);
   }
 
   @Value
   public static class Wrapped {
-    Function<SemVer, SemVer> processor;
+    Function<Builder, Builder> processor;
     String methodName;
 
     @Override

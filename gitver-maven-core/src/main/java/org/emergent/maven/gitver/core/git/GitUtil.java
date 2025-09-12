@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -38,43 +39,79 @@ public class GitUtil {
 
   private static final File NULL_FILE = new File(IS_WINDOWS ? "NUL" : "/dev/null");
 
-  public static String createTag(File basePath, String tagName, String tagMessage) {
+  private final boolean useNative;
+  private final Duration timeout;
+
+  public GitUtil(boolean useNative) {
+    this.useNative = useNative;
+    this.timeout = Duration.ofSeconds(5);
+  }
+
+  public static GitUtil getInstance() {
+    return getInstance(false);
+  }
+
+  public static GitUtil getInstance(boolean useNative) {
+    return new GitUtil(useNative);
+  }
+
+  public String createTag(File basePath, String tagName, String tagMessage) {
     return GitExec.execOp(basePath, git -> {
         Ref tag = git.tag().setName(tagName).setMessage(tagMessage).call();
         return String.format("%s@%s", tag.getName(), tag.getObjectId().getName());
       });
   }
 
-  public static boolean tagExists(File basePath, String tagName) {
+  public boolean tagExists(File basePath, String tagName) {
     return GitExec.execOp(basePath, git -> null != git.getRepository().findRef("refs/tags/" + tagName));
   }
 
-  public static boolean executeCommit(File mavenBasedir, String resolvedMessage) {
-    if (true) return GitExec.execOp(mavenBasedir.getAbsoluteFile(), git -> {
+  public void executeCommit(File basedir, String message) {
+    if (useNative) {
+      executeCommitNative(basedir, message);
+    } else {
+      executeCommitJava(basedir, message);
+    }
+  }
+
+  private void executeCommitNative(File basedir, String message) {
+    try {
+      Process process = new ProcessBuilder()
+        .command("git", "--git-dir", getGitDir(basedir), "commit", "--allow-empty", "-m", message)
+        .inheritIO()
+        .redirectInput(ProcessBuilder.Redirect.from(NULL_FILE))
+        .redirectOutput(ProcessBuilder.Redirect.to(NULL_FILE))
+        .redirectError(ProcessBuilder.Redirect.to(NULL_FILE))
+        .start();
+      if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+        throw new GitverException("Timed out while creating commit");
+      }
+      if  (process.exitValue() != 0) {
+        throw new GitverException("Git commit returned exit code " + process.exitValue());
+      }
+    } catch (Exception e) {
+      throw new GitverException(e.getMessage(), e);
+    }
+  }
+
+  private static void executeCommitJava(File basedir, String message) {
+    GitExec.execOp(basedir.getAbsoluteFile(), git -> {
       try (FileOutputStream nos = new FileOutputStream(NULL_FILE, true);
            PrintStream ps = new PrintStream(nos)) {
         RevCommit revCommit = git.commit()
           .setAllowEmpty(true)
-          .setMessage(resolvedMessage)
+          .setMessage(message)
           .setHookErrorStream(ps)
           .setHookOutputStream(ps)
           .call();
+      } catch (Exception e) {
+        throw new GitverException(e.getMessage(), e);
       }
-      return true;
     });
-    try {
-      String gitDir = GitExec.findGitDir(mavenBasedir.getAbsoluteFile());
-      Process process =
-        new ProcessBuilder()
-          .command("git", "--git-dir", gitDir, "commit", "--allow-empty", "-m", resolvedMessage)
-          .inheritIO()
-          .redirectOutput(ProcessBuilder.Redirect.to(NULL_FILE))
-          .redirectError(ProcessBuilder.Redirect.to(NULL_FILE))
-          .start();
-      return process.waitFor(5, TimeUnit.SECONDS);
-    } catch (IOException | InterruptedException e) {
-      throw new GitverException(e.getMessage(), e);
-    }
+  }
+
+  private static String getGitDir(File mavenBasedir) {
+    return GitExec.findGitDir(mavenBasedir.getAbsoluteFile());
   }
 
   public static VersionStrategy getVersionStrategy(File basePath, VersionConfig versionConfig) {
@@ -92,12 +129,7 @@ public class GitUtil {
 
         String branch = git.getRepository().getBranch();
         Ref head = git.getRepository().findRef("HEAD");
-        String hash;
-        if (head != null && head.getObjectId() != null) {
-          hash = head.getObjectId().getName();
-        } else {
-          hash = "";
-        }
+        String hash = Optional.ofNullable(head).map(Ref::getObjectId).map(ObjectId::getName).orElse("");
 
         // create a map of commit-refs and corresponding list of tags
         Map<ObjectId, List<Ref>> tagMap = git.tagList().call().stream()

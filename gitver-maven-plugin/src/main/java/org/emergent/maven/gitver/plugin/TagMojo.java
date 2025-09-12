@@ -31,11 +31,12 @@ public class TagMojo extends AbstractGitverMojo {
     String tagMessage = replaceTokens(getTagMessagePattern(), versionStrategy);
     getLog().info("Current Version: " + versionStrategy.toVersionString());
     getLog().info(String.format("Tag Version '%s' with message '%s'", tagName, tagMessage));
-    if (GitUtil.tagExists(mavenProject.getBasedir().getAbsoluteFile(), tagName)) {
+    GitUtil gitUtil = GitUtil.getInstance();
+    if (gitUtil.tagExists(mavenProject.getBasedir().getAbsoluteFile(), tagName)) {
       getLog().error(String.format("Tag already exist: %s", tagName));
       if (isFailWhenTagExist()) throw new GitverException("Tag already exist: " + tagName);
     } else {
-      String tagId = GitUtil.createTag(mavenProject.getBasedir().getAbsoluteFile(), tagName, tagMessage);
+      String tagId = gitUtil.createTag(mavenProject.getBasedir().getAbsoluteFile(), tagName, tagMessage);
       getLog().info(String.format("Created tag: '%s'", tagId));
     }
   }

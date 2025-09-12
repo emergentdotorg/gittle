@@ -3,7 +3,9 @@ package org.emergent.maven.gitver.core.version;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import lombok.Getter;
+import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.VersionConfig;
 
 @Getter
@@ -31,7 +33,7 @@ public class VersionPatternStrategy implements VersionStrategy {
     this.commit = 0;
   }
 
-  public RefVersionData getRefVersionData() {
+  private RefVersionData getRefVersionData() {
     return RefVersionData.builder()
       .setBranch(branch)
       .setHash(hash)
@@ -42,11 +44,12 @@ public class VersionPatternStrategy implements VersionStrategy {
       .build();
   }
 
-  public void resetVersion(int major, int minor, int patch) {
+  public VersionPatternStrategy resetVersion(int major, int minor, int patch) {
     this.major = major;
     this.minor = minor;
     this.patch = patch;
     this.commit = 0;
+    return this;
   }
 
   public void incrementMajor() {
@@ -77,7 +80,15 @@ public class VersionPatternStrategy implements VersionStrategy {
   }
 
   private String getVersionPattern() {
-    return getVersionConfig().getVersionPattern();
+    return versionConfig.getVersionPattern();
+  }
+
+  public Map<String, String> toProperties() {
+    Map<String, Object> properties = new TreeMap<>();
+    properties.put("gitver.version", toVersionString());
+    properties.putAll(versionConfig.toProperties());
+    properties.putAll(getRefVersionData().toProperties());
+    return Util.flatten(properties);
   }
 
   @Override

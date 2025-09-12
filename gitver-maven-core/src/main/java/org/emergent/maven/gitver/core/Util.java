@@ -113,10 +113,6 @@ public final class Util {
   }
 
   public static Map<String, String> toProperties(VersionStrategy versionStrategy) {
-    Map<String, Object> properties = new TreeMap<>();
-    properties.put("gitver.version", versionStrategy.toVersionString());
-    properties.putAll(versionStrategy.getVersionConfig().toProperties());
-    properties.putAll(versionStrategy.getRefVersionData().toProperties());
-    return flatten(properties);
+    return versionStrategy.toProperties();
   }
 }
