@@ -32,36 +32,6 @@ public class VersionPatternStrategy implements VersionStrategy {
       .build();
   }
 
-  public VersionPatternStrategy resetVersion(int major, int minor, int patch) {
-    this.major = major;
-    this.minor = minor;
-    this.patch = patch;
-    this.commit = 0;
-    return this;
-  }
-
-  public void incrementMajor() {
-    major++;
-    minor = 0;
-    patch = 0;
-    commit = 0;
-  }
-
-  public void incrementMinor() {
-    minor++;
-    patch = 0;
-    commit = 0;
-  }
-
-  public void incrementPatch() {
-    patch++;
-    commit = 0;
-  }
-
-  public void incrementCommit() {
-    commit++;
-  }
-
   @Override
   public String toVersionString() {
     return toString(getRefVersionData(), getVersionPattern());
@@ -76,10 +46,6 @@ public class VersionPatternStrategy implements VersionStrategy {
     properties.put("gitver.version", toVersionString());
     properties.putAll(getRefVersionData().toProperties());
     properties.putAll(versionConfig.toProperties());
-//    properties.put(GV_KEYWORDS_MAJOR, versionConfig.getMajorKey());
-//    properties.put(GV_KEYWORDS_MINOR, versionConfig.getMinorKey());
-//    properties.put(GV_KEYWORDS_PATCH, versionConfig.getPatchKey());
-//    properties.put(GV_KEYWORDS_REGEX, versionConfig.isUseRegex());
     return Util.flatten(properties);
   }
 
@@ -144,14 +110,6 @@ public class VersionPatternStrategy implements VersionStrategy {
 
   public static class Builder {
 
-    public Builder resetVersion(int major, int minor, int patch) {
-      return this
-        .setMajor(major)
-        .setMinor(minor)
-        .setPatch(patch)
-        .setCommit(0);
-    }
-
     public Builder incrementMajor() {
       return this
         .setMajor(major + 1)
@@ -176,6 +134,5 @@ public class VersionPatternStrategy implements VersionStrategy {
     public Builder incrementCommit() {
       return setCommit(commit + 1);
     }
-
   }
 }

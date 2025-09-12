@@ -1,14 +1,18 @@
 package org.emergent.maven.gitver.core;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeMap;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
-import lombok.experimental.Tolerate;
 
 @Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @lombok.Builder(toBuilder = true, setterPrefix = "set", builderClassName = "Builder")
 public class VersionConfig {
 
@@ -55,27 +59,27 @@ public class VersionConfig {
    */
   @NonNull
   @lombok.Builder.Default
-  String majorKey = KEY_MAJOR;
+  String majorKeywords = KEY_MAJOR;
 
   /**
    * The keyword for calculating minor version of the SemVer.
    */
   @NonNull
   @lombok.Builder.Default
-  String minorKey = KEY_MINOR;
+  String minorKeywords = KEY_MINOR;
 
   /**
    * The keyword for calculating patch version of the SemVer.
    */
   @NonNull
   @lombok.Builder.Default
-  String patchKey = KEY_PATCH;
+  String patchKeywords = KEY_PATCH;
 
   /**
    * Whether to use regex for matching keywords.
    */
   @lombok.Builder.Default
-  boolean useRegex = false;
+  boolean regexKeywords = false;
 
   @NonNull
   @lombok.Builder.Default
@@ -85,22 +89,14 @@ public class VersionConfig {
   @lombok.Builder.Default
   String versionOverride = "";
 
-  public VersionConfig(
-    boolean disabled,
-    int initialMajor, int initialMinor, int initialPatch,
-    String majorKey, String minorKey, String patchKey, boolean useRegex,
-    String versionPattern,
-    String versionOverride) {
-    this.disabled = disabled;
-    this.initialMajor = Util.assertNotNegative(initialMajor, GV_INITIAL_MAJOR);
-    this.initialMinor = Util.assertNotNegative(initialMinor, GV_INITIAL_MINOR);
-    this.initialPatch = Util.assertNotNegative(initialPatch, GV_INITIAL_PATCH);
-    this.majorKey = normalize(majorKey).orElse(KEY_MAJOR);
-    this.minorKey = normalize(minorKey).orElse(KEY_MINOR);
-    this.patchKey = normalize(patchKey).orElse(KEY_PATCH);
-    this.useRegex = useRegex;
-    this.versionPattern = versionPattern;
-    this.versionOverride = versionOverride;
+  {
+    validate();
+  }
+
+  private void validate() {
+    Util.assertNotNegative(initialMajor, GV_INITIAL_MAJOR);
+    Util.assertNotNegative(initialMinor, GV_INITIAL_MINOR);
+    Util.assertNotNegative(initialPatch, GV_INITIAL_PATCH);
   }
 
   public Map<String, String> toProperties() {
@@ -111,56 +107,63 @@ public class VersionConfig {
     properties.put(GV_INITIAL_MAJOR, getInitialMajor());
     properties.put(GV_INITIAL_MINOR, getInitialMinor());
     properties.put(GV_INITIAL_PATCH, getInitialPatch());
-    properties.put(GV_KEYWORDS_MAJOR, getMajorKey());
-    properties.put(GV_KEYWORDS_MINOR, getMinorKey());
-    properties.put(GV_KEYWORDS_PATCH, getPatchKey());
-    properties.put(GV_KEYWORDS_REGEX, isUseRegex());
+    properties.put(GV_KEYWORDS_MAJOR, getMajorKeywords());
+    properties.put(GV_KEYWORDS_MINOR, getMinorKeywords());
+    properties.put(GV_KEYWORDS_PATCH, getPatchKeywords());
+    properties.put(GV_KEYWORDS_REGEX, isRegexKeywords());
     return Util.flatten(properties);
   }
 
   public static VersionConfig from(Properties props) {
     return builder()
       .setDisabled(Boolean.parseBoolean(props.getProperty(GV_DISABLED)))
-      .setInitialMajor(props.getProperty(GV_INITIAL_MAJOR, "0"))
-      .setInitialMinor(props.getProperty(GV_INITIAL_MINOR, "0"))
-      .setInitialPatch(props.getProperty(GV_INITIAL_PATCH, "0"))
-      .setMajorKey(props.getProperty(GV_KEYWORDS_MAJOR, KEY_MAJOR))
-      .setMinorKey(props.getProperty(GV_KEYWORDS_MINOR, KEY_MINOR))
-      .setPatchKey(props.getProperty(GV_KEYWORDS_PATCH, KEY_PATCH))
-      .setUseRegex(Boolean.parseBoolean(props.getProperty(GV_KEYWORDS_REGEX)))
+      .setInitialMajor(getInt(props, GV_INITIAL_MAJOR))
+      .setInitialMinor(getInt(props, GV_INITIAL_MINOR))
+      .setInitialPatch(getInt(props, GV_INITIAL_PATCH))
+      .setMajorKeywords(props.getProperty(GV_KEYWORDS_MAJOR, KEY_MAJOR))
+      .setMinorKeywords(props.getProperty(GV_KEYWORDS_MINOR, KEY_MINOR))
+      .setPatchKeywords(props.getProperty(GV_KEYWORDS_PATCH, KEY_PATCH))
+      .setRegexKeywords(Boolean.parseBoolean(props.getProperty(GV_KEYWORDS_REGEX)))
       .setVersionPattern(props.getProperty(GV_VERSION_PATTERN, DEFAULT_VERSION_PATTERN))
       .setVersionOverride(props.getProperty(GV_VERSION_OVERRIDE, ""))
       .build();
+  }
+
+  public List<String> getMajorKeywordsList() {
+    return Arrays.asList(majorKeywords.split(","));
+  }
+
+  public List<String> getMinorKeywordsList() {
+    return Arrays.asList(minorKeywords.split(","));
+  }
+
+  public List<String> getPatchKeywordsList() {
+    return Arrays.asList(patchKeywords.split(","));
+  }
+
+  private static int getInt(Properties props, String key) {
+    return Integer.parseInt(props.getProperty(key, "0"));
   }
 
   private static Optional<String> normalize(String value) {
     return Optional.ofNullable(value).filter(v -> !v.isBlank());
   }
 
-  public static VersionConfig create() {
-    return builder().build();
-  }
-
   public static class Builder {
 
-    @Tolerate
-    public Builder setInitialMajor(String value) {
-      return setInitialMajor(Integer.parseInt(value));
+    public Builder setInitialMajor(int initialMajor) {
+      this.initialMajor = Util.assertNotNegative(initialMajor, GV_INITIAL_MAJOR);;
+      return this;
     }
 
-    @Tolerate
-    public Builder setInitialMinor(String value) {
-      return setInitialMinor(Integer.parseInt(value));
+    public Builder setInitialMinor(int initialMinor) {
+      this.initialMinor = Util.assertNotNegative(initialMinor, GV_INITIAL_MINOR);;
+      return this;
     }
 
-    @Tolerate
-    public Builder setInitialPatch(String value) {
-      return setInitialPatch(Integer.parseInt(value));
-    }
-
-    @Tolerate
-    public Builder setUseRegexKey(String value) {
-      return setUseRegex(Boolean.parseBoolean(value));
+    public Builder setInitialPatch(int initialPatch) {
+      this.initialPatch = Util.assertNotNegative(initialPatch, GV_INITIAL_PATCH);;
+      return this;
     }
   }
 }

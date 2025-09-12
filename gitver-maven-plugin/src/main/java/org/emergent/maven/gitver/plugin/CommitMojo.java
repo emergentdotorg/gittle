@@ -54,7 +54,7 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElse(toVersionConfig().getMajorKey()));
+      executeIt(Optional.ofNullable(keyword).orElse(toVersionConfig().getMajorKeywordsList().get(0)));
     }
   }
 
@@ -67,19 +67,20 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElse(toVersionConfig().getMinorKey()));
+      executeIt(Optional.ofNullable(keyword).orElse(toVersionConfig().getMinorKeywordsList().get(0)));
     }
   }
 
   @Mojo(name = "commit-patch")
   public static class VersionCommitPatchMojo extends CommitMojo {
 
+    @Setter
     @Parameter(name = "keyword", property = GV_KEYWORDS_PATCH)
     private String keyword;
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElse(toVersionConfig().getPatchKey()));
+      executeIt(Optional.ofNullable(keyword).orElse(toVersionConfig().getPatchKeywordsList().get(0)));
     }
   }
 }

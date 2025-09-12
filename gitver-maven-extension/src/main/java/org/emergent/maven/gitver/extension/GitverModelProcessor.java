@@ -279,10 +279,10 @@ public class GitverModelProcessor extends DefaultModelProcessor {
             <useRegex>%s</useRegex>
           </configuration>
         """,
-      versionConfig.getMajorKey(),
-      versionConfig.getMinorKey(),
-      versionConfig.getPatchKey(),
-      versionConfig.isUseRegex());
+      versionConfig.getMajorKeywords(),
+      versionConfig.getMinorKeywords(),
+      versionConfig.getPatchKeywords(),
+      versionConfig.isRegexKeywords());
     try {
       Xpp3Dom configDom = Xpp3DomBuilder.build(new StringReader(configXml));
       plugin.setConfiguration(configDom);

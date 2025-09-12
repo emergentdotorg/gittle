@@ -46,19 +46,13 @@ public class SemVer implements Comparable<SemVer> {
     if (!matcher.matches()) {
       return Optional.empty();
     }
-    String prerelease = matcher.group("prerelease");
-//    List<Prerelease> prereleaseArr = Arrays.stream(prerelease.split("\\."))
-//      .map(Prerelease::new).toList();
-    String buildmeta = matcher.group("buildmeta");
-//    List<Buildmeta> buildmetaArr = Arrays.stream(buildmeta.split("\\."))
-//      .map(Buildmeta::new).toList();
 
     Builder builder = SemVer.builder()
-      .setMajor(Integer.parseInt(matcher.group("major")))
-      .setMinor(Integer.parseInt(matcher.group("major")))
-      .setPatch(Integer.parseInt(matcher.group("major")))
-      .setPrerelease(prerelease.split("\\."))
-      .setBuildmeta(buildmeta.split("\\."));
+      .setMajor(matcher.group("major"))
+      .setMinor(matcher.group("major"))
+      .setPatch(matcher.group("major"))
+      .setPrerelease(matcher.group("prerelease").split("\\."))
+      .setBuildmeta(matcher.group("buildmeta").split("\\."));
 
     return Optional.of(builder.build());
   }
@@ -68,45 +62,6 @@ public class SemVer implements Comparable<SemVer> {
 
   public static SemVer zero() {
     return ZERO;
-  }
-
-  public SemVer withPrerelease(String prerelease) {
-    return toBuilder().setPrerelease(prerelease).build();
-  }
-
-  public SemVer withNewPrerelease(String prerelease) {
-    return toBuilder().clearPrereleases().setPrerelease(prerelease).build();
-  }
-
-  public SemVer withBuild(String build) {
-    return toBuilder().setBuildmeta(build).build();
-  }
-
-  public SemVer withNewBuild(String build) {
-    return toBuilder().clearBuildmetas().setBuildmeta(build).build();
-  }
-
-  public SemVer incrementMajor() {
-    return this.toBuilder()
-      .setMajor(major + 1)
-      .setMinor(0)
-      .setPatch(0)
-      .clearPrereleases()
-      .clearBuildmetas()
-      .build();
-  }
-
-  public SemVer incrementMinor() {
-    return this.toBuilder()
-      .setMinor(minor + 1)
-      .setPatch(0)
-      .clearPrereleases()
-      .clearBuildmetas()
-      .build();
-  }
-
-  public SemVer incrementPatch() {
-    return this.toBuilder().setPatch(patch + 1).clearPrereleases().clearBuildmetas().build();
   }
 
   public boolean isInitialDevelopment() {

@@ -14,8 +14,8 @@ public class VersionConfigTest {
       .extracting(
         "disabled",
         "initialMajor", "initialMinor", "initialPatch",
-        "majorKey", "minorKey", "patchKey",
-        "useRegex", "versionPattern", "versionOverride")
+        "majorKeywords", "minorKeywords", "patchKeywords",
+        "regexKeywords", "versionPattern", "versionOverride")
       .containsExactly(
         false,
         0, 0, 0,
@@ -38,13 +38,13 @@ public class VersionConfigTest {
   @Test
   public void setKeywordValues() {
     VersionConfig versionConfig = VersionConfig.builder()
-      .setMajorKey("[TEST1]")
-      .setMinorKey("[TEST2]")
-      .setPatchKey("[TEST3]")
-      .setUseRegex(true)
+      .setMajorKeywords("[TEST1]")
+      .setMinorKeywords("[TEST2]")
+      .setPatchKeywords("[TEST3]")
+      .setRegexKeywords(true)
       .build();
     assertThat(versionConfig)
-      .extracting("majorKey", "minorKey", "patchKey", "useRegex")
+      .extracting("majorKeywords", "minorKeywords", "patchKeywords", "regexKeywords")
       .containsExactly("[TEST1]", "[TEST2]", "[TEST3]", true);
   }
 

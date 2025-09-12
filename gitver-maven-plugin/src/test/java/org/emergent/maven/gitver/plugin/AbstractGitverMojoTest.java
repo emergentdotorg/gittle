@@ -2,6 +2,7 @@ package org.emergent.maven.gitver.plugin;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
@@ -76,7 +77,7 @@ public class AbstractGitverMojoTest {
 
   @Test
   public void replaceVersionToken() {
-    assertThat(testMojo.replaceTokens("v%v", new SemVerStrategy(1, 2, 3, "test", "testHash", VersionConfig.create())))
+    assertThat(testMojo.replaceTokens("v%v", new SemVerStrategy(1, 2, 3, "test", "testHash")))
       .isEqualTo("v1.2.3");
   }
 
@@ -89,6 +90,14 @@ public class AbstractGitverMojoTest {
     private String hash;
     private final SemVer semVer;
     private final VersionConfig versionConfig;
+
+    public SemVerStrategy(int major,
+                          int minor,
+                          int patch,
+                          String branch,
+                          String hash) {
+      this(major, minor, patch, branch, hash, VersionConfig.from(new Properties()));
+    }
 
     public SemVerStrategy(int major,
                           int minor,

@@ -18,7 +18,7 @@ public class GitUtilTest {
   })
   public void testHasValueWithRegex(String commitMessage, String keyword, boolean expected) {
     VersionConfig versionConfig = VersionConfig.builder()
-      .setUseRegex(true)
+      .setRegexKeywords(true)
       .build();
 
     assertThat(GitUtil.hasValue(versionConfig, commitMessage, keyword)).isEqualTo(expected);
@@ -27,7 +27,7 @@ public class GitUtilTest {
   @Test
   public void testHasValueWithoutRegex() {
     VersionConfig versionConfig = VersionConfig.builder()
-      .setUseRegex(false)
+      .setRegexKeywords(false)
       .build();
 
     String commitMessage = "Fix: [minor] corrected typo";

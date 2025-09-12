@@ -158,6 +158,24 @@ public class ExtensionTestIT {
   }
 
   @Test
+  public void extensionBuildTagVersion() throws Exception {
+    File tempProject = setupTestProject();
+    try (Git git = getMain(tempProject)) {
+      addEmptyCommit(git);
+      addTag(git, "v2.3.4");
+      addCommit(git, "[patch]");
+      Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
+      verifier.displayStreamBuffers();
+      verifier.executeGoal("verify");
+      copyExecutionLog(tempProject, verifier, "extensionBuildTagVersion.log.txt");
+      verifier.verifyErrorFreeLog();
+      String expectedVersion = "2.3.5";
+      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+    }
+  }
+
+  @Test
   public void extensionBuildHashVersion() throws Exception {
     File tempProject = setupTestProject(true, "3.");
     try (Git git = getMain(tempProject)) {

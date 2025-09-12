@@ -9,14 +9,17 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -26,6 +29,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevTag;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.VersionConfig;
@@ -63,9 +67,9 @@ public class GitUtil {
 
   public String createTag(String tagName, String tagMessage, boolean force) {
     return GitExec.execOp(basedir, git -> {
-        Ref tag = git.tag().setName(tagName).setMessage(tagMessage).setForceUpdate(force).call();
-        return String.format("%s@%s", tag.getName(), tag.getObjectId().getName());
-      });
+      Ref tag = git.tag().setName(tagName).setMessage(tagMessage).setForceUpdate(force).call();
+      return String.format("%s@%s", tag.getName(), tag.getObjectId().getName());
+    });
   }
 
   public boolean tagExists(String tagName) {
@@ -77,26 +81,6 @@ public class GitUtil {
       executeCommitNative(message);
     } else {
       executeCommitJava(message);
-    }
-  }
-
-  private void executeCommitNative(String message) {
-    try {
-      Process process = new ProcessBuilder()
-        .command("git", "--git-dir", getGitDir(basedir), "commit", "--allow-empty", "-m", message)
-        .inheritIO()
-        .redirectInput(ProcessBuilder.Redirect.from(NULL_FILE))
-        .redirectOutput(ProcessBuilder.Redirect.to(NULL_FILE))
-        .redirectError(ProcessBuilder.Redirect.to(NULL_FILE))
-        .start();
-      if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-        throw new GitverException("Timed out while creating commit");
-      }
-      if  (process.exitValue() != 0) {
-        throw new GitverException("Git commit returned exit code " + process.exitValue());
-      }
-    } catch (Exception e) {
-      throw new GitverException(e.getMessage(), e);
     }
   }
 
@@ -116,6 +100,26 @@ public class GitUtil {
     });
   }
 
+  private void executeCommitNative(String message) {
+    try {
+      Process process = new ProcessBuilder()
+        .command("git", "--git-dir", getGitDir(basedir), "commit", "--allow-empty", "-m", message)
+        .inheritIO()
+        .redirectInput(ProcessBuilder.Redirect.from(NULL_FILE))
+        .redirectOutput(ProcessBuilder.Redirect.to(NULL_FILE))
+        .redirectError(ProcessBuilder.Redirect.to(NULL_FILE))
+        .start();
+      if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+        throw new GitverException("Timed out while creating commit");
+      }
+      if (process.exitValue() != 0) {
+        throw new GitverException("Git commit returned exit code " + process.exitValue());
+      }
+    } catch (Exception e) {
+      throw new GitverException(e.getMessage(), e);
+    }
+  }
+
   private static String getGitDir(File mavenBasedir) {
     return GitExec.findGitDir(mavenBasedir.getAbsoluteFile());
   }
@@ -125,99 +129,113 @@ public class GitUtil {
   }
 
   public VersionStrategy getVersionStrategy(VersionConfig versionConfig) {
-    return getVersionStrategy0(basedir, versionConfig);
-  }
+    Optional<VersionStrategy> overrideStrategy = Optional.of(versionConfig.getVersionOverride())
+      .filter(Util::isNotEmpty).map(OverrideStrategy::new);
+    return overrideStrategy.orElseGet(() -> GitExec.execOp(basedir.toAbsolutePath(), git -> {
+      try (Repository repository = git.getRepository();
+           ObjectReader reader = repository.newObjectReader()) {
 
-  public static VersionStrategy getVersionStrategy0(Path basePath, VersionConfig versionConfig) {
-    return GitExec.execOp(
-      basePath.toAbsolutePath(),
-      git -> {
-
-        String branch = git.getRepository().getBranch();
-        Ref head = git.getRepository().findRef("HEAD");
-        String hash = Optional.ofNullable(head).map(Ref::getObjectId).map(ObjectId::getName).orElse("");
+//      Repository repository = git.getRepository();
+        String branch = repository.getBranch();
+        ObjectId headId = repository.resolve(Constants.HEAD);
+        String hash = Optional.ofNullable(headId).map(ObjectId::getName).orElse("");
 
         // create a map of commit-refs and corresponding list of tags
+
         Map<ObjectId, List<Ref>> tagMap = git.tagList().call().stream()
-          .filter(tag -> Util.VERSION_REGEX.asMatchPredicate().test(tag.getName()))
+          .filter(tag -> Util.VERSION_REGEX.asMatchPredicate().test(tag.getLeaf().getName()))
           .collect(Collectors.groupingBy(
-            ref -> getObjectId(git.getRepository(), ref),
+            ref -> getObjectId(reader, ref),
             Collectors.mapping(ref -> ref, Collectors.toList())
           ));
 
-        VersionPatternStrategy.Builder versionStrategy = VersionPatternStrategy.builder()
+        VersionPatternStrategy.Builder strategy = VersionPatternStrategy.builder()
+          .setVersionConfig(versionConfig)
           .setBranch(branch)
           .setHash(hash)
-          .setVersionConfig(versionConfig)
           .setMajor(versionConfig.getInitialMajor())
           .setMinor(versionConfig.getInitialMinor())
           .setPatch(versionConfig.getInitialPatch());
 
-        Iterable<RevCommit> commits = git.log().call();
-        List<RevCommit> revCommits = StreamSupport.stream(commits.spliterator(), false).collect(Collectors.toList());
-        Collections.reverse(revCommits);
 
-        for (RevCommit commit : revCommits) {
-          String fullMessage = commit.getFullMessage();
+        LinkedList<RevCommit> revCommits = new LinkedList<>();
 
-          List<Ref> tags = tagMap.getOrDefault(commit.getId(), Collections.emptyList());
-          Optional<SemVer> semVer = tags.stream()
-            .map(t -> {
-              String tagName = t.getName();
-              Matcher matcher = Util.VERSION_REGEX.matcher(tagName);
-              if (!matcher.matches()) {
-                return null;
-              }
-              return SemVer.builder()
-                .setMajor(matcher.group("major"))
-                .setMinor(matcher.group("minor"))
-                .setPatch(matcher.group("patch"))
-                .build();
-            })
-            .filter(Objects::nonNull)
-            .max(Comparator.naturalOrder());
+        try (RevWalk revWalk = getWalk(repository, headId)) {
+          for (RevCommit commit : revWalk) {
+            Optional<SemVer> tag = tagMap.getOrDefault(commit.getId(), Collections.emptyList()).stream()
+              .map(t -> Optional.of(Util.VERSION_REGEX.matcher(t.getName()))
+                .filter(Matcher::matches)
+                .map(m -> SemVer.builder()
+                  .setMajor(m.group("major"))
+                  .setMinor(m.group("minor"))
+                  .setPatch(m.group("patch"))
+                  .build()
+                ).orElse(null))
+              .filter(Objects::nonNull)
+              .max(Comparator.naturalOrder());
 
-          if (semVer.isPresent()) {
-            SemVer sv = semVer.get();
-            versionStrategy.resetVersion(sv.getMajor(), sv.getMinor(), sv.getPatch());
-          } else {
-            if (hasMajorKeyword(versionConfig, fullMessage)) {
-              versionStrategy.incrementMajor();
-            } else if (hasMinorKeyword(versionConfig, fullMessage)) {
-              versionStrategy.incrementMinor();
-            } else if (hasPatchKeyword(versionConfig, fullMessage)) {
-              versionStrategy.incrementPatch();
+            tag.ifPresent(sv -> strategy.setCommit(0)
+              .setMajor(sv.getMajor())
+              .setMinor(sv.getMinor())
+              .setPatch(sv.getPatch()));
+
+            if (tag.isPresent()) {
+              break;
             } else {
-              versionStrategy.incrementCommit();
+              revCommits.addFirst(commit);
             }
           }
         }
-        return versionStrategy.build();
-      });
+
+        for (RevCommit commit : revCommits) {
+          String fullMessage = commit.getFullMessage();
+          if (hasMajorKeyword(versionConfig, fullMessage)) {
+            strategy.incrementMajor();
+          } else if (hasMinorKeyword(versionConfig, fullMessage)) {
+            strategy.incrementMinor();
+          } else if (hasPatchKeyword(versionConfig, fullMessage)) {
+            strategy.incrementPatch();
+          } else {
+            strategy.incrementCommit();
+          }
+        }
+
+        return strategy.build();
+      }
+    }));
   }
 
-  static ObjectId getObjectId(Repository repository, Ref ref) {
-    return getObjectId(resolveRevObject(repository, ref));
+  private static RevWalk getWalk(Repository repository, ObjectId headId) throws IOException, NoHeadException {
+    if (headId == null)
+      throw new NoHeadException(JGitText.get().noHEADExistsAndNoExplicitStartingRevisionWasSpecified);
+    RevWalk walk = new RevWalk(repository);
+    walk.markStart(walk.lookupCommit(headId));
+    return walk;
   }
 
-  static ObjectId getObjectId(Repository repository, ObjectId objectId) {
-    return getObjectId(resolveRevObject(repository, objectId));
+  static ObjectId getObjectId(ObjectReader reader, Ref ref) {
+    return getObjectId(resolveRevObject(reader, ref));
   }
 
-  static RevObject resolveRevObject(Repository repository, Ref ref) {
-    return getTargetRevObject(getRevObject(repository, ref));
+  static ObjectId getObjectId(ObjectReader reader, ObjectId objectId) {
+    return getObjectId(resolveRevObject(reader, objectId));
   }
 
-  static RevObject resolveRevObject(Repository repository, ObjectId objectId) {
-    return getTargetRevObject(getRevObject(repository, objectId));
+  static RevObject resolveRevObject(ObjectReader reader, Ref ref) {
+    return getTargetRevObject(getRevObject(reader, ref));
   }
 
-  static RevObject getRevObject(Repository repository, Ref ref) {
-    return getRevObject(repository, peeledId(ref));
+  static RevObject resolveRevObject(ObjectReader reader, ObjectId objectId) {
+    return getTargetRevObject(getRevObject(reader, objectId));
   }
 
-  static RevObject getRevObject(Repository repository, ObjectId objectId) {
-    try (ObjectReader reader = repository.newObjectReader()) {
+  static RevObject getRevObject(ObjectReader reader, Ref ref) {
+    return getRevObject(reader, getObjectId(ref));
+  }
+
+  static RevObject getRevObject(ObjectReader reader, ObjectId objectId) {
+//    try (ObjectReader reader = repository.newObjectReader()) {
+    try {
       ObjectLoader loader = reader.open(objectId);
       int objectType = loader.getType();
       byte[] rawData = loader.getBytes();
@@ -245,6 +263,15 @@ public class GitUtil {
     }
   }
 
+  static ObjectId getObjectId(Ref ref) {
+    Util.check(ref.isPeeled() == (ref.getPeeledObjectId() != null));
+    return ref.isPeeled() ? ref.getPeeledObjectId() : ref.getObjectId();
+  }
+
+  static ObjectId getObjectId(RevObject revObj) {
+    return Optional.ofNullable(revObj).map(RevObject::getId).orElse(null);
+  }
+
   static RevObject getTargetRevObject(RevObject revObj) {
     return getTargetRevObject(revObj, true);
   }
@@ -264,32 +291,52 @@ public class GitUtil {
     };
   }
 
-  static ObjectId getObjectId(RevObject revObj) {
-    return Optional.ofNullable(revObj).map(RevObject::getId).orElse(null);
+  static boolean hasMajorKeyword(VersionConfig config, String message) {
+    return hasValue(config, message, config.getMajorKeywordsList());
   }
 
-  static ObjectId peeledId(Ref ref) {
-    Util.check(ref.isPeeled() == (ref.getPeeledObjectId() != null));
-    return ref.isPeeled() ? ref.getPeeledObjectId() : ref.getObjectId();
+  static boolean hasMinorKeyword(VersionConfig config, String message) {
+    return hasValue(config, message, config.getMinorKeywordsList());
   }
 
-  static boolean hasMajorKeyword(VersionConfig versionConfig, String commitMessage) {
-    return hasValue(versionConfig, commitMessage, versionConfig.getMajorKey());
+  static boolean hasPatchKeyword(VersionConfig config, String message) {
+    return hasValue(config, message, config.getPatchKeywordsList());
   }
 
-  static boolean hasMinorKeyword(VersionConfig versionConfig, String commitMessage) {
-    return hasValue(versionConfig, commitMessage, versionConfig.getMinorKey());
+  static boolean hasValue(VersionConfig versionConfig, String message, String keyword) {
+    return hasValue(versionConfig.isRegexKeywords(), message, Collections.singletonList(keyword));
   }
 
-  static boolean hasPatchKeyword(VersionConfig versionConfig, String commitMessage) {
-    return hasValue(versionConfig, commitMessage, versionConfig.getPatchKey());
+  static boolean hasValue(VersionConfig versionConfig, String message, List<String> keywords) {
+    return hasValue(versionConfig.isRegexKeywords(), message, keywords);
   }
 
-  static boolean hasValue(VersionConfig versionConfig, String commitMessage, String keyword) {
-    if (versionConfig.isUseRegex()) {
-      return commitMessage.matches(keyword);
+  static boolean hasValue(boolean useRegex, String message, List<String> keywords) {
+    if (useRegex) {
+      return keywords.stream().anyMatch(message::matches);
     } else {
-      return commitMessage.contains(keyword);
+      return keywords.stream().anyMatch(message::contains);
+    }
+  }
+
+  private static class OverrideStrategy implements VersionStrategy {
+
+    private final String version;
+
+    public OverrideStrategy(String version) {
+      this.version = version;
+    }
+
+    @Override
+    public String toVersionString() {
+      return version;
+    }
+
+    @Override
+    public Map<String, String> toProperties() {
+      TreeMap<String, String> map = new TreeMap<>();
+      map.put(VersionConfig.GITVER_VERSION, toVersionString());
+      return map;
     }
   }
 }
