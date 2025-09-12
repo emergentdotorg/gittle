@@ -19,3 +19,4 @@ buildNumber.properties
 # Build generated files
 .gitver.pom.xml
 .flattened-pom.xml
+.mvn/extensions.xml

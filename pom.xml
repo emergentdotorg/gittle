@@ -4,7 +4,7 @@
 
   <groupId>org.emergent.maven.plugins</groupId>
   <artifactId>gitver-maven-tools</artifactId>
-  <version>0.9999-SNAPSHOT</version>
+  <version>Z-LATEST</version>
   <packaging>pom</packaging>
 
   <name>Git Semantic Versioning Maven Tools</name>
@@ -300,6 +300,15 @@
           <artifactId>central-publishing-maven-plugin</artifactId>
           <version>0.8.0</version>
         </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>2.18.0</version>
+          <configuration>
+            <generateBackupPoms>false</generateBackupPoms>
+            <processAllModules>true</processAllModules>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -500,11 +509,13 @@
 
     <profile>
       <id>bootstrap</id>
+      <!--
       <activation>
         <file>
           <missing>${maven.multiModuleProjectDirectory}/.mvn/extension.xml</missing>
         </file>
       </activation>
+      -->
       <build>
         <plugins>
           <plugin>
