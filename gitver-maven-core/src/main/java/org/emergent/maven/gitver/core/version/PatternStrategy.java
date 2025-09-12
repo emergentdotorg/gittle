@@ -11,7 +11,7 @@ import org.emergent.maven.gitver.core.VersionConfig;
 
 @Getter
 @Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
-public class VersionPatternStrategy implements VersionStrategy {
+public class PatternStrategy implements VersionStrategy {
 
   private final VersionConfig versionConfig;
   private final String branch;
@@ -43,7 +43,7 @@ public class VersionPatternStrategy implements VersionStrategy {
 
   public Map<String, String> toProperties() {
     Map<String, Object> properties = new TreeMap<>();
-    properties.put("gitver.version", toVersionString());
+    properties.put(VersionConfig.GITVER_VERSION, toVersionString());
     properties.putAll(getRefVersionData().toProperties());
     properties.putAll(versionConfig.toProperties());
     return Util.flatten(properties);
@@ -108,6 +108,7 @@ public class VersionPatternStrategy implements VersionStrategy {
     }
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   public static class Builder {
 
     public Builder incrementMajor() {

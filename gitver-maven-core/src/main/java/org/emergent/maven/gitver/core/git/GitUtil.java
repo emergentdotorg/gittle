@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
@@ -33,8 +32,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.version.OverrideStrategy;
 import org.emergent.maven.gitver.core.version.SemVer;
-import org.emergent.maven.gitver.core.version.VersionPatternStrategy;
+import org.emergent.maven.gitver.core.version.PatternStrategy;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 
 public class GitUtil {
@@ -149,7 +149,7 @@ public class GitUtil {
             Collectors.mapping(ref -> ref, Collectors.toList())
           ));
 
-        VersionPatternStrategy.Builder strategy = VersionPatternStrategy.builder()
+        PatternStrategy.Builder strategy = PatternStrategy.builder()
           .setVersionConfig(versionConfig)
           .setBranch(branch)
           .setHash(hash)
@@ -319,24 +319,4 @@ public class GitUtil {
     }
   }
 
-  private static class OverrideStrategy implements VersionStrategy {
-
-    private final String version;
-
-    public OverrideStrategy(String version) {
-      this.version = version;
-    }
-
-    @Override
-    public String toVersionString() {
-      return version;
-    }
-
-    @Override
-    public Map<String, String> toProperties() {
-      TreeMap<String, String> map = new TreeMap<>();
-      map.put(VersionConfig.GITVER_VERSION, toVersionString());
-      return map;
-    }
-  }
 }
