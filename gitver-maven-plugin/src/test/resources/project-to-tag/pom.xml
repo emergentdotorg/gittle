@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.emergent.maven</groupId>
-  <artifactId>versioner-maven-plugin-test</artifactId>
+  <artifactId>gitver-plugin-test</artifactId>
   <version>0.0.0</version>
   <packaging>jar</packaging>
   <name>Test MyMojo</name>

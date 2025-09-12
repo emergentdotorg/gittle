@@ -71,8 +71,8 @@ public class AbstractGitverMojoTest {
 
   @Test
   public void getVersionStrategy() {
-    VersionStrategy versioner = testMojo.getVersionStrategy();
-    assertThat(versioner).isNotNull().isInstanceOf(VersionStrategy.class);
+    VersionStrategy strategy = testMojo.getVersionStrategy();
+    assertThat(strategy).isNotNull().isInstanceOf(VersionStrategy.class);
   }
 
   @Test

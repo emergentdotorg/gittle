@@ -52,8 +52,8 @@ public class ExtensionTestIT {
       copyExecutionLog(tempProject, verifier, "extensionBuildInitialVersion.log.txt");
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.0-1-SNAPSHOT";
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
-      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("gitver-extension-test-" + expectedVersion + ".jar");
       assertThat(resolveGitVerPom(tempProject).toFile())
         .as("Git versioner pom file")
         .exists();
@@ -73,8 +73,8 @@ public class ExtensionTestIT {
       copyExecutionLog(tempProject, verifier, "extensionBuildVersionWithCommits.log.txt");
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.0-3-SNAPSHOT";
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
-      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("gitver-extension-test-" + expectedVersion + ".jar");
       assertThat(resolveGitVerPom(tempProject).toFile())
         .as("Git versioner pom file")
         .exists();
@@ -93,8 +93,8 @@ public class ExtensionTestIT {
       copyExecutionLog(tempProject, verifier, "extensionValidateVersionProperties.log.txt");
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.1";
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
-      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("gitver-extension-test-" + expectedVersion + ".jar");
       verifier.verifyTextInLog("gitver.commitNumber=0");
       verifier.verifyTextInLog("gitver.major=0");
       verifier.verifyTextInLog("gitver.minor=0");
@@ -118,8 +118,8 @@ public class ExtensionTestIT {
       copyExecutionLog(tempProject, verifier, "extensionBuildPatchVersion.log.txt");
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.1";
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
-      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("gitver-extension-test-" + expectedVersion + ".jar");
     }
   }
 
@@ -135,8 +135,8 @@ public class ExtensionTestIT {
       copyExecutionLog(tempProject, verifier, "extensionBuildMinorVersion.log.txt");
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.1.0";
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
-      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("gitver-extension-test-" + expectedVersion + ".jar");
     }
   }
 
@@ -152,8 +152,8 @@ public class ExtensionTestIT {
       copyExecutionLog(tempProject, verifier, "extensionBuildMajorVersion.log.txt");
       verifier.verifyErrorFreeLog();
       String expectedVersion = "1.0.0";
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
-      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("gitver-extension-test-" + expectedVersion + ".jar");
     }
   }
 
@@ -170,8 +170,8 @@ public class ExtensionTestIT {
       copyExecutionLog(tempProject, verifier, "extensionBuildTagVersion.log.txt");
       verifier.verifyErrorFreeLog();
       String expectedVersion = "2.3.5";
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
-      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("gitver-extension-test-" + expectedVersion + ".jar");
     }
   }
 
@@ -188,8 +188,8 @@ public class ExtensionTestIT {
       copyExecutionLog(tempProject, verifier, "extensionBuildHashVersion.log.txt");
       verifier.verifyErrorFreeLog();
       String expectedVersion = "1.3.5+" + hash.substring(0, 8);
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
-      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("gitver-extension-test-" + expectedVersion + ".jar");
     }
   }
 
@@ -206,8 +206,8 @@ public class ExtensionTestIT {
       copyExecutionLog(tempProject, verifier, "extensionWithInitialVersionProperties.log.txt");
       verifier.verifyErrorFreeLog();
       String expectedVersion = "1.3.5-1";
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
-      verifier.verifyTextInLog("versioner-maven-extension-test-" + expectedVersion + ".jar");
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("gitver-extension-test-" + expectedVersion + ".jar");
     }
   }
 
@@ -266,7 +266,7 @@ public class ExtensionTestIT {
       copyExecutionLog(
         tempProject, verifier, "extensionWithVersionKeywordProperties" + key + ".log.txt");
       verifier.verifyErrorFreeLog();
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
     }
   }
 
@@ -282,7 +282,7 @@ public class ExtensionTestIT {
       verifier.executeGoal("verify");
       copyExecutionLog(tempProject, verifier, "extensionWithCommitsProperties" + key + ".log.txt");
       verifier.verifyErrorFreeLog();
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
     }
   }
 
@@ -304,7 +304,7 @@ public class ExtensionTestIT {
       copyExecutionLog(
         tempProject, verifier, "extensionWithVersionKeyword_AddCommits" + key + ".log.txt");
       verifier.verifyErrorFreeLog();
-      verifier.verifyTextInLog("Building versioner-maven-extension-test " + expectedVersion);
+      verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
     }
   }
 
