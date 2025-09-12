@@ -5,9 +5,10 @@
   <parent>
     <groupId>org.emergent.maven.plugins</groupId>
     <artifactId>gitver-maven-tools</artifactId>
-    <version>Z-LATEST</version>
+    <version>Z-LATEST-SNAPSHOT</version>
   </parent>
 
+  <!--<groupId>org.emergent.maven.plugins</groupId>-->
   <artifactId>gitver-maven-extension</artifactId>
 
   <name>GitVer Maven Extension</name>
@@ -26,7 +27,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <scope>provided</scope>
+      <!--<scope>provided</scope>-->
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -89,15 +90,40 @@
   <profiles>
     <profile>
       <id>bootstrap</id>
-      <!--
       <activation>
         <file>
           <missing>${maven.multiModuleProjectDirectory}/.mvn/extension.xml</missing>
         </file>
       </activation>
-      -->
       <build>
         <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>flatten-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>flatten.clean</id>
+                <phase>clean</phase>
+                <goals>
+                  <goal>clean</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>flatten</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>flatten</goal>
+                </goals>
+                <configuration>
+                  <flattenMode>ossrh</flattenMode>
+                  <pomElements>
+                    <parent>flatten</parent>
+                    <profiles>flatten</profiles>
+                  </pomElements>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
@@ -108,7 +134,6 @@
                   <goal>shade</goal>
                 </goals>
                 <configuration>
-                  <!--<shadedArtifactAttached>true</shadedArtifactAttached>-->
                   <useDependencyReducedPomInJar>true</useDependencyReducedPomInJar>
                   <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                   <transformers>
@@ -122,6 +147,11 @@
                     <entryPoint>org.emergent.maven.gitver.extension.GitverMavenLifecycleParticipant</entryPoint>
                     <entryPoint>org.emergent.maven.gitver.extension.GitverModelProcessor</entryPoint>
                   </entryPoints>
+                  <artifactSet>
+                    <excludes>
+                      <exclude>org.slf4j:slf4j-api</exclude>
+                    </excludes>
+                  </artifactSet>
                   <filters>
                     <filter>
                       <artifact>*:*</artifact>

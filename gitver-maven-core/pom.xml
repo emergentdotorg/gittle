@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.emergent.maven.plugins</groupId>
     <artifactId>gitver-maven-tools</artifactId>
-    <version>Z-LATEST</version>
+    <version>Z-LATEST-SNAPSHOT</version>
   </parent>
 
   <artifactId>gitver-maven-core</artifactId>

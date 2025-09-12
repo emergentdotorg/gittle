@@ -9,6 +9,10 @@ import org.emergent.maven.gitver.core.version.VersionStrategy;
 public class Main {
 
   public static void main(String[] args) {
+    Package pack = Util.class.getPackage();
+    String implVendor = pack.getImplementationVendor();
+    String implVersion = pack.getImplementationVersion();
+    System.out.printf("Vendor: %s ; Version: %s%n", implVendor, implVersion);
     String path = args.length > 0 ? args[0] : ".";
     GitUtil gitUtil = GitUtil.getInstance(Paths.get(path));
     Paths.get(path);
