@@ -331,6 +331,25 @@
             <processAllModules>true</processAllModules>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.emergent.maven.plugins</groupId>
+          <artifactId>sortpom-maven-plugin</artifactId>
+          <version>3.5.1</version>
+          <configuration>
+            <prioritizeProjectGroup>true</prioritizeProjectGroup>
+            <priorityGroups>org.emergent</priorityGroups>
+            <createBackupFile>false</createBackupFile>
+            <expandEmptyElements>false</expandEmptyElements>
+            <lineSeparator>\n</lineSeparator>
+            <sortDependencyExclusions>groupId,artifactId</sortDependencyExclusions>
+            <sortExecutions>true</sortExecutions>
+            <sortModules>true</sortModules>
+            <sortOrderFile>${maven.multiModuleProjectDirectory}/emergent-sortpom-order.xml</sortOrderFile>
+            <sortPlugins>groupId,artifactId</sortPlugins>
+            <sortProperties>true</sortProperties>
+            <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
