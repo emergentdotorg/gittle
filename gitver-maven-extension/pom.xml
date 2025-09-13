@@ -34,7 +34,6 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>javax.inject</groupId>
@@ -87,7 +86,45 @@
       <artifactId>maven-verifier</artifactId>
       <scope>test</scope>
     </dependency>
+    <!--
+    <dependency>
+      <groupId>org.apache.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>5.0.0</version>
+      <type>pom</type>
+    </dependency>
+    -->
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <version>1.13.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>5.0.0</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <scripts>
+            <script>src/main/groovy/Main.groovy</script>
+          </scripts>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <profiles>
     <profile>
@@ -115,6 +152,8 @@
               <scope>test</scope>
               <cloneClean>true</cloneClean>
               <projectsDirectory>src/it</projectsDirectory>
+              <!--<preBuildHookScript>setup</preBuildHookScript>-->
+              <postBuildHookScript>verify</postBuildHookScript>
               <settingsFile>src/it/settings.xml</settingsFile>
               <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
               <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
@@ -205,7 +244,16 @@
                     <entryPoint>org.emergent.maven.gitver.extension.GitverModelProcessor</entryPoint>
                   </entryPoints>
                   <artifactSet>
+                    <includes>
+                      <include>com.googlecode.javaewah:JavaEWAH</include>
+                      <include>commons-codec:commons-codec</include>
+                      <include>commons-io:commons-io</include>
+                      <include>org.apache.commons:commons-lang3</include>
+                      <include>org.eclipse.jgit:org.eclipse.jgit</include>
+                      <include>org.emergent.maven.plugins:gitver-maven-core</include>
+                    </includes>
                     <excludes>
+                      <!--<exclude>commons-io:commons-io</exclude>-->
                       <exclude>org.emergent.maven.plugins:gitver-maven-plugin</exclude>
                       <exclude>org.slf4j:slf4j-api</exclude>
                     </excludes>
@@ -215,6 +263,7 @@
                       <artifact>*:*</artifact>
                       <excludes>
                         <exclude>META-INF/LICENSE.*</exclude>
+                        <exclude>META-INF/LICENSE-*</exclude>
                         <exclude>META-INF/MANIFEST.MF</exclude>
                         <exclude>META-INF/NOTICE.*</exclude>
                         <exclude>META-INF/*.SF</exclude>
