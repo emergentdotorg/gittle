@@ -9,13 +9,13 @@ public class KeywordsConfigTest {
   @Test
   public void setKeywordValues() {
     KeywordsConfig config = KeywordsConfig.builder()
-        .setMajorKeywords("[TEST1]")
-        .setMinorKeywords("[TEST2]")
-        .setPatchKeywords("[TEST3]")
-        .setRegexKeywords(true)
+        .setMajor("[TEST1]")
+        .setMinor("[TEST2]")
+        .setPatch("[TEST3]")
+        .setRegex(true)
         .build();
     assertThat(config)
-      .extracting("majorKeywords", "minorKeywords", "patchKeywords", "regexKeywords")
+      .extracting("major", "minor", "patch", "regex")
       .containsExactly("[TEST1]", "[TEST2]", "[TEST3]", true);
   }
 

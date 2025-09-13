@@ -25,40 +25,12 @@ public class AbstractGitverMojoTest {
 
   @Test
   public void getVersionConfig() {
-//    assertThat(testMojo)
-//      .isNotNull()
-//      .extracting("skip", "versionPattern", "versionOverride")
-//      .containsExactly(false, VersionConfig.DEFAULT_VERSION_PATTERN, "");
     assertThat(testMojo)
       .isNotNull()
       .extracting("skip")
       .isEqualTo(false);
     assertThat(testMojo).isNotNull();
-//    assertThat(testMojo)
-//      .extracting("initialMajor", "initialMinor", "initialPatch")
-//      .containsExactly(0, 0, 0);
-//    assertThat(testMojo)
-//      .isNotNull()
-//      .extracting("majorKey", "minorKey", "patchKey", "useRegex")
-//      .containsExactly(VersionConfig.KEY_MAJOR, VersionConfig.KEY_MINOR, VersionConfig.KEY_PATCH, false);
   }
-
-//  @Test
-//  public void setVersionConfig() {
-//    AbstractGitverMojo mojo = new AbstractGitverMojo() {
-//      @Override
-//      protected void execute0() throws MojoExecutionException, MojoFailureException {}
-//    };
-//    mojo.setInitialMajor(1);
-//    assertThat(mojo)
-//      .isNotNull()
-//      .extracting("initialMajor", "initialMinor", "initialPatch")
-//      .containsExactly(1, 0, 0);
-//    assertThat(testMojo)
-//      .isNotNull()
-//      .extracting("majorKey", "minorKey", "patchKey", "useRegex")
-//      .containsExactly(VersionConfig.KEY_MAJOR, VersionConfig.KEY_MINOR, VersionConfig.KEY_PATCH, false);
-//  }
 
   @Test
   public void getVersionStrategy() {

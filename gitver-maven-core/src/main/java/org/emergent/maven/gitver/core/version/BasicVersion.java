@@ -1,17 +1,18 @@
 package org.emergent.maven.gitver.core.version;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Tolerate;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.emergent.maven.gitver.core.Constants;
-import org.emergent.maven.gitver.core.Mapper;
 import org.emergent.maven.gitver.core.Util;
+
+import static org.emergent.maven.gitver.core.Util.VERSION_REGEX;
 
 @Value
 @Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
@@ -19,8 +20,8 @@ public class BasicVersion implements Comparable<BasicVersion> {
 
   private static final BasicVersion ZERO = BasicVersion.builder().build();
 
-  public static final Comparator<BasicVersion> COMPARATOR = Comparator.comparing(BasicVersion::getMajor)
-    .thenComparing(BasicVersion::getMinor).thenComparing(BasicVersion::getPatch).thenComparing(BasicVersion::getCommit);
+  public static final Comparator<BasicVersion> COMPARATOR =
+    Comparator.comparing(bv -> new ComparableVersion(bv.toString()));
 
   int major;
   int minor;
@@ -34,17 +35,18 @@ public class BasicVersion implements Comparable<BasicVersion> {
     this.commit = Util.assertNotNegative(commit);
   }
 
-  public static BasicVersion zero() {
-    return ZERO;
+  public static Optional<BasicVersion> parse(String version) {
+    return Optional.of(VERSION_REGEX.matcher(version))
+      .filter(Matcher::matches)
+      .map(m -> BasicVersion.builder()
+        .setMajor(Integer.parseInt(m.group("major")))
+        .setMinor(Integer.parseInt(m.group("minor")))
+        .setPatch(Integer.parseInt(m.group("patch")))
+        .build());
   }
 
-  public static BasicVersion from(String prefix, Properties props) {
-    return BasicVersion.builder()
-      .setMajor(props.getProperty(prefix + "major"))
-      .setMinor(props.getProperty(prefix + "minor"))
-      .setPatch(props.getProperty(prefix + "patch"))
-      .setCommit(props.getProperty(prefix + "commitNumber"))
-      .build();
+  public static BasicVersion zero() {
+    return ZERO;
   }
 
   public boolean isZero() {
@@ -57,15 +59,6 @@ public class BasicVersion implements Comparable<BasicVersion> {
 
   public boolean isInitialDevelopment() {
     return getMajor() == 0;
-  }
-
-  public Map<String, String> toProperties(String prefix) {
-    Mapper m = Mapper.create(prefix)
-      .put("major", major)
-      .put("minor", minor)
-      .put("patch", patch)
-      .put("commitNumber", commit);
-    return m.toMap();
   }
 
   @Override

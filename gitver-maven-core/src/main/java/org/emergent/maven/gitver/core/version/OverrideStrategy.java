@@ -2,8 +2,11 @@ package org.emergent.maven.gitver.core.version;
 
 import java.util.Map;
 import java.util.TreeMap;
+import lombok.Getter;
 import org.emergent.maven.gitver.core.Constants;
 
+
+@Getter
 public class OverrideStrategy implements VersionStrategy {
 
   private final String version;

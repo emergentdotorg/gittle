@@ -17,6 +17,13 @@
       <groupId>org.emergent.maven.plugins</groupId>
       <artifactId>gitver-maven-core</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <!-- this needs to be provided scope for extension and plugin -->
+        <exclusion>
+          <groupId>org.apache.maven</groupId>
+          <artifactId>maven-artifact</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -38,6 +45,11 @@
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-artifact</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -86,45 +98,7 @@
       <artifactId>maven-verifier</artifactId>
       <scope>test</scope>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>org.apache.groovy</groupId>
-      <artifactId>groovy-all</artifactId>
-      <version>5.0.0</version>
-      <type>pom</type>
-    </dependency>
-    -->
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.gmavenplus</groupId>
-        <artifactId>gmavenplus-plugin</artifactId>
-        <version>1.13.1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.groovy</groupId>
-            <artifactId>groovy</artifactId>
-            <version>5.0.0</version>
-            <scope>runtime</scope>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <scripts>
-            <script>src/main/groovy/Main.groovy</script>
-          </scripts>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 
   <profiles>
     <profile>
@@ -294,5 +268,47 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>groovy</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.groovy</groupId>
+          <artifactId>groovy-all</artifactId>
+          <version>5.0.0</version>
+          <type>pom</type>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmavenplus</groupId>
+            <artifactId>gmavenplus-plugin</artifactId>
+            <version>1.13.1</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+              </execution>
+            </executions>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.groovy</groupId>
+                <artifactId>groovy</artifactId>
+                <version>5.0.0</version>
+                <scope>runtime</scope>
+              </dependency>
+            </dependencies>
+            <configuration>
+              <scripts>
+                <script>src/main/groovy/Main.groovy</script>
+              </scripts>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
   </profiles>
 </project>

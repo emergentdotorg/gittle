@@ -57,7 +57,7 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getMajorKeywords()));
+      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getMajor()));
     }
   }
 
@@ -70,7 +70,7 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getMinorKeywords()));
+      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getMinor()));
     }
   }
 
@@ -83,7 +83,7 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getPatchKeywords()));
+      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getPatch()));
     }
   }
 }

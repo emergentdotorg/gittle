@@ -19,13 +19,8 @@ import org.emergent.maven.gitver.core.version.VersionStrategy;
 
 public class Util {
 
-//  public static final String GITVER_EXTENSION_PROPERTIES = "gitver-maven-extension.properties";
-//  public static final String DOT_MVN = ".mvn";
-//  public static final String GITVER_POM_XML = ".gitver.pom.xml";
-//  public static final String GITVER_PROPERTIES = "gitver.properties";
-
   public static final String DISABLED_ENV_VAR = "GV_EXTENSION_DISABLED";
-  public static final String DISABLED_SYSPROP = "gv.extensionDisabled";
+  public static final String DISABLED_SYSPROP = "gv.extension.disabled";
 
   public static final String GITVER_POM_XML = ".gitver.pom.xml";
 
@@ -48,39 +43,36 @@ public class Util {
       .filter(Util::isNotEmpty).findFirst().map(Boolean::parseBoolean).orElse(false);
   }
 
-  public static GitverConfig loadConfig(Path currentDir) {
-    currentDir = currentDir.toAbsolutePath();
-    Path dotmvnDirectory = getDOTMVNDirectory(currentDir);
-    Properties fileProps = loadExtensionProperties(dotmvnDirectory);
-//    VersionConfig versionConfig = loadConfig(dotmvnDirectory);
-//    Properties fallback = new Properties();
-//    versionConfig.toProperties().forEach(fallback::setProperty);
-    Properties props = new Properties(fileProps);
-//    props.putAll(Util.flatten(projectModel.getProperties()));
-    GitverConfig vc = GitverConfig.from(props);
-    return vc;
-  }
-
-  public static Properties loadExtensionProperties(Path dotmvnDirectory) {
-    Properties props = new Properties();
-    Path propertiesPath = dotmvnDirectory.resolve(GITVER_EXTENSION_PROPERTIES);
-    if (propertiesPath.toFile().exists()) {
-      try (Reader reader = Files.newBufferedReader(propertiesPath)) {
-        props.load(reader);
-      } catch (IOException e) {
-        throw new GitverException("Failed to load extensions properties file", e);
-      }
-    }
-    return props;
-  }
-
-  public static Path getDOTMVNDirectory(Path currentDir) {
-    Path refDir = currentDir;
+  public static Path getDotMvnDir(Path currentDir) {
+    Path refDir = currentDir.toAbsolutePath();
     while (refDir != null && !Files.exists(refDir.resolve(DOT_MVN))) {
       refDir = refDir.getParent();
     }
     return Optional.ofNullable(refDir).map(r -> r.resolve(DOT_MVN)).orElse(currentDir);
   }
+
+  public static GitverConfig loadConfig(Path currentDir) {
+    Path extConfigFile = Util.getExtensionPropsFile(currentDir);
+    Properties extensionProps = Util.loadPropsFromFile(extConfigFile);
+    return GitverConfig.from(extensionProps);
+  }
+
+  public static Path getExtensionPropsFile(Path currentDir) {
+    return getDotMvnDir(currentDir).resolve(GITVER_EXTENSION_PROPERTIES);
+  }
+
+  public static Properties loadPropsFromFile(Path propertiesPath) {
+    Properties props = new Properties();
+    if (propertiesPath.toFile().exists()) {
+      try (Reader reader = Files.newBufferedReader(propertiesPath)) {
+        props.load(reader);
+      } catch (IOException e) {
+        throw new GitverException("Failed to load properties file " + propertiesPath.toString(), e);
+      }
+    }
+    return props;
+  }
+
 
   public static String toShortHash(String hash) {
     return hash != null ? hash.substring(0, 8) : null;

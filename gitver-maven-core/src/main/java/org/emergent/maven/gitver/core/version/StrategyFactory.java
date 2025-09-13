@@ -1,14 +1,15 @@
 package org.emergent.maven.gitver.core.version;
 
 import java.io.File;
-import java.nio.file.Path;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
@@ -18,82 +19,64 @@ import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.git.GitExec;
 import org.emergent.maven.gitver.core.git.TagProvider;
 
+import static java.util.Objects.requireNonNull;
+
 public class StrategyFactory {
 
-  private final File basePath;
-
-  private StrategyFactory(File basePath) {
-    this.basePath = basePath.getAbsoluteFile();
+  public static VersionStrategy getVersionStrategy(File basePath, GitverConfig config) {
+    return getOverrideStrategy(config)
+      .orElseGet(() -> GitExec.execOp(basePath, git -> {
+        return getPatternStrategy(config, git);
+      }));
   }
 
-  public static StrategyFactory getInstance(Path basePath) {
-    return getInstance(basePath.toFile());
+  private static Optional<VersionStrategy> getOverrideStrategy(GitverConfig config) {
+    return Optional.of(config.getVersionOverride()).filter(Util::isNotEmpty).map(OverrideStrategy::new);
   }
 
-  public static StrategyFactory getInstance(File basePath) {
-    return new StrategyFactory(basePath);
-  }
-
-  public VersionStrategy getVersionStrategy(GitverConfig config) {
-    Optional<VersionStrategy> overrideStrategy = Optional.of(config.getVersionOverride())
-      .filter(Util::isNotEmpty).map(OverrideStrategy::new);
-
-    //      Repository repository = git.getRepository();
-// create a map of commit-refs and corresponding list of tags
-// not a merge commit
-
-    return overrideStrategy.orElseGet(() -> GitExec.execOp(basePath, git -> {
-      Repository repository = git.getRepository();
-      ObjectId headId = Objects.requireNonNull(repository.resolve(Constants.HEAD), "headId is null");
-      TagProvider tagProvider = TagProvider.create(git);
-
-      BasicVersion.Builder version = config.getInitial().toBuilder();
-
-      LinkedList<RevCommit> revCommits = new LinkedList<>();
-      // We start walking commits newest to oldest until we come to a tag.
-      // Once we have a tag we are able to set all the version elements, and short-circuit our walk.
-
-      for (RevCommit commit : git.log().add(headId).call()) {
-        // highest semver is first in list
-        LinkedList<BasicVersion> referencingTags = tagProvider.getMatchingTags(commit);
-        if (!referencingTags.isEmpty()) {
-          version.reset(referencingTags.getFirst());
-          // we found our starting point, so we stop going back into history
-          break;
-        } else {
-          revCommits.addFirst(commit);
-        }
+  private static VersionStrategy getPatternStrategy(GitverConfig config, Git git) throws GitAPIException, IOException {
+    Repository repository = git.getRepository();
+    TagProvider tagProvider = new TagProvider(git);
+    ObjectId headId = requireNonNull(repository.resolve(Constants.HEAD), "headId is null");
+    RefData refData = RefData.builder().setBranch(repository.getBranch()).setHash(headId.getName()).build();
+    BasicVersion.Builder builder = config.getInitial().toBuilder();
+    LinkedList<RevCommit> revCommits = new LinkedList<>();
+    // We start walking commits newest to oldest until we come to a tag.
+    // Once we have a tag we are able to set all the version elements, and short-circuit our walk.
+    for (RevCommit commit : git.log().add(headId).call()) {
+      LinkedList<BasicVersion> desceningTags = tagProvider.getDescendingTags(commit);
+      if (!desceningTags.isEmpty()) {
+        builder.reset(desceningTags.getFirst());
+        // we found our starting point, so we stop going back into history
+        break;
+      } else {
+        revCommits.addFirst(commit);
       }
-
-      // Now we walk from oldest (immediately after the tag we found) to latest (HEAD),
-      // incrementing the various version components based on keywords as we go.
-      for (RevCommit commit : revCommits) {
-        VersionIncrementType inc = VersionIncrementType.COMMIT;
-        boolean isMergeCommit = commit.getParentCount() > 1;
-        if (!isMergeCommit) {
-          inc = getKeywordIncrement(config.getKeywords(), commit.getFullMessage());
-        }
-        version.increment(inc);
+    }
+    // Now we walk from oldest (immediately after the tag we found) to latest (HEAD),
+    // incrementing the various version components based on keywords as we go.
+    for (RevCommit commit : revCommits) {
+      VersionIncrementType inc = VersionIncrementType.COMMIT;
+      boolean isMergeCommit = commit.getParentCount() > 1;
+      if (!isMergeCommit) {
+        inc = getKeywordIncrement(config.getKeywords(), commit.getFullMessage());
       }
-
-      return PatternStrategy.builder()
-        .setConfig(config)
-        .setRefData(RefData.builder()
-          .setBranch(repository.getBranch())
-          .setHash(headId.getName())
-          .setVersion(version.build())
-          .build())
-        .build();
-    }));
+      builder.increment(inc);
+    }
+    return PatternStrategy.builder()
+      .setConfig(config)
+      .setRefData(refData)
+      .setResolved(builder.build())
+      .build();
   }
 
   private static VersionIncrementType getKeywordIncrement(KeywordsConfig config, String fullMessage) {
-    boolean regex = config.isRegexKeywords();
-    if (hasValue(regex, fullMessage, config.getMajorKeywords())) {
+    boolean regex = config.isRegex();
+    if (hasValue(regex, fullMessage, config.getMajor())) {
       return VersionIncrementType.MAJOR;
-    } else if (hasValue(regex, fullMessage, config.getMinorKeywords())) {
+    } else if (hasValue(regex, fullMessage, config.getMinor())) {
       return VersionIncrementType.MINOR;
-    } else if (hasValue(regex, fullMessage, config.getPatchKeywords())) {
+    } else if (hasValue(regex, fullMessage, config.getPatch())) {
       return VersionIncrementType.PATCH;
     } else {
       return VersionIncrementType.COMMIT;
@@ -101,7 +84,7 @@ public class StrategyFactory {
   }
 
   static boolean hasValue(KeywordsConfig config, String message, String keyword) {
-    return hasValue(config.isRegexKeywords(), message, Collections.singletonList(keyword));
+    return hasValue(config.isRegex(), message, Collections.singletonList(keyword));
   }
 
   static boolean hasValue(boolean useRegex, String message, String keywords) {

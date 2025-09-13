@@ -8,6 +8,13 @@ import lombok.Getter;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.Mapper;
 
+import static org.emergent.maven.gitver.core.Constants.GITVER_BRANCH;
+import static org.emergent.maven.gitver.core.Constants.GITVER_COMMIT_NUMBER;
+import static org.emergent.maven.gitver.core.Constants.GITVER_HASH;
+import static org.emergent.maven.gitver.core.Constants.GITVER_HASH_SHORT;
+import static org.emergent.maven.gitver.core.Constants.GITVER_MAJOR;
+import static org.emergent.maven.gitver.core.Constants.GITVER_MINOR;
+import static org.emergent.maven.gitver.core.Constants.GITVER_PATCH;
 import static org.emergent.maven.gitver.core.Constants.GITVER_VERSION;
 
 @Getter
@@ -16,41 +23,24 @@ public class PatternStrategy implements VersionStrategy {
 
   private final GitverConfig config;
   private final RefData refData;
-
-  private String getVersionPattern() {
-    return config.getVersionPattern();
-  }
-
-  public Map<String, String> toProperties() {
-    Mapper m = Mapper.create()
-      .put(GITVER_VERSION, toVersionString())
-      .putAll(getRefData().toProperties())
-      .putAll(config.toProperties());
-    return m.toMap();
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s [branch: %s, version: %s, hash: %s]",
-      getClass().getSimpleName(), refData.getBranch(), toVersionString(), refData.getHash());
-  }
+  private final BasicVersion resolved;
 
   @Override
   public String toVersionString() {
     RefData version = getRefData();
     String pattern = getVersionPattern();
 
-    int commits = version.commit();
+    int commits = resolved.getCommit();
     Map<PatternToken, Object> values = new HashMap<>();
-    values.put(PatternToken.MAJOR, version.major());
-    values.put(PatternToken.MINOR, version.minor());
-    values.put(PatternToken.PATCH, version.patch());
-    values.put(PatternToken.SMART_PATCH, commits > 0 ? version.patch() + 1 : version.patch());
+    values.put(PatternToken.MAJOR, resolved.getMajor());
+    values.put(PatternToken.MINOR, resolved.getMinor());
+    values.put(PatternToken.PATCH, resolved.getPatch());
+    values.put(PatternToken.SMART_PATCH, commits > 0 ? resolved.getPatch() + 1 : resolved.getPatch());
     values.put(PatternToken.COMMIT, commits);
     values.put(PatternToken.SNAPSHOT, commits > 0 ? "SNAPSHOT" : "");
-    values.put(PatternToken.BRANCH, version.branch());
+    values.put(PatternToken.BRANCH, version.getBranch());
     values.put(PatternToken.HASH_SHORT, version.getHashShort());
-    values.put(PatternToken.HASH, version.hash());
+    values.put(PatternToken.HASH, version.getHash());
 
     String text = pattern;
     for (PatternToken token : values.keySet()) {
@@ -66,6 +56,31 @@ public class PatternStrategy implements VersionStrategy {
       text = text.replace(token.getToken(), value);
     }
     return text;
+  }
+
+  @Override
+  public Map<String, String> toProperties() {
+    Mapper m = Mapper.create()
+      .putAll(config.toProperties())
+      .put(GITVER_BRANCH, refData.getBranch())
+      .put(GITVER_HASH, refData.getHash())
+      .put(GITVER_HASH_SHORT, refData.getHashShort())
+      .put(GITVER_MAJOR, resolved.getMajor(), -1)
+      .put(GITVER_MINOR, resolved.getMinor(), -1)
+      .put(GITVER_PATCH, resolved.getPatch(), -1)
+      .put(GITVER_COMMIT_NUMBER, resolved.getCommit(), -1)
+      .put(GITVER_VERSION, toVersionString());
+    return m.toMap();
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s [branch: %s, version: %s, hash: %s]",
+      getClass().getSimpleName(), refData.getBranch(), toVersionString(), refData.getHash());
+  }
+
+  private String getVersionPattern() {
+    return config.getVersionPattern();
   }
 
   @Getter

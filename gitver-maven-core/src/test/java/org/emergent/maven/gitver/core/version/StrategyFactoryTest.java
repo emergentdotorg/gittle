@@ -18,7 +18,7 @@ public class StrategyFactoryTest {
   })
   public void testHasValueWithRegex(String commitMessage, String keyword, boolean expected) {
     KeywordsConfig versionConfig = KeywordsConfig.builder()
-      .setRegexKeywords(true)
+      .setRegex(true)
       .build();
 
     Assertions.assertThat(StrategyFactory.hasValue(versionConfig, commitMessage, keyword)).isEqualTo(expected);
@@ -27,7 +27,7 @@ public class StrategyFactoryTest {
   @Test
   public void testHasValueWithoutRegex() {
     KeywordsConfig versionConfig = KeywordsConfig.builder()
-      .setRegexKeywords(false)
+      .setRegex(false)
       .build();
 
     String commitMessage = "Fix: [minor] corrected typo";

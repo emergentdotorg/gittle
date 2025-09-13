@@ -1,6 +1,6 @@
 package org.emergent.maven.gitver.core;
 
-import java.nio.file.Path;
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +18,9 @@ public class Main {
     String implVersion = pack.getImplementationVersion();
     System.out.printf("Vendor: %s ; Version: %s%n", implVendor, implVersion);
     String path = args.length > 0 ? args[0] : DEFAULT_PATH;
-    Path basedir = Paths.get(path);
+    File basedir = Paths.get(path).toAbsolutePath().toFile();
     GitverConfig config = GitverConfig.from(new Properties());
-    VersionStrategy strategy = StrategyFactory.getInstance(basedir).getVersionStrategy(config);
+    VersionStrategy strategy = StrategyFactory.getVersionStrategy(basedir, config);
     System.out.printf("version: %s%n", strategy.toVersionString());
   }
 }
