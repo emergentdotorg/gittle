@@ -8,7 +8,6 @@
     <version>Z-LATEST-SNAPSHOT</version>
   </parent>
 
-  <!--<groupId>org.emergent.maven.plugins</groupId>-->
   <artifactId>gitver-maven-extension</artifactId>
 
   <name>GitVer Maven Extension</name>
@@ -101,7 +100,6 @@
             <executions>
               <execution>
                 <id>integration-test</id>
-                <!--<phase>integration-test</phase>-->
                 <goals>
                   <goal>install</goal>
                   <goal>integration-test</goal>
@@ -115,10 +113,11 @@
                 <pomInclude>*/pom.xml</pomInclude>
               </pomIncludes>
               <scope>test</scope>
+              <cloneClean>true</cloneClean>
               <projectsDirectory>src/it</projectsDirectory>
+              <settingsFile>src/it/settings.xml</settingsFile>
               <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
               <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
-              <settingsFile>${project.build.directory}/it/settings.xml</settingsFile>
             </configuration>
           </plugin>
           <plugin>
@@ -126,7 +125,6 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>
-                <!--<phase>verify</phase>-->
                 <goals>
                   <goal>integration-test</goal>
                   <goal>verify</goal>
@@ -248,5 +246,4 @@
       </build>
     </profile>
   </profiles>
-
 </project>
