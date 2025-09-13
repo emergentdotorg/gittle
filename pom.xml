@@ -12,6 +12,11 @@
   <url>https://github.com/emergentdotorg/gitver-maven-tools</url>
   <inceptionYear>2025</inceptionYear>
 
+  <organization>
+    <name>Emergent.org</name>
+    <url>https://github.com/emergentdotorg</url>
+  </organization>
+
   <licenses>
     <license>
       <name>MIT</name>
@@ -19,11 +24,6 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-
-  <organization>
-    <name>Emergent.org</name>
-    <url>https://github.com/emergentdotorg</url>
-  </organization>
 
   <developers>
     <developer>
@@ -42,8 +42,8 @@
   <scm>
     <connection>scm:git:https://github.com/emergentdotorg/gitver-maven-tools</connection>
     <developerConnection>scm:ssh:git@github.com:emergentdotorg/gitver-maven-tools</developerConnection>
-    <url>https://github.com/emergentdotorg/gitver-maven-tools</url>
     <tag>HEAD</tag>
+    <url>https://github.com/emergentdotorg/gitver-maven-tools</url>
   </scm>
 
   <issueManagement>
@@ -60,6 +60,202 @@
     <version.maven>3.9.9</version.maven>
     <version.plugintools>3.15.1</version.plugintools>
   </properties>
+
+  <build>
+    <resources>
+      <resource>
+        <filtering>true</filtering>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>**/gitver.properties</include>
+        </includes>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <filtering>true</filtering>
+        <directory>src/test/resources</directory>
+      </testResource>
+    </testResources>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.github.ekryd.sortpom</groupId>
+          <artifactId>sortpom-maven-plugin</artifactId>
+          <version>4.0.0</version>
+          <configuration>
+            <createBackupFile>false</createBackupFile>
+            <expandEmptyElements>false</expandEmptyElements>
+            <lineSeparator>\n</lineSeparator>
+            <sortDependencyExclusions>groupId,artifactId</sortDependencyExclusions>
+            <sortExecutions>true</sortExecutions>
+            <sortModules>true</sortModules>
+            <sortOrderFile>${maven.multiModuleProjectDirectory}/emergent-sortpom-order.xml</sortOrderFile>
+            <sortPlugins>groupId,artifactId</sortPlugins>
+            <sortProperties>true</sortProperties>
+            <spaceBeforeCloseEmptyElement>false</spaceBeforeCloseEmptyElement>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.14.0</version>
+          <configuration>
+            <release>17</release>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.8.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.4</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.5.3</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.2.7</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-invoker-plugin</artifactId>
+          <version>3.9.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.4.1</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              </manifest>
+            </archive>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.11.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.3.1</version>
+          <configuration>
+            <delimiters>
+              <delimiter>@</delimiter>
+            </delimiters>
+            <useDefaultDelimiters>false</useDefaultDelimiters>
+            <propertiesEncoding>ISO-8859-1</propertiesEncoding>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.6.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.3.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>flatten-maven-plugin</artifactId>
+          <version>1.7.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>2.18.0</version>
+          <configuration>
+            <generateBackupPoms>false</generateBackupPoms>
+            <processAllModules>true</processAllModules>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>0.8.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.1</version>
+        <executions>
+          <execution>
+            <id>exec</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>java</executable>
+              <classpathScope>provided</classpathScope>
+              <arguments>
+                <argument>-cp</argument>
+                <classpath/>
+                <!--
+                <classpath>
+                  <dependency>org.apache.maven:maven-artifact</dependency>
+                </classpath>
+                -->
+                <argument>org.apache.maven.artifact.versioning.ComparableVersion</argument>
+              </arguments>
+              <environmentVariables>
+                <LANG>en_US</LANG>
+              </environmentVariables>
+            </configuration>
+          </execution>
+          <execution>
+            <id>java</id>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>org.apache.maven.artifact.versioning.ComparableVersion</mainClass>
+              <classpathScope>provided</classpathScope>
+              <systemProperties>
+                <systemProperty>
+                  <key>myproperty</key>
+                  <value>myvalue</value>
+                </systemProperty>
+              </systemProperties>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
 
   <dependencyManagement>
     <dependencies>
@@ -222,204 +418,6 @@
     </dependency>
   </dependencies>
 
-  <build>
-    <resources>
-      <resource>
-        <filtering>true</filtering>
-        <directory>src/main/resources</directory>
-        <includes>
-          <include>**/gitver.properties</include>
-        </includes>
-      </resource>
-    </resources>
-    <testResources>
-      <testResource>
-        <filtering>true</filtering>
-        <directory>src/test/resources</directory>
-      </testResource>
-    </testResources>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.14.0</version>
-          <configuration>
-            <release>17</release>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.1.4</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.8.1</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <version>3.5.3</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>3.2.7</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-invoker-plugin</artifactId>
-          <version>3.9.0</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>3.4.1</version>
-          <configuration>
-            <archive>
-              <manifest>
-                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-              </manifest>
-            </archive>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.11.2</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.1</version>
-          <configuration>
-            <delimiters>
-              <delimiter>@</delimiter>
-            </delimiters>
-            <useDefaultDelimiters>false</useDefaultDelimiters>
-            <propertiesEncoding>ISO-8859-1</propertiesEncoding>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-shade-plugin</artifactId>
-          <version>3.6.0</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>3.3.1</version>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>flatten-maven-plugin</artifactId>
-          <version>1.7.2</version>
-        </plugin>
-        <plugin>
-          <groupId>org.sonatype.central</groupId>
-          <artifactId>central-publishing-maven-plugin</artifactId>
-          <version>0.8.0</version>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>versions-maven-plugin</artifactId>
-          <version>2.18.0</version>
-          <configuration>
-            <generateBackupPoms>false</generateBackupPoms>
-            <processAllModules>true</processAllModules>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>com.github.ekryd.sortpom</groupId>
-          <artifactId>sortpom-maven-plugin</artifactId>
-          <version>4.0.0</version>
-          <configuration>
-            <prioritizeProjectGroup>true</prioritizeProjectGroup>
-            <priorityGroups>org.emergent</priorityGroups>
-            <createBackupFile>false</createBackupFile>
-            <expandEmptyElements>false</expandEmptyElements>
-            <lineSeparator>\n</lineSeparator>
-            <sortDependencyExclusions>groupId,artifactId</sortDependencyExclusions>
-            <sortExecutions>true</sortExecutions>
-            <sortModules>true</sortModules>
-            <sortOrderFile>${maven.multiModuleProjectDirectory}/emergent-sortpom-order.xml</sortOrderFile>
-            <sortPlugins>groupId,artifactId</sortPlugins>
-            <sortProperties>true</sortProperties>
-            <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.5.1</version>
-        <executions>
-          <execution>
-            <id>java</id>
-            <goals>
-              <goal>java</goal>
-            </goals>
-            <configuration>
-              <mainClass>org.apache.maven.artifact.versioning.ComparableVersion</mainClass>
-              <classpathScope>provided</classpathScope>
-              <systemProperties>
-                <systemProperty>
-                  <key>myproperty</key>
-                  <value>myvalue</value>
-                </systemProperty>
-              </systemProperties>
-            </configuration>
-          </execution>
-          <execution>
-            <id>exec</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>java</executable>
-              <classpathScope>provided</classpathScope>
-              <arguments>
-                <argument>-cp</argument>
-                <classpath/>
-                <!--
-                <classpath>
-                  <dependency>org.apache.maven:maven-artifact</dependency>
-                </classpath>
-                -->
-                <argument>org.apache.maven.artifact.versioning.ComparableVersion</argument>
-              </arguments>
-              <environmentVariables>
-                <LANG>en_US</LANG>
-              </environmentVariables>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-    </plugins>
-  </build>
-
   <profiles>
     <profile>
       <id>deploy</id>
@@ -509,8 +507,7 @@
       </activation>
       <build>
         <!--<pluginManagement>-->
-        <plugins>
-        </plugins>
+        <plugins/>
         <!--</pluginManagement>-->
       </build>
     </profile>

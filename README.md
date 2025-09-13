@@ -22,6 +22,7 @@ See https://github.com/emergentdotorg/gitver-maven-extension-examples[manikmagar
 ## Acknowledgements
 
 This project was inspired by and borrows heavily from the following:
+
 * [git-versioner-maven-extension](https://github.com/manikmagar/git-versioner-maven-extension).
 * [maven-git-versioning-extension](https://github.com/qoomon/maven-git-versioning-extension)
 

@@ -107,17 +107,28 @@
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-invoker-plugin</artifactId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <environmentVariables>
+                <HOME>${project.build.testOutputDirectory}/home</HOME>
+              </environmentVariables>
+              <systemPropertyVariables>
+                <user.home>${project.build.testOutputDirectory}/home</user.home>
+                <maven.repo.local>${project.build.directory}/local-repo</maven.repo.local>
+              </systemPropertyVariables>
+            </configuration>
             <executions>
               <execution>
-                <id>integration-test</id>
                 <goals>
-                  <goal>install</goal>
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
               </execution>
             </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-invoker-plugin</artifactId>
             <configuration>
               <debug>false</debug>
               <pomIncludes>
@@ -132,27 +143,16 @@
               <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
               <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
             </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>
+                <id>integration-test</id>
                 <goals>
+                  <goal>install</goal>
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
               </execution>
             </executions>
-            <configuration>
-              <environmentVariables>
-                <HOME>${project.build.testOutputDirectory}/home</HOME>
-              </environmentVariables>
-              <systemPropertyVariables>
-                <user.home>${project.build.testOutputDirectory}/home</user.home>
-                <maven.repo.local>${project.build.directory}/local-repo</maven.repo.local>
-              </systemPropertyVariables>
-            </configuration>
           </plugin>
         </plugins>
       </build>
@@ -168,41 +168,14 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>flatten-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>flatten.clean</id>
-                <phase>clean</phase>
-                <goals>
-                  <goal>clean</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>flatten</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>flatten</goal>
-                </goals>
-                <configuration>
-                  <flattenMode>ossrh</flattenMode>
-                  <pomElements>
-                    <parent>flatten</parent>
-                    <profiles>flatten</profiles>
-                  </pomElements>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
             <executions>
               <execution>
-                <phase>package</phase>
                 <goals>
                   <goal>shade</goal>
                 </goals>
+                <phase>package</phase>
                 <configuration>
                   <useDependencyReducedPomInJar>true</useDependencyReducedPomInJar>
                   <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
@@ -265,6 +238,33 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>flatten-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>flatten.clean</id>
+                <goals>
+                  <goal>clean</goal>
+                </goals>
+                <phase>clean</phase>
+              </execution>
+              <execution>
+                <id>flatten</id>
+                <goals>
+                  <goal>flatten</goal>
+                </goals>
+                <phase>process-resources</phase>
+                <configuration>
+                  <flattenMode>ossrh</flattenMode>
+                  <pomElements>
+                    <parent>flatten</parent>
+                    <profiles>flatten</profiles>
+                  </pomElements>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -285,13 +285,11 @@
             <groupId>org.codehaus.gmavenplus</groupId>
             <artifactId>gmavenplus-plugin</artifactId>
             <version>1.13.1</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>execute</goal>
-                </goals>
-              </execution>
-            </executions>
+            <configuration>
+              <scripts>
+                <script>src/main/groovy/Main.groovy</script>
+              </scripts>
+            </configuration>
             <dependencies>
               <dependency>
                 <groupId>org.apache.groovy</groupId>
@@ -300,11 +298,13 @@
                 <scope>runtime</scope>
               </dependency>
             </dependencies>
-            <configuration>
-              <scripts>
-                <script>src/main/groovy/Main.groovy</script>
-              </scripts>
-            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
