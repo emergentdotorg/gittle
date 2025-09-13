@@ -1,9 +1,11 @@
 package org.emergent.maven.gitver.core;
 
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -14,6 +16,12 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.emergent.maven.gitver.core.Util.VERSION_REGEX;
 
 class UtilTest {
+
+  @Test
+  public void treeMapHoldsEmptyValues() {
+    TreeMap<String, Object> map = new TreeMap<>();
+    map.put("foo", null);
+  }
 
   @ParameterizedTest
   @CsvSource({"refs/tags/v0.1.0,true", "refs/tags/v0.15.0,true", "v0.15.0,true", "0.15.0,true", "hoopla,false"})

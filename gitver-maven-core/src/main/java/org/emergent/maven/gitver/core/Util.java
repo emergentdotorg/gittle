@@ -48,7 +48,8 @@ public class Util {
       .filter(Util::isNotEmpty).findFirst().map(Boolean::parseBoolean).orElse(false);
   }
 
-  public static VersionConfig loadConfig(Path currentDir) {
+  public static GitverConfig loadConfig(Path currentDir) {
+    currentDir = currentDir.toAbsolutePath();
     Path dotmvnDirectory = getDOTMVNDirectory(currentDir);
     Properties fileProps = loadExtensionProperties(dotmvnDirectory);
 //    VersionConfig versionConfig = loadConfig(dotmvnDirectory);
@@ -56,7 +57,7 @@ public class Util {
 //    versionConfig.toProperties().forEach(fallback::setProperty);
     Properties props = new Properties(fileProps);
 //    props.putAll(Util.flatten(projectModel.getProperties()));
-    VersionConfig vc = VersionConfig.from(props);
+    GitverConfig vc = GitverConfig.from(props);
     return vc;
   }
 
@@ -171,11 +172,11 @@ public class Util {
     return versionStrategy.toProperties();
   }
 
-  public static ArtifactCoordinates getCoreCoordinates() {
+  public static Coordinates getCoreCoordinates() {
     try (InputStream is = Util.class.getResourceAsStream(GITVER_PROPERTIES)) {
       Properties props = new Properties();
       props.load(is);
-      return ArtifactCoordinates.builder()
+      return Coordinates.builder()
         .setGroupId(props.getProperty("projectGroupId"))
         .setArtifactId(props.getProperty("projectArtifactId"))
         .setVersion(props.getProperty("projectVersion"))
@@ -185,14 +186,26 @@ public class Util {
     }
   }
 
-  public static ArtifactCoordinates getExtensionCoordinates() {
-    ArtifactCoordinates core = getCoreCoordinates();
+  public static Coordinates getExtensionCoordinates() {
+    Coordinates core = getCoreCoordinates();
     return core.toBuilder().setArtifactId(core.getArtifactId().replace("-core", "-extension")).build();
   }
 
-  public static ArtifactCoordinates getPluginCoordinates() {
-    ArtifactCoordinates core = getCoreCoordinates();
+  public static Coordinates getPluginCoordinates() {
+    Coordinates core = getCoreCoordinates();
     return core.toBuilder().setArtifactId(core.getArtifactId().replace("-core", "-plugin")).build();
+  }
+
+  public static void go(Map<String, String> map, String key, boolean val) {
+    map.put(key, Boolean.toString(val));
+  }
+
+  public static void go(Map<String, String> map, String key, int nbr) {
+    if (nbr != 0) map.put(key, Integer.toString(nbr));
+  }
+
+  public static void go(Map<String, String> map, String key, String val) {
+    if (isNotEmpty(val)) map.put(key, val);
   }
 
 }

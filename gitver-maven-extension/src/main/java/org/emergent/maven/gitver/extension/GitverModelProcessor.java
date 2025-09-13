@@ -23,6 +23,7 @@ import org.apache.maven.building.Source;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginManagement;
 import org.apache.maven.model.building.DefaultModelProcessor;
 import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.shared.utils.logging.MessageBuilder;
@@ -32,11 +33,12 @@ import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.sisu.Priority;
 import org.eclipse.sisu.Typed;
-import org.emergent.maven.gitver.core.ArtifactCoordinates;
+import org.emergent.maven.gitver.core.Coordinates;
+import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
-import org.emergent.maven.gitver.core.VersionConfig;
-import org.emergent.maven.gitver.core.git.GitUtil;
+import org.emergent.maven.gitver.core.version.KeywordsConfig;
+import org.emergent.maven.gitver.core.version.StrategyFactory;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,8 +99,8 @@ public class GitverModelProcessor extends DefaultModelProcessor {
   }
 
   private VersionStrategy getVersionStrategy(Model projectModel) {
-    VersionConfig versionConfig = loadConfig(projectModel);
-    ArtifactCoordinates extensionGAV = Util.getExtensionCoordinates();
+    GitverConfig versionConfig = loadConfig(projectModel);
+    Coordinates extensionGAV = Util.getExtensionCoordinates();
     LOGGER.info(
       MessageUtils.buffer()
         .a("--- ")
@@ -107,15 +109,15 @@ public class GitverModelProcessor extends DefaultModelProcessor {
         .strong("[core-extension]")
         .a(" ---")
         .build());
-    GitUtil gitUtil = GitUtil.getInstance(projectModel.getProjectDirectory());
     projectModel.getProjectDirectory();
-    VersionStrategy versionStrategy = gitUtil.getVersionStrategy(versionConfig);
+    StrategyFactory factory = StrategyFactory.getInstance(projectModel.getProjectDirectory());
+    VersionStrategy versionStrategy = factory.getVersionStrategy(versionConfig);
     findRelatedProjects(projectModel);
     printProperties(versionStrategy.toProperties());
     return versionStrategy;
   }
 
-  private VersionConfig loadConfig(Model projectModel) {
+  private GitverConfig loadConfig(Model projectModel) {
     Path dotmvnDirectory = getDOTMVNDirectory(projectModel.getProjectDirectory().toPath());
     Properties fileProps = loadExtensionProperties(dotmvnDirectory);
 //    VersionConfig versionConfig = loadConfig(dotmvnDirectory);
@@ -123,7 +125,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
 //    versionConfig.toProperties().forEach(fallback::setProperty);
     Properties props = new Properties(fileProps);
     props.putAll(Util.flatten(projectModel.getProperties()));
-    VersionConfig vc = VersionConfig.from(props);
+    GitverConfig vc = GitverConfig.from(props);
     return vc;
   }
 
@@ -178,10 +180,10 @@ public class GitverModelProcessor extends DefaultModelProcessor {
     });
 
     addGitverProperties(projectModel, strategyProperties);
-//    addBuildPlugin(projectModel);
+    addBuildPlugin(projectModel);
   }
 
-  private VersionConfig loadConfig(Path dotmvnDirectory) {
+  private GitverConfig loadConfig(Path dotmvnDirectory) {
     Properties fileProps = loadExtensionProperties(dotmvnDirectory);
     try (StringWriter writer = new StringWriter()) {
       fileProps.store(writer, null);
@@ -190,7 +192,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
       throw new GitverException(e.getMessage(), e);
     }
 
-    return VersionConfig.from(fileProps);
+    return GitverConfig.from(fileProps);
   }
 
   private Properties loadExtensionProperties(Path dotmvnDirectory) {
@@ -219,20 +221,23 @@ public class GitverModelProcessor extends DefaultModelProcessor {
   }
 
   private void addBuildPlugin(Model projectModel) {
-    ArtifactCoordinates coordinates = Util.getPluginCoordinates();
+    Coordinates coordinates = Util.getPluginCoordinates();
     LOGGER.debug("Adding build plugin version {}", coordinates);
     if (projectModel.getBuild() == null) {
       projectModel.setBuild(new Build());
     }
-    if (projectModel.getBuild().getPlugins() == null) {
-      projectModel.getBuild().setPlugins(new ArrayList<>());
+    if (projectModel.getBuild().getPluginManagement() == null) {
+      projectModel.getBuild().setPluginManagement(new PluginManagement());
+    }
+    if (projectModel.getBuild().getPluginManagement().getPlugins() == null) {
+      projectModel.getBuild().getPluginManagement().setPlugins(new ArrayList<>());
     }
     Plugin plugin = new Plugin();
 
     plugin.setGroupId(coordinates.getGroupId());
     plugin.setArtifactId(coordinates.getArtifactId());
     plugin.setVersion(coordinates.getVersion());
-    Plugin existing = projectModel.getBuild().getPluginsAsMap().get(plugin.getKey());
+    Plugin existing = projectModel.getBuild().getPluginManagement().getPluginsAsMap().get(plugin.getKey());
     boolean addExecution = false;
 
     if (existing != null) {
@@ -256,7 +261,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
 //      }
     } else {
 //      addPluginConfiguration(plugin, versionConfig);
-      projectModel.getBuild().getPlugins().add(0, plugin);
+      projectModel.getBuild().getPluginManagement().getPlugins().add(0, plugin);
     }
 
 //    if (addExecution) {
@@ -269,8 +274,9 @@ public class GitverModelProcessor extends DefaultModelProcessor {
 //    if (existing == null) projectModel.getBuild().getPlugins().add(0, plugin);
   }
 
-  private void addPluginConfiguration(Plugin plugin, VersionConfig versionConfig) {
+  private void addPluginConfiguration(Plugin plugin, GitverConfig config) {
     // Version keywords are used by version commit goals.
+    KeywordsConfig keywords = config.getKeywords();
     String configXml = String.format(//language=xml
       """
           <configuration>
@@ -280,10 +286,10 @@ public class GitverModelProcessor extends DefaultModelProcessor {
             <useRegex>%s</useRegex>
           </configuration>
         """,
-      versionConfig.getMajorKeywords(),
-      versionConfig.getMinorKeywords(),
-      versionConfig.getPatchKeywords(),
-      versionConfig.isRegexKeywords());
+      keywords.getMajorKeywords(),
+      keywords.getMinorKeywords(),
+      keywords.getPatchKeywords(),
+      keywords.isRegexKeywords());
     try {
       Xpp3Dom configDom = Xpp3DomBuilder.build(new StringReader(configXml));
       plugin.setConfiguration(configDom);

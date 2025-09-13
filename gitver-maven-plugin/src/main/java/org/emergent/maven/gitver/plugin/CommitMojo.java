@@ -3,6 +3,7 @@ package org.emergent.maven.gitver.plugin;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -37,9 +38,11 @@ public abstract class CommitMojo extends AbstractGitverMojo {
     if (!msg.contains(KEYWORD_TOKEN)) {
       msg = msg + " " + KEYWORD_TOKEN;
     }
+    keyword = StringUtils.substringBefore(keyword, ",");
     String resolvedMessage = msg.replace(KEYWORD_TOKEN, keyword);
     try {
-      GitUtil.getInstance(mavenProject.getBasedir()).executeCommit(resolvedMessage);
+      GitUtil gitutil = GitUtil.getInstance(mavenProject.getBasedir());
+      gitutil.executeCommit(resolvedMessage);
     } catch (GitverException e) {
       throw new MojoFailureException(e.getMessage(), e);
     }
@@ -54,7 +57,7 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElse(toVersionConfig().getMajorKeywordsList().get(0)));
+      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getMajorKeywords()));
     }
   }
 
@@ -67,7 +70,7 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElse(toVersionConfig().getMinorKeywordsList().get(0)));
+      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getMinorKeywords()));
     }
   }
 
@@ -80,7 +83,7 @@ public abstract class CommitMojo extends AbstractGitverMojo {
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElse(toVersionConfig().getPatchKeywordsList().get(0)));
+      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getPatchKeywords()));
     }
   }
 }

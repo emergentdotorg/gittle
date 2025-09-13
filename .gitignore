@@ -20,3 +20,4 @@ buildNumber.properties
 .gitver.pom.xml
 .flattened-pom.xml
 .mvn/extensions.xml
+!.idea/codeStyles/Project.xml

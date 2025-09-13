@@ -3,60 +3,43 @@ package org.emergent.maven.gitver.core.version;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import lombok.Builder;
 import lombok.Getter;
-import org.emergent.maven.gitver.core.Constants;
-import org.emergent.maven.gitver.core.Util;
-import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.GitverConfig;
+import org.emergent.maven.gitver.core.Mapper;
+
+import static org.emergent.maven.gitver.core.Constants.GITVER_VERSION;
 
 @Getter
 @Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
 public class PatternStrategy implements VersionStrategy {
 
-  private final VersionConfig versionConfig;
-  private final String branch;
-  private final String hash;
-  private int major;
-  private int minor;
-  private int patch;
-  private int commit;
-
-  private RefVersionData getRefVersionData() {
-    return RefVersionData.builder()
-      .setBranch(branch)
-      .setHash(hash)
-      .setMajor(major)
-      .setMinor(minor)
-      .setPatch(patch)
-      .setCommit(commit)
-      .build();
-  }
-
-  @Override
-  public String toVersionString() {
-    return toString(getRefVersionData(), getVersionPattern());
-  }
+  private final GitverConfig config;
+  private final RefData refData;
 
   private String getVersionPattern() {
-    return versionConfig.getVersionPattern();
+    return config.getVersionPattern();
   }
 
   public Map<String, String> toProperties() {
-    Map<String, Object> properties = new TreeMap<>();
-    properties.put(Constants.GITVER_VERSION, toVersionString());
-    properties.putAll(getRefVersionData().toProperties());
-    properties.putAll(versionConfig.toProperties());
-    return Util.flatten(properties);
+    Mapper m = Mapper.create()
+      .put(GITVER_VERSION, toVersionString())
+      .putAll(getRefData().toProperties())
+      .putAll(config.toProperties());
+    return m.toMap();
   }
 
   @Override
   public String toString() {
     return String.format("%s [branch: %s, version: %s, hash: %s]",
-      getClass().getSimpleName(), branch, toVersionString(), hash);
+      getClass().getSimpleName(), refData.getBranch(), toVersionString(), refData.getHash());
   }
 
-  private static String toString(RefVersionData version, String pattern) {
+  @Override
+  public String toVersionString() {
+    RefData version = getRefData();
+    String pattern = getVersionPattern();
+
     int commits = version.commit();
     Map<PatternToken, Object> values = new HashMap<>();
     values.put(PatternToken.MAJOR, version.major());
@@ -106,35 +89,6 @@ public class PatternStrategy implements VersionStrategy {
     @Override
     public String toString() {
       return getToken();
-    }
-  }
-
-  @SuppressWarnings("UnusedReturnValue")
-  public static class Builder {
-
-    public Builder incrementMajor() {
-      return this
-        .setMajor(major + 1)
-        .setMinor(0)
-        .setPatch(0)
-        .setCommit(0);
-    }
-
-    public Builder incrementMinor() {
-      return this
-        .setMinor(minor + 1)
-        .setPatch(0)
-        .setCommit(0);
-    }
-
-    public Builder incrementPatch() {
-      return this
-        .setPatch(patch + 1)
-        .setCommit(0);
-    }
-
-    public Builder incrementCommit() {
-      return setCommit(commit + 1);
     }
   }
 }

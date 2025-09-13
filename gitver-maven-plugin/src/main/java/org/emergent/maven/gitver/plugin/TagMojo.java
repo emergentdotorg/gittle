@@ -34,8 +34,8 @@ public class TagMojo extends AbstractGitverMojo {
     String tagMessage = replaceTokens(getMessagePattern(), versionStrategy);
     getLog().info("Current Version: " + versionStrategy.toVersionString());
     getLog().info(String.format("Tag Version '%s' with message '%s'", tagName, tagMessage));
-    GitUtil gitUtil = getGitUtil();
-    if (!force && gitUtil.tagExists(tagName)) {
+    GitUtil gitutil = getGitUtil();
+    if (!force && gitutil.tagExists(tagName)) {
       getLog().error(String.format("Tag already exist: %s", tagName));
       if (failWhenExists) {
         throw new GitverException("Tag already exist: " + tagName);
@@ -43,7 +43,7 @@ public class TagMojo extends AbstractGitverMojo {
         return;
       }
     }
-    String tagId = gitUtil.createTag(tagName, tagMessage, force);
+    String tagId = gitutil.createTag(tagName, tagMessage, force);
     getLog().info(String.format("Created tag: '%s'", tagId));
   }
 }

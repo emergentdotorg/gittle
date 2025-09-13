@@ -1,13 +1,13 @@
-package org.emergent.maven.gitver.core.git;
+package org.emergent.maven.gitver.core.version;
 
-import org.emergent.maven.gitver.core.VersionConfig;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class GitUtilTest {
+public class StrategyFactoryTest {
 
   @ParameterizedTest
   @CsvSource({
@@ -17,23 +17,23 @@ public class GitUtilTest {
     "Update: improved performance, [minor], false"
   })
   public void testHasValueWithRegex(String commitMessage, String keyword, boolean expected) {
-    VersionConfig versionConfig = VersionConfig.builder()
+    KeywordsConfig versionConfig = KeywordsConfig.builder()
       .setRegexKeywords(true)
       .build();
 
-    assertThat(GitUtil.hasValue(versionConfig, commitMessage, keyword)).isEqualTo(expected);
+    Assertions.assertThat(StrategyFactory.hasValue(versionConfig, commitMessage, keyword)).isEqualTo(expected);
   }
 
   @Test
   public void testHasValueWithoutRegex() {
-    VersionConfig versionConfig = VersionConfig.builder()
+    KeywordsConfig versionConfig = KeywordsConfig.builder()
       .setRegexKeywords(false)
       .build();
 
     String commitMessage = "Fix: [minor] corrected typo";
-    assertThat(GitUtil.hasValue(versionConfig, commitMessage, "[minor]")).isTrue();
+    assertThat(StrategyFactory.hasValue(versionConfig, commitMessage, "[minor]")).isTrue();
 
     commitMessage = "Update: improved performance";
-    assertThat(GitUtil.hasValue(versionConfig, commitMessage, "[minor]")).isFalse();
+    assertThat(StrategyFactory.hasValue(versionConfig, commitMessage, "[minor]")).isFalse();
   }
 }

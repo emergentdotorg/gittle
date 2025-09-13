@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,27 +40,30 @@ public class SemVer implements Comparable<SemVer> {
     this.buildmetas = buildmetas;
   }
 
-  public static Optional<SemVer> fromString(String version) {
+  public static SemVer fromString(String version) {
+    Builder builder = SemVer.builder();
     Matcher matcher = Util.VERSION_REGEX2.matcher(version);
-    if (!matcher.matches()) {
-      return Optional.empty();
+    if (matcher.matches()) {
+      builder
+        .setMajor(matcher.group("major"))
+        .setMinor(matcher.group("major"))
+        .setPatch(matcher.group("major"))
+        .setPrerelease(matcher.group("prerelease").split("\\."))
+        .setBuildmeta(matcher.group("buildmeta").split("\\."));
     }
-
-    Builder builder = SemVer.builder()
-      .setMajor(matcher.group("major"))
-      .setMinor(matcher.group("major"))
-      .setPatch(matcher.group("major"))
-      .setPrerelease(matcher.group("prerelease").split("\\."))
-      .setBuildmeta(matcher.group("buildmeta").split("\\."));
-
-    return Optional.of(builder.build());
+    return builder.build();
   }
+
   public static SemVer of(int major, int minor, int patch) {
     return builder().setMajor(major).setMinor(minor).setPatch(patch).build();
   }
 
   public static SemVer zero() {
     return ZERO;
+  }
+
+  public boolean isZero() {
+    return ZERO.equals(this);
   }
 
   public boolean isInitialDevelopment() {

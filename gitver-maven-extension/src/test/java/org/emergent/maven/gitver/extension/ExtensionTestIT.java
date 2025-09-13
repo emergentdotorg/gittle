@@ -2,10 +2,14 @@ package org.emergent.maven.gitver.extension;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.Random;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.it.Verifier;
 import org.eclipse.jgit.api.Git;
@@ -49,7 +53,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionBuildInitialVersion.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.0-1-SNAPSHOT";
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
@@ -70,7 +74,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionBuildVersionWithCommits.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.0-3-SNAPSHOT";
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
@@ -90,7 +94,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionValidateVersionProperties.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.1";
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
@@ -115,7 +119,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionBuildPatchVersion.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.1";
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
@@ -132,7 +136,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionBuildMinorVersion.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.1.0";
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
@@ -149,7 +153,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionBuildMajorVersion.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "1.0.0";
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
@@ -167,7 +171,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionBuildTagVersion.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "2.3.5";
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
@@ -185,7 +189,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionBuildHashVersion.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "1.3.5+" + hash.substring(0, 8);
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
@@ -203,7 +207,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionWithInitialVersionProperties.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "1.3.5-1";
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
@@ -222,7 +226,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionWithModule.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.1";
       verifier.verifyTextInLog("Building multi-module-parent " + expectedVersion);
@@ -242,7 +246,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionWithParentChild.log.txt");
+      copyExecutionLog(tempProject, verifier);
       verifier.verifyErrorFreeLog();
       String expectedVersion = "0.0.1";
       verifier.verifyTextInLog("Building parent-test-pom " + expectedVersion);
@@ -263,8 +267,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(
-        tempProject, verifier, "extensionWithVersionKeywordProperties" + key + ".log.txt");
+      copyExecutionLog(tempProject, verifier, key);
       verifier.verifyErrorFreeLog();
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
     }
@@ -280,7 +283,7 @@ public class ExtensionTestIT {
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
       verifier.executeGoal("verify");
-      copyExecutionLog(tempProject, verifier, "extensionWithCommitsProperties" + key + ".log.txt");
+      copyExecutionLog(tempProject, verifier, key);
       verifier.verifyErrorFreeLog();
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
     }
@@ -298,27 +301,57 @@ public class ExtensionTestIT {
       addEmptyCommit(git);
       Verifier verifier = new Verifier(tempProject.getAbsolutePath(), true);
       verifier.displayStreamBuffers();
-      verifier.executeGoal("gitver:" + goal);
+      verifier.executeGoal(Util.getPluginCoordinates().toString() + ":" + goal);
       //verifier.executeGoal("clean");
       verifier.executeGoal("verify");
-      copyExecutionLog(
-        tempProject, verifier, "extensionWithVersionKeyword_AddCommits" + key + ".log.txt");
+      copyExecutionLog(tempProject, verifier, key);
       verifier.verifyErrorFreeLog();
       verifier.verifyTextInLog("Building gitver-extension-test " + expectedVersion);
     }
   }
 
-  private static void copyExecutionLog(File tempProject, Verifier verifier, String logName) throws IOException {
+  private static String getTestName() {
+    Class<?> clazz = ExtensionTestIT.class;
+    for (StackTraceElement trace : new Exception().getStackTrace()) {
+      if (clazz.getName().equals(trace.getClassName())) {
+        Optional<Method> match = Arrays.stream(clazz.getDeclaredMethods())
+          .filter(m -> m.getName().equals(trace.getMethodName()))
+          .filter(m -> m.getAnnotation(Test.class) != null || m.getAnnotation(ParameterizedTest.class) != null)
+          .findFirst();
+        if (match.isPresent()) {
+          return match.get().getName();
+        }
+      }
+    }
+    return "unknownTest" + new Random().nextInt(10000, 99999);
+  }
+
+  private static void copyExecutionLogx(File tempProject, Verifier verifier, String logName) throws IOException {
     Path destdir = Files.createDirectories(Paths.get("./target/it-logs/"));
     Path target = destdir.resolve(logName);
     if (target.toFile().exists()) target.toFile().delete();
     Files.copy(tempProject.toPath().resolve(verifier.getLogFileName()), target);
-    //String altpomname = ".gitver.pom.xml";
-    //Files.copy(tempProject.toPath().resolve(altpomname), destdir.resolve(logName + ".pom.xml"));
-    //Path propsfile = tempProject.toPath().resolve(".mvn/gitver-maven-extension.properties");
-    //if (Files.exists(propsfile)) {
-    //  Files.copy(propsfile, destdir.resolve(logName + ".extension.properties"));
-    //}
+    String altpomname = ".gitver.pom.xml";
+    Files.copy(tempProject.toPath().resolve(altpomname), destdir.resolve(logName + ".pom.xml"));
+    Path propsfile = tempProject.toPath().resolve(".mvn/gitver-maven-extension.properties");
+    if (Files.exists(propsfile)) {
+      Files.copy(propsfile, destdir.resolve(logName + ".extension.properties"));
+    }
+    Path extFile = tempProject.toPath().resolve(".mvn/extensions.xml");
+    if (Files.exists(extFile)) {
+      Files.copy(extFile, destdir.resolve(logName + ".extensions.xml"));
+    }
+  }
+
+  private static void copyExecutionLog(File tempProject, Verifier verifier) throws IOException {
+    copyExecutionLog(tempProject, verifier, "");
+  }
+
+  private static void copyExecutionLog(File tempProject, Verifier verifier, String logKey) throws IOException {
+    String testName = getTestName() + logKey;
+    Path destdir = Files.createDirectories(Paths.get("./target/it-logs/"));
+    Path target = destdir.resolve(testName);
+    org.codehaus.plexus.util.FileUtils.copyDirectoryStructure(tempProject.getAbsoluteFile(), target.toFile());
   }
 
   private static void addEmptyCommit(Git git) throws GitAPIException {
@@ -336,7 +369,10 @@ public class ExtensionTestIT {
   }
 
   private static Git getMain(File tempProject) throws GitAPIException, IOException {
-    Git main = Git.init().setInitialBranch("main").setDirectory(tempProject).call();
+    Path projPath = tempProject.toPath();
+    Git main = Git.init().setInitialBranch("main").setDirectory(tempProject)
+      .setGitDir(projPath.resolve(".git").toFile())
+      .call();
     StoredConfig config = main.getRepository().getConfig();
     config.setString("user", null, "name", "GitHub Actions Test");
     config.setString("user", null, "email", "");

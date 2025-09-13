@@ -8,8 +8,9 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.emergent.maven.gitver.core.Util;
-import org.emergent.maven.gitver.core.VersionConfig;
+import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.git.GitUtil;
+import org.emergent.maven.gitver.core.version.StrategyFactory;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 
 @Getter
@@ -82,21 +83,8 @@ public abstract class AbstractGitverMojo extends org.apache.maven.plugin.Abstrac
     return GitUtil.getInstance(mavenProject.getBasedir());
   }
 
-  public VersionConfig toVersionConfig() {
+  public GitverConfig getConfig() {
     return Util.loadConfig(mavenProject.getBasedir().toPath());
-//
-//    return VersionConfig.builder()
-//      .setDisabled(disabled)
-//      .setInitialMajor(initialMajor)
-//      .setInitialMinor(initialMinor)
-//      .setInitialPatch(initialPatch)
-//      .setMajorKey(majorKey)
-//      .setMinorKey(minorKey)
-//      .setPatchKey(patchKey)
-//      .setUseRegex(useRegex)
-//      .setVersionPattern(versionPattern)
-//      .setVersionOverride(versionOverride)
-//      .build();
   }
 
   protected Map<String, String> getGitverProperties(VersionStrategy versionStrategy) {
@@ -104,8 +92,8 @@ public abstract class AbstractGitverMojo extends org.apache.maven.plugin.Abstrac
   }
 
   protected VersionStrategy getVersionStrategy() {
-    GitUtil gitUtil = GitUtil.getInstance(mavenProject.getBasedir());
-    return gitUtil.getVersionStrategy(toVersionConfig());
+    StrategyFactory factory = StrategyFactory.getInstance(mavenProject.getBasedir());
+    return factory.getVersionStrategy(getConfig());
   }
 
   protected String replaceTokens(String pattern, VersionStrategy versionStrategy) {
