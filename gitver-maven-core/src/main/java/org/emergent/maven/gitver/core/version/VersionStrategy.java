@@ -4,7 +4,7 @@ import java.util.Map;
 
 public interface VersionStrategy {
 
-  String toVersionString();
+    String toVersionString();
 
-  Map<String, String> toProperties();
+    Map<String, String> toProperties();
 }

@@ -1,11 +1,11 @@
 package org.emergent.maven.gitver.core;
 
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.emergent.maven.gitver.core.Constants.VERSION_INITAL_DEF;
 import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
 import static org.emergent.maven.gitver.core.version.KeywordsConfig.DEFAULT_KEYWORDS;
+
+import org.junit.jupiter.api.Test;
 
 public class GitverConfigTest {
 

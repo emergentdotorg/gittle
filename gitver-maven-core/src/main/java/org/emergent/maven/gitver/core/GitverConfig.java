@@ -1,5 +1,11 @@
 package org.emergent.maven.gitver.core;
 
+import static org.emergent.maven.gitver.core.Constants.GV_VERSION_INITIAL;
+import static org.emergent.maven.gitver.core.Constants.GV_VERSION_OVERRIDE;
+import static org.emergent.maven.gitver.core.Constants.GV_VERSION_PATTERN;
+import static org.emergent.maven.gitver.core.Constants.VERSION_INITAL_DEF;
+import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
+
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -10,12 +16,6 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.emergent.maven.gitver.core.version.BasicVersion;
 import org.emergent.maven.gitver.core.version.KeywordsConfig;
-
-import static org.emergent.maven.gitver.core.Constants.GV_VERSION_INITIAL;
-import static org.emergent.maven.gitver.core.Constants.GV_VERSION_OVERRIDE;
-import static org.emergent.maven.gitver.core.Constants.GV_VERSION_PATTERN;
-import static org.emergent.maven.gitver.core.Constants.VERSION_INITAL_DEF;
-import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
 
 @Value
 @Slf4j

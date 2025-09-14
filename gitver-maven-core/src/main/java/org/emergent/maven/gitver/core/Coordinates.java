@@ -9,17 +9,27 @@ import lombok.Value;
 @lombok.Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
 public class Coordinates {
 
-  @NonNull String groupId;
-  @NonNull String artifactId;
-  @NonNull String version;
-  @lombok.Builder.Default
-  @NonNull String packaging = "";
-  @lombok.Builder.Default
-  @NonNull String classifier = "";
+    @NonNull
+    String groupId;
 
-  @Override
-  public String toString() {
-    return Stream.of(groupId, artifactId, version, packaging, classifier)
-      .filter(Util::isNotEmpty).collect(Collectors.joining(":"));
-  }
+    @NonNull
+    String artifactId;
+
+    @NonNull
+    String version;
+
+    @lombok.Builder.Default
+    @NonNull
+    String packaging = "";
+
+    @lombok.Builder.Default
+    @NonNull
+    String classifier = "";
+
+    @Override
+    public String toString() {
+        return Stream.of(groupId, artifactId, version, packaging, classifier)
+                .filter(Util::isNotEmpty)
+                .collect(Collectors.joining(":"));
+    }
 }

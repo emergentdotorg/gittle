@@ -11,15 +11,15 @@ import org.emergent.maven.gitver.core.Util;
 @Mojo(name = "set", defaultPhase = LifecyclePhase.INITIALIZE)
 public class SetMojo extends AbstractGitverMojo {
 
-  @Override
-  protected void execute0() throws MojoExecutionException, MojoFailureException {
-    Path basedir = mavenProject.getBasedir().toPath();
-    //Path targetdir = basedir.resolve(mavenProject.getBuild().getDirectory());
-    Path newPom = basedir.resolve(Util.GITVER_POM_XML);
-    if (Files.exists(newPom)) {
-      mavenProject.setPomFile(newPom.toFile());
-    } else {
-      throw new MojoExecutionException("Cannot find " + newPom);
+    @Override
+    protected void execute0() throws MojoExecutionException, MojoFailureException {
+        Path basedir = mavenProject.getBasedir().toPath();
+        // Path targetdir = basedir.resolve(mavenProject.getBuild().getDirectory());
+        Path newPom = basedir.resolve(Util.GITVER_POM_XML);
+        if (Files.exists(newPom)) {
+            mavenProject.setPomFile(newPom.toFile());
+        } else {
+            throw new MojoExecutionException("Cannot find " + newPom);
+        }
     }
-  }
 }

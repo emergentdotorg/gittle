@@ -12,79 +12,79 @@ import org.emergent.maven.gitver.core.GitverException;
 @Slf4j
 public class GitExec {
 
-  public static <R> R execOp(Path basePath, Operation<Git, R> work) throws GitverException {
-    return execOp(normalize(basePath), work);
-  }
-
-  public static <R> R execOp(File basePath, Operation<Git, R> work) throws GitverException {
-    try (Repository repository = getRepository(basePath);
-         Git git = new Git(repository)) {
-      return work.apply(git);
-    } catch (Exception e) {
-      throw new GitverException(e);
+    public static <R> R execOp(Path basePath, Operation<Git, R> work) throws GitverException {
+        return execOp(normalize(basePath), work);
     }
-  }
 
-  public static void execOp(Path basePath, ExecConsumer<Git> work) throws GitverException {
-    execOp(normalize(basePath), work);
-  }
-
-  public static void execOp(File basePath, ExecConsumer<Git> work) throws GitverException {
-    try (Repository repository = getRepository(basePath);
-         Git git = new Git(repository)) {
-      work.accept(git);
-    } catch (Exception e) {
-      throw new GitverException(e);
+    public static <R> R execOp(File basePath, Operation<Git, R> work) throws GitverException {
+        try (Repository repository = getRepository(basePath);
+                Git git = new Git(repository)) {
+            return work.apply(git);
+        } catch (Exception e) {
+            throw new GitverException(e);
+        }
     }
-  }
 
-  public static String findGitDir(Path basePath) {
-    return findGitDir(normalize(basePath));
-  }
-
-  public static String findGitDir(File basePath) {
-    try (Repository repository = getRepository(basePath, true)) {
-      return repository.getDirectory().getAbsolutePath();
-    } catch (Exception e) {
-      throw new GitverException(e);
+    public static void execOp(Path basePath, ExecConsumer<Git> work) throws GitverException {
+        execOp(normalize(basePath), work);
     }
-  }
 
-  public static Repository getRepository(Path basePath) throws IOException {
-    return getRepository(normalize(basePath), false);
-  }
+    public static void execOp(File basePath, ExecConsumer<Git> work) throws GitverException {
+        try (Repository repository = getRepository(basePath);
+                Git git = new Git(repository)) {
+            work.accept(git);
+        } catch (Exception e) {
+            throw new GitverException(e);
+        }
+    }
 
-  public static Repository getRepository(File basePath) throws IOException {
-    return getRepository(basePath, false);
-  }
+    public static String findGitDir(Path basePath) {
+        return findGitDir(normalize(basePath));
+    }
 
-  public static Repository getRepository(Path basePath, boolean mustExist) throws IOException {
-    return getRepository(normalize(basePath), mustExist);
-  }
+    public static String findGitDir(File basePath) {
+        try (Repository repository = getRepository(basePath, true)) {
+            return repository.getDirectory().getAbsolutePath();
+        } catch (Exception e) {
+            throw new GitverException(e);
+        }
+    }
 
-  public static Repository getRepository(File basePath, boolean mustExist) throws IOException {
-    return new FileRepositoryBuilder()
-      .readEnvironment()
-      .findGitDir(normalize(basePath))
-      .setMustExist(mustExist)
-      .build();
-  }
+    public static Repository getRepository(Path basePath) throws IOException {
+        return getRepository(normalize(basePath), false);
+    }
 
-  private static File normalize(Path path) {
-    return path != null ? path.toFile() : null;
-  }
+    public static Repository getRepository(File basePath) throws IOException {
+        return getRepository(basePath, false);
+    }
 
-  private static File normalize(File file) {
-    return file != null ? file.getAbsoluteFile() : null;
-  }
+    public static Repository getRepository(Path basePath, boolean mustExist) throws IOException {
+        return getRepository(normalize(basePath), mustExist);
+    }
 
-  @FunctionalInterface
-  public interface Operation<T, R> {
-    R apply(T t) throws Exception;
-  }
+    public static Repository getRepository(File basePath, boolean mustExist) throws IOException {
+        return new FileRepositoryBuilder()
+                .readEnvironment()
+                .findGitDir(normalize(basePath))
+                .setMustExist(mustExist)
+                .build();
+    }
 
-  @FunctionalInterface
-  public interface ExecConsumer<T> {
-    void accept(T t) throws Exception;
-  }
+    private static File normalize(Path path) {
+        return path != null ? path.toFile() : null;
+    }
+
+    private static File normalize(File file) {
+        return file != null ? file.getAbsoluteFile() : null;
+    }
+
+    @FunctionalInterface
+    public interface Operation<T, R> {
+        R apply(T t) throws Exception;
+    }
+
+    @FunctionalInterface
+    public interface ExecConsumer<T> {
+        void accept(T t) throws Exception;
+    }
 }

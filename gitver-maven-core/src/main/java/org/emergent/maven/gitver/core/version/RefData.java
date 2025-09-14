@@ -7,14 +7,14 @@ import org.emergent.maven.gitver.core.Util;
 @lombok.Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
 public class RefData {
 
-  String branch;
-  String hash;
+    String branch;
+    String hash;
 
-  public String hashShort() {
-    return Util.toShortHash(hash);
-  }
+    public String hashShort() {
+        return Util.toShortHash(hash);
+    }
 
-  public String getHashShort() {
-    return hashShort();
-  }
+    public String getHashShort() {
+        return hashShort();
+    }
 }

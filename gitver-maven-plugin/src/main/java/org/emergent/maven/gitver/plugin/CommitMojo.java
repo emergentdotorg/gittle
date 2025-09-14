@@ -1,5 +1,9 @@
 package org.emergent.maven.gitver.plugin;
 
+import static org.emergent.maven.gitver.core.Constants.GV_KEYWORDS_MAJOR;
+import static org.emergent.maven.gitver.core.Constants.GV_KEYWORDS_MINOR;
+import static org.emergent.maven.gitver.core.Constants.GV_KEYWORDS_PATCH;
+
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Setter;
@@ -11,10 +15,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.git.GitUtil;
-
-import static org.emergent.maven.gitver.core.Constants.GV_KEYWORDS_MAJOR;
-import static org.emergent.maven.gitver.core.Constants.GV_KEYWORDS_MINOR;
-import static org.emergent.maven.gitver.core.Constants.GV_KEYWORDS_PATCH;
 
 
 public abstract class CommitMojo extends AbstractGitverMojo {

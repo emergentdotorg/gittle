@@ -7,16 +7,15 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 public abstract class AbstractMojoTest {
 
-  protected MavenSession mavenSession;
+    protected MavenSession mavenSession;
 
-  @RegisterExtension
-  public ProjectMojoRule rule =
-    new ProjectMojoRule() {
+    @RegisterExtension
+    public ProjectMojoRule rule = new ProjectMojoRule() {
 
-      @Override
-      public Mojo lookupConfiguredMojo(MavenSession session, MojoExecution execution) throws Exception {
-        mavenSession = session;
-        return super.lookupConfiguredMojo(session, execution);
-      }
+        @Override
+        public Mojo lookupConfiguredMojo(MavenSession session, MojoExecution execution) throws Exception {
+            mavenSession = session;
+            return super.lookupConfiguredMojo(session, execution);
+        }
     };
 }

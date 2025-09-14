@@ -1,5 +1,7 @@
 package org.emergent.maven.gitver.plugin;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.File;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -7,8 +9,6 @@ import org.apache.maven.project.MavenProject;
 import org.emergent.maven.gitver.core.version.OverrideStrategy;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class AbstractGitverMojoTest {
 

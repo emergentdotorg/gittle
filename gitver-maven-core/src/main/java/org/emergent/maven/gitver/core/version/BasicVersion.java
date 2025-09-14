@@ -1,5 +1,7 @@
 package org.emergent.maven.gitver.core.version;
 
+import static org.emergent.maven.gitver.core.Util.VERSION_REGEX;
+
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -11,8 +13,6 @@ import lombok.experimental.Tolerate;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.emergent.maven.gitver.core.Constants;
 import org.emergent.maven.gitver.core.Util;
-
-import static org.emergent.maven.gitver.core.Util.VERSION_REGEX;
 
 @Value
 @Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")

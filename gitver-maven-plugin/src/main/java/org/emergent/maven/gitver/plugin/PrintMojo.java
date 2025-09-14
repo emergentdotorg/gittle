@@ -11,11 +11,11 @@ import org.apache.maven.shared.utils.logging.MessageUtils;
 @Mojo(name = "print", defaultPhase = LifecyclePhase.VALIDATE)
 public class PrintMojo extends AbstractGitverMojo {
 
-  @Override
-  protected void execute0() throws MojoExecutionException, MojoFailureException {
-    Map<String, String> properties = getVersionStrategy().toProperties();
-    MessageBuilder builder = MessageUtils.buffer().a("properties:");
-    properties.forEach((k,v) -> builder.newline().format("	%s=%s", k, v));
-    getLog().info("Gitver " + builder);
-  }
+    @Override
+    protected void execute0() throws MojoExecutionException, MojoFailureException {
+        Map<String, String> properties = getVersionStrategy().toProperties();
+        MessageBuilder builder = MessageUtils.buffer().a("properties:");
+        properties.forEach((k, v) -> builder.newline().format("	%s=%s", k, v));
+        getLog().info("Gitver " + builder);
+    }
 }

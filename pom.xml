@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.emergent.maven.plugins</groupId>
@@ -11,7 +12,7 @@
   <description>Tools for generating and manipulating maven project versions from Git logs</description>
   <url>https://github.com/emergentdotorg/gitver-maven-tools</url>
   <inceptionYear>2025</inceptionYear>
-
+  
   <organization>
     <name>Emergent.org</name>
     <url>https://github.com/emergentdotorg</url>
@@ -259,13 +260,11 @@
         <version>2.46.1</version>
         <configuration>
           <java>
-            <!-- optional: limit format enforcement to just the files changed by this feature branch -->
-            <!--<ratchetFrom>origin/main</ratchetFrom>-->
             <palantirJavaFormat>
-              <version>2.39.0</version>                     <!-- optional -->
-              <style>PALANTIR</style>                       <!-- or AOSP/GOOGLE (optional) -->
+              <version>2.74.0</version>
+              <style>PALANTIR</style>
               <formatJavadoc>false
-              </formatJavadoc>          <!-- defaults to false (optional, requires at least Palantir 2.39.0) -->
+              </formatJavadoc>
             </palantirJavaFormat>
           </java>
         </configuration>

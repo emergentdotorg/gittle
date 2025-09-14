@@ -1,13 +1,5 @@
 package org.emergent.maven.gitver.core.version;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import lombok.Builder;
-import lombok.Getter;
-import org.emergent.maven.gitver.core.GitverConfig;
-import org.emergent.maven.gitver.core.Mapper;
-
 import static org.emergent.maven.gitver.core.Constants.GITVER_BRANCH;
 import static org.emergent.maven.gitver.core.Constants.GITVER_COMMIT_NUMBER;
 import static org.emergent.maven.gitver.core.Constants.GITVER_HASH;
@@ -16,6 +8,14 @@ import static org.emergent.maven.gitver.core.Constants.GITVER_MAJOR;
 import static org.emergent.maven.gitver.core.Constants.GITVER_MINOR;
 import static org.emergent.maven.gitver.core.Constants.GITVER_PATCH;
 import static org.emergent.maven.gitver.core.Constants.GITVER_VERSION;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import lombok.Builder;
+import lombok.Getter;
+import org.emergent.maven.gitver.core.GitverConfig;
+import org.emergent.maven.gitver.core.Mapper;
 
 @Getter
 @Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
