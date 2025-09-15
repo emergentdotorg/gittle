@@ -29,10 +29,6 @@ import org.emergent.maven.gitver.core.Util;
 
 public class TagProvider {
 
-    // private static final Predicate<String> TAG_REF_NAME_PREDICATE = VERSION_REGEX.asMatchPredicate();
-    // private static final Predicate<Ref> TAG_REF_PREDICATE =
-    //   ref -> TAG_REF_NAME_PREDICATE.test(ref.getLeaf().getName());
-
     private final GitverConfig config;
     private final Git git;
     private final Supplier<Map<ObjectId, List<ComparableVersion>>> tagMap;

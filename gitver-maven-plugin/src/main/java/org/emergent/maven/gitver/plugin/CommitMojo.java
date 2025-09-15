@@ -1,89 +1,35 @@
 package org.emergent.maven.gitver.plugin;
 
-import static org.emergent.maven.gitver.core.Constants.GV_KEYWORDS_MAJOR;
-import static org.emergent.maven.gitver.core.Constants.GV_KEYWORDS_MINOR;
-import static org.emergent.maven.gitver.core.Constants.GV_KEYWORDS_PATCH;
-
 import java.util.Objects;
-import java.util.Optional;
 import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.git.GitUtil;
 
-
-public abstract class CommitMojo extends AbstractGitverMojo {
-
-  private static final String KEYWORD_TOKEN = "[%k]";
-
-  @Setter
-  @Parameter(name = "message", property = "gv.commitMessage", defaultValue = "chore(release): " + KEYWORD_TOKEN)
-  private String message;
-
-  @Setter
-  @Parameter(defaultValue = "${session}", required = true, readonly = true)
-  private MavenSession mavenSession;
-
-  protected void executeIt(String keyword) throws MojoExecutionException, MojoFailureException {
-    if (!Objects.equals(mavenSession.getTopLevelProject(), mavenProject)) {
-      getLog().debug("Skipping CommitMojo in child module: " + mavenProject.getArtifactId());
-      return;
-    }
-    String msg = message;
-    if (!msg.contains(KEYWORD_TOKEN)) {
-      msg = msg + " " + KEYWORD_TOKEN;
-    }
-    keyword = StringUtils.substringBefore(keyword, ",");
-    String resolvedMessage = msg.replace(KEYWORD_TOKEN, keyword);
-    try {
-      GitUtil gitutil = GitUtil.getInstance(mavenProject.getBasedir());
-      gitutil.executeCommit(resolvedMessage);
-    } catch (GitverException e) {
-      throw new MojoFailureException(e.getMessage(), e);
-    }
-  }
-
-  @Mojo(name = "commit-major")
-  public static class VersionCommitMajorMojo extends CommitMojo {
+public class CommitMojo extends AbstractGitverMojo {
 
     @Setter
-    @Parameter(name = "keyword", property = GV_KEYWORDS_MAJOR)
-    private String keyword;
+    @Parameter(name = "message", property = "gv.commitMessage", defaultValue = "Empty Commit")
+    private String message;
+
+    @Setter
+    @Parameter(defaultValue = "${session}", required = true, readonly = true)
+    private MavenSession mavenSession;
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getMajor()));
+        if (!Objects.equals(mavenSession.getTopLevelProject(), mavenProject)) {
+            getLog().debug("Skipping CommitMojo in child module: " + mavenProject.getArtifactId());
+            return;
+        }
+        try {
+            GitUtil gitutil = GitUtil.getInstance(mavenProject.getBasedir());
+            gitutil.executeCommit(message);
+        } catch (GitverException e) {
+            throw new MojoFailureException(e.getMessage(), e);
+        }
     }
-  }
-
-  @Mojo(name = "commit-minor")
-  public static class VersionCommitMinorMojo extends CommitMojo {
-
-    @Setter
-    @Parameter(name = "keyword", property = GV_KEYWORDS_MINOR)
-    private String keyword;
-
-    @Override
-    protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getMinor()));
-    }
-  }
-
-  @Mojo(name = "commit-patch")
-  public static class VersionCommitPatchMojo extends CommitMojo {
-
-    @Setter
-    @Parameter(name = "keyword", property = GV_KEYWORDS_PATCH)
-    private String keyword;
-
-    @Override
-    protected void execute0() throws MojoExecutionException, MojoFailureException {
-      executeIt(Optional.ofNullable(keyword).orElseGet(() -> getConfig().getKeywords().getPatch()));
-    }
-  }
 }

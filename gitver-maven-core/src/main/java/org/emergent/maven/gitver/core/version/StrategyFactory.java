@@ -18,7 +18,6 @@ import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.git.GitExec;
 import org.emergent.maven.gitver.core.git.TagProvider;
-import org.emergent.maven.gitver.core.version.PatternStrategy.Builder;
 
 public class StrategyFactory {
 
@@ -44,7 +43,7 @@ public class StrategyFactory {
 
         ObjectId headId = requireNonNull(repository.resolve(Constants.HEAD), "headId is null");
 
-        Builder builder = PatternStrategy.builder().setConfig(config);
+        PatternStrategy.Builder builder = PatternStrategy.builder().setConfig(config);
 
         int commits = 0;
         for (RevCommit commit : git.log().add(headId).call()) {

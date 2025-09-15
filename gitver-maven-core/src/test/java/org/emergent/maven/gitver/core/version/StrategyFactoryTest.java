@@ -2,6 +2,7 @@ package org.emergent.maven.gitver.core.version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Value;
@@ -94,6 +95,21 @@ public class StrategyFactoryTest {
         @Override
         public String toString() {
             return methodName;
+        }
+    }
+
+    public enum VersionIncrementType {
+        MAJOR,
+        MINOR,
+        PATCH,
+        COMMIT;
+
+        public String getMojoName() {
+            String name = "commit";
+            if (this != COMMIT) {
+                name += "-" + this.name().toLowerCase(Locale.ROOT);
+            }
+            return name;
         }
     }
 }

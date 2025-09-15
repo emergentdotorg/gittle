@@ -14,25 +14,24 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.Mapper;
-import org.emergent.maven.gitver.core.Util;
 
 @Value
 @Accessors(fluent = true)
-@Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
+@lombok.Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
 public class PatternStrategy implements VersionStrategy {
 
     public static final String VERSION_PATTERN_DEF = "%t(-%B)(-%c)(-%S)+%h(.%d)";
 
     @NonNull GitverConfig config;
     @NonNull RefData ref;
-    @NonNull String tag;
+    @lombok.Builder.Default
+    @NonNull String tag = "0.0.0";
     int commits;
     boolean dirty;
 
@@ -91,17 +90,6 @@ public class PatternStrategy implements VersionStrategy {
         return String.format(
           "%s [branch: %s, version: %s, hash: %s]",
           getClass().getSimpleName(), ref.getBranch(), toVersionString(), ref.getHash());
-    }
-
-    public static class Builder {
-
-        public Builder setConfig(GitverConfig config) {
-            if (Util.isEmpty(this.tag)) {
-                setTag(config.getVersionInitial());
-            }
-            this.config = config;
-            return this;
-        }
     }
 
     @Getter

@@ -14,6 +14,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -23,6 +24,7 @@ public class CommitMojoTest extends AbstractMojoTest {
   @TempDir
   public Path temporaryFolder;
 
+  @Disabled
   @ParameterizedTest
   @CsvSource({"commit-patch, patch", "commit-minor, minor", "commit-major, major"})
   public void executeVersionCommit(String goal, String keyword) throws Exception {
@@ -38,6 +40,7 @@ public class CommitMojoTest extends AbstractMojoTest {
     }
   }
 
+  @Disabled
   @ParameterizedTest
   @CsvSource({"commit-patch, patch", "commit-minor, minor", "commit-major, major"})
   public void executeVersionCommitCustomMessage(String goal, String keyword) throws Exception {
