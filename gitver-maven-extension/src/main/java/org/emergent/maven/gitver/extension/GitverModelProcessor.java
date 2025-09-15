@@ -1,5 +1,8 @@
 package org.emergent.maven.gitver.extension;
 
+import static org.emergent.maven.gitver.extension.ExtensionUtil.$_REVISION;
+import static org.emergent.maven.gitver.extension.ExtensionUtil.REVISION;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +43,6 @@ import org.emergent.maven.gitver.core.Coordinates;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
-import org.emergent.maven.gitver.core.version.KeywordsConfig;
 import org.emergent.maven.gitver.core.version.StrategyFactory;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 import org.slf4j.Logger;
@@ -60,6 +62,16 @@ public class GitverModelProcessor extends DefaultModelProcessor {
     private final Set<Path> relatedPoms = new HashSet<>();
     private final AtomicReference<VersionStrategy> strategyRef = new AtomicReference<>();
     private final AtomicBoolean initialized = new AtomicBoolean(false);
+
+    private final boolean addProperties;
+    private final boolean addPlugin;
+    private final boolean configurePlugin;
+
+    public GitverModelProcessor() {
+        addProperties = true;
+        addPlugin = false;
+        configurePlugin = false;
+    }
 
     @Override
     public Model read(File input, Map<String, ?> options) throws IOException {
@@ -93,9 +105,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
         }
 
         // This model processor is invoked for every POM on the classpath, including the plugins.
-        // The first execution is with the project's pom though. Use first initialized flag to avoid processing other
-        // poms.
-
+        // The first execution is with the project's pom though. We use strategyRef to avoid processing other poms.
         VersionStrategy strategy = strategyRef.updateAndGet(curStrat -> {
             if (curStrat != null) return curStrat;
             return getVersionStrategy(projectModel);
@@ -135,7 +145,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
     private void findRelatedProjects(Model model) {
         Path basedir = model.getProjectDirectory().toPath();
         LOGGER.debug("Finding related projects for {} {}", model.getArtifactId(), basedir);
-        // Add main project
+        // Add main project absolute path
         relatedPoms.add(model.getPomFile().toPath());
         // Find modules
         List<Path> modulePoms = model.getModules().stream()
@@ -153,53 +163,54 @@ public class GitverModelProcessor extends DefaultModelProcessor {
         return builder.build();
     }
 
-    private void processRelatedProjects(Model projectModel, VersionStrategy versionStrategy) {
-        String versionString = versionStrategy.toVersionString();
+    private void processRelatedProjects(Model projectModel, VersionStrategy strategy) {
+        String versionString = strategy.toVersionString();
 
-        Path modelPath = projectModel.getProjectDirectory().toPath();
-        File modelPomFile = projectModel.getPomFile();
-        Path modelPomPath = modelPomFile.toPath();
-        LOGGER.debug("Processing model for {}", modelPomPath);
-
-        if (!relatedPoms.contains(modelPomPath)) return;
-        if (projectModel.getProperties().contains("gitver.version")) {
-            LOGGER.warn("Skipping repeat of {}", modelPomPath);
+        Path modelPomPath = Optional.ofNullable(projectModel.getPomFile()).map(File::toPath).orElse(null);
+        if (modelPomPath == null || !relatedPoms.contains(modelPomPath)) {
             return;
         }
-
-        Optional<Parent> parent = Optional.ofNullable(projectModel.getParent());
-        String groupId = projectModel.getGroupId();
-        if (groupId == null) {
-            groupId = parent.map(Parent::getGroupId).orElse(null);
-        }
+        LOGGER.debug("Processing model for {}", modelPomPath);
 
         LOGGER.debug(
                 "Project {}:{}, Computed version: {}",
-                groupId,
+                getGroupId(projectModel).orElse(""),
                 projectModel.getArtifactId(),
                 MessageUtils.buffer().strong(versionString));
 
-        if (projectModel.getVersion() != null) {
+        Optional<String> projectVersion = Optional.ofNullable(projectModel.getVersion());
+        if (projectVersion.filter($_REVISION::equals).isEmpty()) {
             projectModel.setVersion(versionString);
         }
 
-        parent.ifPresent(p -> {
-            Path parentPomPath = modelPath.resolve(p.getRelativePath()).normalize();
-            if (Files.exists(parentPomPath) && relatedPoms.contains(parentPomPath)) {
-                LOGGER.info("Setting parent {} version to {}", p, versionString);
-                p.setVersion(versionString);
-            } else {
-                LOGGER.debug("Parent {} is not part of this build. Skipping version change for parent.", p);
-            }
+        Optional<String> parentVersion = Optional.ofNullable(projectModel.getParent()).map(Parent::getVersion);
+        Optional.ofNullable(projectModel.getParent())
+          .filter(parent -> !$_REVISION.equals(parent.getVersion()))
+          .filter(parent -> Objects.nonNull(parent.getRelativePath()))
+          .ifPresent(parent -> {
+              Path parentPath = projectModel.getProjectDirectory().toPath().resolve(parent.getRelativePath());
+              if (Files.exists(parentPath) && relatedPoms.contains(parentPath.normalize())) {
+                  LOGGER.info("Setting parent {} version to {}", parent, versionString);
+                  parent.setVersion(versionString);
+              } else {
+                  LOGGER.debug("Parent {} is not part of this build. Skipping version change for parent.", parent);
+              }
         });
 
-        Map<String, String> strategyProperties = versionStrategy.toProperties();
-        LOGGER.info("Adding generated properties to project model: {}", formatProperties(strategyProperties));
-        projectModel.getProperties().putAll(strategyProperties);
-        addBuildPlugin(projectModel);
+        if (addProperties) {
+            Map<String, String> newProps = strategy.toProperties();
+            LOGGER.info("Adding generated properties to project model: {}", formatProperties(newProps));
+            projectModel.getProperties().putAll(newProps);
+        }
+        if ($_REVISION.equals(projectVersion.orElse(parentVersion.orElse(null)))) {
+            projectModel.getProperties().put(REVISION, versionString);
+        }
+        if (addPlugin) {
+            addBuildPlugin(projectModel, strategy);
+        }
     }
 
-    private void addBuildPlugin(Model projectModel) {
+    private void addBuildPlugin(Model projectModel, VersionStrategy strategy) {
         Coordinates coordinates = Util.getPluginCoordinates();
         LOGGER.debug("Adding build plugin version {}", coordinates);
 
@@ -239,28 +250,37 @@ public class GitverModelProcessor extends DefaultModelProcessor {
                 .build()));
 
         if (found.isEmpty()) {
+            if (configurePlugin) {
+                addPluginConfiguration(plugin, strategy);
+            }
             pluginMgmt.getPlugins().add(0, plugin);
         }
     }
 
-    private void addPluginConfiguration(Plugin plugin, GitverConfig config) {
-        // Version keywords are used by version commit goals.
-        KeywordsConfig keywords = config.getKeywords();
-        String configXml = String.format( // language=xml
-                """
+    private static void addPluginConfiguration(Plugin plugin, VersionStrategy strategy) {
+        GitverConfig config = strategy.config();
+        String configXml = String.format(
+          // language=xml
+          """
           <configuration>
-            <majorKey>%s</majorKey>
-            <minorKey>%s</minorKey>
-            <patchKey>%s</patchKey>
-            <useRegex>%s</useRegex>
+            <tagPattern>%s</tagPattern>
           </configuration>
-        """,
-                keywords.getMajor(), keywords.getMinor(), keywords.getPatch(), keywords.isRegex());
+          """,
+          config.getTagPattern()
+        );
         try {
             Xpp3Dom configDom = Xpp3DomBuilder.build(new StringReader(configXml));
             plugin.setConfiguration(configDom);
         } catch (XmlPullParserException | IOException e) {
             throw new GitverException(e.getMessage(), e);
         }
+    }
+
+    private static Optional<String> getGroupId(Model projectModel) {
+        Optional<String> groupId = Optional.ofNullable(projectModel.getGroupId());
+        if (groupId.isEmpty()) {
+            groupId = Optional.ofNullable(projectModel.getParent()).map(Parent::getGroupId);
+        }
+        return groupId;
     }
 }

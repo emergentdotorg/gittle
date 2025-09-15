@@ -29,11 +29,11 @@ public class GitverConfigTest {
   @Test
   public void setMiscellaneous() {
     GitverConfig config = GitverConfig.builder()
-      .setVersionPattern("%M.%m.%p(-%c)")
+      .setVersionPattern("%t(-%c)")
       .setVersionOverride("1.2.3-SNAPSHOT")
       .build();
     assertThat(config)
       .extracting("versionPattern", "versionOverride")
-      .containsExactly("%M.%m.%p(-%c)", "1.2.3-SNAPSHOT");
+      .containsExactly("%t(-%c)", "1.2.3-SNAPSHOT");
   }
 }

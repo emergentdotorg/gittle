@@ -40,7 +40,7 @@ public class AbstractGitverMojoTest {
 
   @Test
   public void replaceVersionToken() {
-    assertThat(testMojo.replaceTokens("v%v", new OverrideStrategy("1.2.3")))
+      assertThat(testMojo.replaceTokens("v%v", new OverrideStrategy("1.2.3")))
       .isEqualTo("v1.2.3");
   }
 }

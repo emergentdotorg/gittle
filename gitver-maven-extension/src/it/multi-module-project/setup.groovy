@@ -25,7 +25,7 @@ static ArrayList<String> exec(String[] env, File path, String execcmd, String[] 
   def proc = execcmd.execute(env, path)
   def inStream = proc.outputStream
 
-  subcmds.each { cm ->
+  subcmds.each {cm ->
     inStream.write((cm + '\n').getBytes(encoding))
     inStream.flush()
   }
@@ -46,7 +46,8 @@ static void bash(File path, String[] subcmds) {
 def keyword = "[major]"
 
 bash(dirbase, [
-  "echo PWD=\${PWD}",
-  "git init --initial-branch main .",
-  "git commit --allow-empty -m \'chore(release): $keyword\'"
+    "echo PWD=\${PWD}",
+    "git init --initial-branch main .",
+    "git commit --allow-empty -m \'chore(release): $keyword\'",
+    "git tag \'v1.0.0\'"
 ] as String[])

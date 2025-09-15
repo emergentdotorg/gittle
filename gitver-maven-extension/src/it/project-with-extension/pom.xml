@@ -8,4 +8,5 @@
   <groupId>org.emergent.maven.gitver.its</groupId>
   <artifactId>gitver-extension-test</artifactId>
   <version>0.0.0</version>
+  <packaging>pom</packaging>
 </project>

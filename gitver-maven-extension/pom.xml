@@ -137,10 +137,11 @@
               <scope>test</scope>
               <cloneClean>true</cloneClean>
               <showErrors>true</showErrors>
+              <streamLogs>true</streamLogs>
               <projectsDirectory>src/it</projectsDirectory>
               <preBuildHookScript>setup</preBuildHookScript>
               <postBuildHookScript>verify</postBuildHookScript>
-              <settingsFile>src/it/settings.xml</settingsFile>
+              <settingsFile>${project.basedir}/src/it/settings.xml</settingsFile>
               <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
               <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
             </configuration>

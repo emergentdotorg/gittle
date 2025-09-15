@@ -142,22 +142,20 @@ The following example will generate versions as `major.minor.patch+shorthash`, e
 .Example configuration for version pattern in extension mode
 
 ```properties
-gv.version.pattern=%M.%m.%p+%h
+gv.version.pattern=%t+%h
 ```
 
 Available Tokens for Version Pattern
 
-| Token          | Description                    | Example                                                                                                                          |
-|----------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| %M             | Major Version                  | **1**.y.z                                                                                                                        |
-| %m             | Minor Version                  | x.**1**.z                                                                                                                        |
-| %p             | Patch Version                  | x.y.**1**                                                                                                                        |
-| %P             | Non-Zero Commit adjusted patch | Given _%M.%m.%P(-SNAPSHOT)_ with _%M=1_, _%m=2_, _%p=3_ <br/>when c == 0 -> _1.2.3_ <br/>when c > 0, = 5 -> _1.2.**4-SNAPSHOT**_ |
-| %c             | Commit count                   | x.y.z-**4**                                                                                                                      |
-| ([anything]%c) | Non-Zero Commit count          | Given _%M.%m.%p(-%c)_ with _%M=1_, _%m=2_, _%p=3_ <br/>when c == 0 -> _1.2.3_ <br/>when c > 0, = 5 -> _1.2.3-**5**_              |
-| %b             | Branch name                    | _%M.%m.%p+%b_ -> _1.2.3+**main**_                                                                                                |
-| %H             | Long Hash Ref                  | _%M.%m.%p+%H_ -> _1.2.3+**b5f600c40f362d9977132e8bf7398d2cdc745c28**_                                                            |
-| %h             | Short Hash Ref                 | _%M.%m.%p+%H_ -> _1.2.3+**a5a29f8**_                                                                                             |
+| Token          | Description             | Example                                                                                                      |
+|----------------|-------------------------|--------------------------------------------------------------------------------------------------------------|
+| %t             | Major, minor and patch  | **1.2.3**                                                                                                    |
+| %c             | Commit count            | x.y.z-**4**                                                                                                  |
+| ([anything]%c) | Non-zero commit count   | Given _%t(-%c)_ with _%t=1.2.3_ <br/>when c == 0 -> _1.2.3_ <br/>when c > 0, = 5 -> _1.2.3-**5**_            |
+| %b             | Branch name             | _%t+%b_ -> _1.2.3+**main**_                                                                                  |
+| %B             | Non-release branch name | Given _%t(-%B)_ with _%t=1.2.3_ <br/>when B == main -> _1.2.3_ <br/>when B = devel, = 5 -> _1.2.3-**devel**_ |
+| %H             | Long hash ref           | _%t+%H_ -> _1.2.3+**b5f600c40f362d9977132e8bf7398d2cdc745c28**_                                              |
+| %h             | Short hash ref          | _%t+%H_ -> _1.2.3+**a5a29f8**_                                                                               |
 
 ## Keyword Customization
 

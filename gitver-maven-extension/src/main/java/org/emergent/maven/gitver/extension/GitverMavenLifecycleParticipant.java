@@ -1,15 +1,12 @@
 package org.emergent.maven.gitver.extension;
 
 import static org.emergent.maven.gitver.core.Util.GITVER_POM_XML;
+import static org.emergent.maven.gitver.extension.ExtensionUtil.$_REVISION;
+import static org.emergent.maven.gitver.extension.ExtensionUtil.REVISION;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -17,11 +14,8 @@ import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.apache.maven.model.Parent;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,13 +51,10 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
         Path originalPomFile = originalModel.getPomFile().toPath().toAbsolutePath();
         Path gitverPomFile = originalPomFile.resolveSibling(GITVER_POM_XML);
         try {
-            Model gitverModel = readModelFromPom(originalPomFile);
-            // Update the new model with versions for artifact and parent if needed.
-            String newVersion = originalModel.getVersion();
-            if (Objects.nonNull(gitverModel.getVersion())) gitverModel.setVersion(newVersion);
-            Optional.ofNullable(gitverModel.getParent()).ifPresent(parent -> parent.setVersion(newVersion));
+            Model gitverModel = ExtensionUtil.readModelFromPom(originalPomFile);
+            copyVersions(originalModel, gitverModel);
             // Now write the updated model out to a file so we can point the project to it.
-            writeModelToPom(gitverModel, gitverPomFile);
+            ExtensionUtil.writeModelToPom(gitverModel, gitverPomFile);
             project.setPomFile(gitverPomFile.toFile());
             LOGGER.debug("Updated project with newly generated gitver pom {}", gitverPomFile);
         } catch (Exception e) {
@@ -71,21 +62,39 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
         }
     }
 
-    private static Model readModelFromPom(Path pomPath) {
-        try (InputStream inputStream = Files.newInputStream(pomPath)) {
-            MavenXpp3Reader reader = new MavenXpp3Reader();
-            return reader.read(inputStream);
-        } catch (IOException | XmlPullParserException e) {
-            throw new GitverException(e.getMessage(), e);
-        }
-    }
 
-    private static void writeModelToPom(Model projectModel, Path newPomPath) {
-        try (Writer fileWriter = Files.newBufferedWriter(newPomPath, Charset.defaultCharset())) {
-            MavenXpp3Writer writer = new MavenXpp3Writer();
-            writer.write(fileWriter, projectModel);
-        } catch (IOException e) {
-            throw new GitverException(e.getMessage(), e);
-        }
+    @SuppressWarnings("UnusedReturnValue")
+    public static boolean copyVersions(Model sourceModel, Model targetModel) {
+        Optional<Model> source = Optional.ofNullable(sourceModel);
+
+        Optional<String> sourceVersion = source.map(Model::getVersion);
+        boolean versionUpdated = sourceVersion.map(newValue -> {
+            String original = targetModel.getVersion();
+            targetModel.setVersion(newValue);
+            return newValue.equals(original);
+        }).orElse(false);
+
+        Optional<String> sourceParentVersion = source.map(Model::getParent).map(Parent::getVersion);
+        boolean parentUpdated = sourceParentVersion.map(newValue -> {
+            Parent parent = Optional.ofNullable(targetModel.getParent()).orElseGet(() -> {
+                targetModel.setParent(new Parent());
+                return targetModel.getParent();
+            });
+            String original = parent.getVersion();
+            parent.setVersion(newValue);
+            return newValue.equals(original);
+        }).orElse(false);
+
+        Optional<Object> sourceRevisionProperty = source.map(Model::getProperties).map(p -> p.get(REVISION));
+        boolean revisionUpdated = sourceRevisionProperty.map(newValue -> {
+            Properties properties = Optional.ofNullable(targetModel.getProperties()).orElseGet(() -> {
+                targetModel.setProperties(new Properties());
+                return targetModel.getProperties();
+            });
+            Object original = properties.put($_REVISION, newValue);
+            return !newValue.equals(original);
+        }).orElse(false);
+
+        return versionUpdated | parentUpdated | revisionUpdated;
     }
 }

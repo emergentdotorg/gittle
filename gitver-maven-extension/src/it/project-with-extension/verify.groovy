@@ -1,3 +1,5 @@
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -9,5 +11,53 @@ if (!binding.hasVariable('basedir')) {
 File dirbase = basedir;
 Path basepath = dirbase.toPath().toAbsolutePath();
 
-def gitDotDir = basepath.resolve(".git" )
+//def userProperties = context.get('userProperties')
+//def server = new MockServer()
+//userProperties.put('serverHost', server.getHost())
+//userProperties.put('serverPort', server.getPort())
+
+//File scriptDirFile = new File(getClass().protectionDomain.codeSource.location.path).getParentFile().getAbsoluteFile();
+//def workPath = scriptDirFile.toPath()
+
+static ArrayList<String> exec(String[] env, File path, String execcmd, String[] subcmds) {
+  Charset encoding = StandardCharsets.UTF_8;
+  def outStream = new ByteArrayOutputStream()
+  def errStream = new ByteArrayOutputStream()
+  def proc = execcmd.execute(env, path)
+  def inStream = proc.outputStream
+
+  subcmds.each {cm ->
+    inStream.write((cm + '\n').getBytes(encoding))
+    inStream.flush()
+  }
+
+  inStream.write('exit\n'.getBytes(encoding))
+  inStream.flush()
+  proc.consumeProcessOutput(outStream, errStream)
+  proc.waitFor()
+  return [new String(outStream.toByteArray(), encoding), new String(errStream.toByteArray(), encoding)]
+}
+
+static void bash(File path, String[] subcmds) {
+  def out = exec(null, path, "/bin/bash", subcmds);
+  println "OUT:\n" + out[0]
+  println "ERR:\n" + out[1]
+}
+
+//bash(dirbase, [
+//  "ls -alh",
+//] as String[])
+
+def gitDotDir = basepath.resolve(".git")
 assert Files.exists(gitDotDir)
+
+def gitverPom = basepath.resolve(".gitver.pom.xml")
+assert Files.exists(gitverPom)
+def gitverPomBody = Files.readString(gitverPom, StandardCharsets.UTF_8)
+assert gitverPomBody.contains("<version>1.0.0</version>")
+
+def buildLog = basepath.resolve("build.log")
+assert Files.exists(buildLog)
+def buildLogBody = Files.readString(buildLog, StandardCharsets.UTF_8)
+assert buildLogBody.contains("gitver.version=1.0.0")
+assert buildLogBody.contains("Building gitver-extension-test 1.0.0")

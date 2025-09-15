@@ -1,17 +1,18 @@
 package org.emergent.maven.gitver.core.git;
 
-import static org.emergent.maven.gitver.core.Util.VERSION_REGEX;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
@@ -19,52 +20,65 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevTag;
+import org.emergent.maven.gitver.core.GitverConfig;
+import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
-import org.emergent.maven.gitver.core.version.BasicVersion;
 
 public class TagProvider {
 
-    private static final Predicate<String> TAG_REF_NAME_PREDICATE = VERSION_REGEX.asMatchPredicate();
-    private static final Predicate<Ref> TAG_REF_PREDICATE =
-            ref -> TAG_REF_NAME_PREDICATE.test(ref.getLeaf().getName());
+    // private static final Predicate<String> TAG_REF_NAME_PREDICATE = VERSION_REGEX.asMatchPredicate();
+    // private static final Predicate<Ref> TAG_REF_PREDICATE =
+    //   ref -> TAG_REF_NAME_PREDICATE.test(ref.getLeaf().getName());
 
-    private final Repository repository;
-    private final Map<ObjectId, List<Ref>> tagMap;
+    private final GitverConfig config;
+    private final Git git;
+    private final Supplier<Map<ObjectId, List<ComparableVersion>>> tagMap;
 
-    public TagProvider(Git git) throws GitAPIException {
-        this.repository = git.getRepository();
+    public TagProvider(GitverConfig config, Git git) {
+        this.config = config;
+        this.git = git;
+        this.tagMap = Util.memoize(this::createTagMap);
+    }
+
+    private Map<ObjectId, List<ComparableVersion>> createTagMap() {
         // create a map of commit-refs and corresponding list of tags
-        this.tagMap = git.tagList().call().stream()
-                .filter(TAG_REF_PREDICATE)
-                .collect(Collectors.groupingBy(this::getObjectId, Collectors.toList()));
+        try {
+            String tagPattern = config.getTagPattern();
+            if (!tagPattern.startsWith("^")) {
+                tagPattern = "^" + tagPattern;
+            }
+            if (!tagPattern.endsWith("$")) {
+                tagPattern = tagPattern + "$";
+            }
+            Pattern pattern = Pattern.compile(tagPattern);
+
+            return git.tagList().call().stream()
+              .map(ref -> {
+                  String refName = ref.getLeaf().getName();
+                  String tagName = StringUtils.substringAfter(refName, "refs/tags/");
+                  return Map.entry(ref, pattern.matcher(tagName));
+              })
+              .filter(entry -> entry.getValue().matches())
+              .collect(Collectors.groupingBy(
+                entry -> getObjectId(entry.getKey()),
+                Collectors.mapping(
+                  entry -> new ComparableVersion(entry.getValue().group(1)),
+                  Collectors.toList())
+              ));
+        } catch (GitAPIException e) {
+            throw new GitverException(e);
+        }
     }
 
     /**
-     * Returns a map of descending (highest to lowest) tags pointing to this commit.
+     * Returns the tag with the greatest semantic version that points to this commit.
      */
-    public LinkedList<BasicVersion> getDescendingTags(RevCommit commit) {
-        return tagMap.getOrDefault(commit.getId(), Collections.emptyList()).stream()
-                .map(ref -> ref.getLeaf().getName())
-                .map(BasicVersion::parse)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .sorted(BasicVersion.COMPARATOR.reversed())
-                .collect(Collectors.toCollection(LinkedList::new));
-    }
-
-    private BasicVersion getSimpleVer(Ref tag) {
-        BasicVersion.Builder builder = BasicVersion.builder();
-        Matcher matcher = VERSION_REGEX.matcher(tag.getLeaf().getName());
-        if (matcher.matches()) {
-            builder.setMajor(Integer.parseInt(matcher.group("major")))
-                    .setMinor(Integer.parseInt(matcher.group("minor")))
-                    .setPatch(Integer.parseInt(matcher.group("patch")));
-        }
-        return builder.build();
+    public Optional<ComparableVersion> getTag(RevCommit commit) {
+        List<ComparableVersion> tags = tagMap.get().getOrDefault(commit.getId(), Collections.emptyList());
+        return tags.stream().max(Comparator.naturalOrder());
     }
 
     public ObjectId getObjectId(Ref ref) {
@@ -94,7 +108,7 @@ public class TagProvider {
     }
 
     private RevObject getRevObject(ObjectId objectId) {
-        try (ObjectReader reader = repository.newObjectReader()) {
+        try (ObjectReader reader = git.getRepository().newObjectReader()) {
             //    try {
             ObjectLoader loader = reader.open(objectId);
             int objectType = loader.getType();
