@@ -92,7 +92,8 @@
             <sortExecutions>true</sortExecutions>
             <sortModules>true</sortModules>
             <sortOrderFile>${maven.multiModuleProjectDirectory}/emergent-sortpom-order.xml</sortOrderFile>
-            <sortPlugins>groupId,artifactId</sortPlugins>
+            <sortPlugins/>
+            <!--<sortPlugins>groupId,artifactId</sortPlugins>-->
             <sortProperties>true</sortProperties>
             <spaceBeforeCloseEmptyElement>false</spaceBeforeCloseEmptyElement>
           </configuration>
