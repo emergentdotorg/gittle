@@ -1,8 +1,6 @@
 package org.emergent.maven.gitver.plugin;
 
 import java.util.Map;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.shared.utils.logging.MessageUtils;
@@ -14,7 +12,7 @@ import org.emergent.maven.gitver.core.version.VersionStrategy;
 public class PropsMojo extends AbstractGitverMojo {
 
     @Override
-    protected void execute0() throws MojoExecutionException, MojoFailureException {
+    protected void execute0() {
         VersionStrategy strategy = getVersionStrategy();
         Map<String, String> properties = strategy.getPropertiesMap();
         getLog().info("Adding properties to project "

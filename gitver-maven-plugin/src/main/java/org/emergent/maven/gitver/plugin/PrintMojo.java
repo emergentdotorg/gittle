@@ -1,7 +1,5 @@
 package org.emergent.maven.gitver.plugin;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.shared.utils.logging.MessageUtils;
@@ -12,7 +10,7 @@ import org.emergent.maven.gitver.core.Util;
 public class PrintMojo extends AbstractGitverMojo {
 
     @Override
-    protected void execute0() throws MojoExecutionException, MojoFailureException {
+    protected void execute0() {
         getLog().info("Printing properties of project "
                 + MessageUtils.buffer()
                         .mojo(Coordinates.builder()

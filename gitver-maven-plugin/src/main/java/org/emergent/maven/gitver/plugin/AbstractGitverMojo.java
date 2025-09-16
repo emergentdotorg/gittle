@@ -7,6 +7,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.emergent.maven.gitver.core.GitverConfig;
+import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
 import org.emergent.maven.gitver.core.git.GitUtil;
 import org.emergent.maven.gitver.core.version.StrategyFactory;
@@ -24,10 +25,16 @@ public abstract class AbstractGitverMojo extends org.apache.maven.plugin.Abstrac
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        execute0();
+        try {
+            execute0();
+        } catch (MojoExecutionException | MojoFailureException | Error e) {
+            throw e;
+        } catch (Exception e) {
+            throw new GitverException(e.getMessage(), e);
+        }
     }
 
-    protected void execute0() throws MojoExecutionException, MojoFailureException {}
+    protected void execute0() throws Exception {}
 
     protected GitUtil getGitUtil() {
         return GitUtil.getInstance(mavenProject.getBasedir());

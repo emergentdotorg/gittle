@@ -3,7 +3,6 @@ package org.emergent.maven.gitver.plugin;
 import java.util.Objects;
 import lombok.Setter;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.emergent.maven.gitver.core.GitverException;
@@ -19,7 +18,7 @@ public class CommitMojo extends AbstractGitverMojo {
     private MavenSession mavenSession;
 
     @Override
-    protected void execute0() throws MojoExecutionException, MojoFailureException {
+    protected void execute0() throws Exception {
         if (!Objects.equals(mavenSession.getTopLevelProject(), mavenProject)) {
             getLog().debug("Skipping CommitMojo in child module: " + mavenProject.getArtifactId());
             return;

@@ -2,8 +2,6 @@ package org.emergent.maven.gitver.plugin;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.emergent.maven.gitver.core.GitverException;
@@ -28,7 +26,7 @@ public class TagMojo extends AbstractGitverMojo {
     private boolean failWhenExists;
 
     @Override
-    protected void execute0() throws MojoExecutionException, MojoFailureException {
+    protected void execute0() {
         VersionStrategy versionStrategy = getVersionStrategy();
         String tagName = replaceTokens(getNamePattern(), versionStrategy);
         String tagMessage = replaceTokens(getMessagePattern(), versionStrategy);
