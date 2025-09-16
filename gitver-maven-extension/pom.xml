@@ -170,6 +170,7 @@
               <cloneClean>true</cloneClean>
               <showErrors>true</showErrors>
               <streamLogs>true</streamLogs>
+              <parallelThreads>1C</parallelThreads>
               <projectsDirectory>src/it</projectsDirectory>
               <preBuildHookScript>setup</preBuildHookScript>
               <postBuildHookScript>verify</postBuildHookScript>
