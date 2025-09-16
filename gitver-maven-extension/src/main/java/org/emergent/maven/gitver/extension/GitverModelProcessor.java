@@ -1,9 +1,9 @@
 package org.emergent.maven.gitver.extension;
 
 import static org.apache.maven.shared.utils.logging.MessageUtils.buffer;
+import static org.emergent.maven.gitver.core.Util.join;
 import static org.emergent.maven.gitver.extension.ExtensionUtil.$_REVISION;
 import static org.emergent.maven.gitver.extension.ExtensionUtil.REVISION;
-import static org.emergent.maven.gitver.core.Util.join;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,8 +56,6 @@ import org.emergent.maven.gitver.core.version.VersionStrategy;
 @Singleton
 @Typed(ModelProcessor.class)
 public class GitverModelProcessor extends DefaultModelProcessor {
-
-    // private static final Logger log = LoggerFactory.getLogger(GitverModelProcessor.class);
 
     private final Set<Path> relatedPoms = new HashSet<>();
     private final AtomicReference<VersionStrategy> strategyRef = new AtomicReference<>();
@@ -120,13 +118,12 @@ public class GitverModelProcessor extends DefaultModelProcessor {
     private VersionStrategy getVersionStrategy(Model projectModel) {
         GitverConfig config = loadConfig(projectModel);
         Coordinates extensionGAV = Util.getExtensionCoordinates();
-        log.info(buffer()
-          .a("--- ")
-          .mojo(extensionGAV)
-          .a(" ")
-          .strong("[core-extension]")
-          .a(" ---")
-          .build());
+        log.info(buffer().a("--- ")
+                .mojo(extensionGAV)
+                .a(" ")
+                .strong("[core-extension]")
+                .a(" ---")
+                .build());
         File basedir = projectModel.getProjectDirectory();
         VersionStrategy versionStrategy = StrategyFactory.getVersionStrategy(basedir, config);
         findRelatedProjects(projectModel);
@@ -152,64 +149,66 @@ public class GitverModelProcessor extends DefaultModelProcessor {
         relatedPoms.add(model.getPomFile().toPath());
         // Find modules
         List<Path> modulePoms = model.getModules().stream()
-          .map(module -> basedir.resolve(module).resolve("pom.xml"))
-          .toList();
+                .map(module -> basedir.resolve(module).resolve("pom.xml"))
+                .toList();
         log.debug(
-          "Modules found:{}",
-          modulePoms.stream().map(Path::toString).collect(Collectors.joining("\n", "\n", "")));
+                "Modules found:{}",
+                modulePoms.stream().map(Path::toString).collect(Collectors.joining("\n", "\n", "")));
         relatedPoms.addAll(modulePoms);
     }
 
-    private void processRelatedProjects(Model projectModel, VersionStrategy strategy) {
+    private void processRelatedProjects(Model model, VersionStrategy strategy) {
         String versionString = strategy.toVersionString();
 
-        Path modelPomPath = Optional.ofNullable(projectModel.getPomFile()).map(File::toPath).orElse(null);
+        Path modelPomPath =
+                Optional.ofNullable(model.getPomFile()).map(File::toPath).orElse(null);
         if (modelPomPath == null || !relatedPoms.contains(modelPomPath)) {
             return;
         }
         log.debug("Processing model for {}", modelPomPath);
 
         Coordinates projectGav = Coordinates.builder()
-          .setGroupId(getGroupId(projectModel).orElse(""))
-          .setArtifactId(projectModel.getArtifactId())
-          .setVersion(versionString)
-          .build();
+                .setGroupId(getGroupId(model).orElse(""))
+                .setArtifactId(model.getArtifactId())
+                .setVersion(versionString)
+                .build();
 
         log.debug(
-          "Project {}:{}, Computed version: {}",
-          projectGav.getGroupId(),
-          projectGav.getArtifactId(),
-          buffer().strong(projectGav.getVersion()));
+                "Project {}:{}, Computed version: {}",
+                projectGav.getGroupId(),
+                projectGav.getArtifactId(),
+                buffer().strong(projectGav.getVersion()));
 
-        Optional<String> projectVersion = Optional.ofNullable(projectModel.getVersion());
+        Optional<String> projectVersion = Optional.ofNullable(model.getVersion());
         if (projectVersion.filter($_REVISION::equals).isEmpty()) {
-            projectModel.setVersion(versionString);
+            model.setVersion(versionString);
         }
 
-        Optional<String> parentVersion = Optional.ofNullable(projectModel.getParent()).map(Parent::getVersion);
-        Optional.ofNullable(projectModel.getParent())
-          .filter(parent -> !$_REVISION.equals(parent.getVersion()))
-          .filter(parent -> Objects.nonNull(parent.getRelativePath()))
-          .ifPresent(parent -> {
-              Path parentPath = projectModel.getProjectDirectory().toPath().resolve(parent.getRelativePath());
-              if (Files.exists(parentPath) && relatedPoms.contains(parentPath.normalize())) {
-                  log.info("Setting parent {} version to {}", parent, versionString);
-                  parent.setVersion(versionString);
-              } else {
-                  log.debug("Parent {} is not part of this build. Skipping version change for parent.", parent);
-              }
-          });
+        Optional<String> parentVersion = Optional.ofNullable(model.getParent()).map(Parent::getVersion);
+        Optional.ofNullable(model.getParent())
+                .filter(parent -> !$_REVISION.equals(parent.getVersion()))
+                .filter(parent -> Objects.nonNull(parent.getRelativePath()))
+                .ifPresent(parent -> {
+                    Path parentPath = model.getProjectDirectory().toPath().resolve(parent.getRelativePath());
+                    if (Files.exists(parentPath) && relatedPoms.contains(parentPath.normalize())) {
+                        log.info("Setting parent {} version to {}", parent, versionString);
+                        parent.setVersion(versionString);
+                    } else {
+                        log.debug("Parent {} is not part of this build. Skipping version change for parent.", parent);
+                    }
+                });
 
         if (addProperties) {
             Map<String, String> newProps = strategy.getPropertiesMap();
-            log.info("Adding properties to project {}", buffer().mojo(projectGav).a(join(newProps)));
-            projectModel.getProperties().putAll(newProps);
+            log.info(
+                    "Adding properties to project {}", buffer().mojo(projectGav).a(join(newProps)));
+            model.getProperties().putAll(newProps);
         }
         if ($_REVISION.equals(projectVersion.orElse(parentVersion.orElse(null)))) {
-            projectModel.getProperties().put(REVISION, versionString);
+            model.getProperties().put(REVISION, versionString);
         }
         if (addPlugin) {
-            addBuildPlugin(projectModel, strategy);
+            addBuildPlugin(model, strategy);
         }
     }
 
@@ -225,10 +224,10 @@ public class GitverModelProcessor extends DefaultModelProcessor {
             build.setPlugins(new ArrayList<>());
         }
         PluginManagement pluginMgmt = Optional.ofNullable(build.getPluginManagement())
-          .orElseGet(() -> {
-              build.setPluginManagement(new PluginManagement());
-              return build.getPluginManagement();
-          });
+                .orElseGet(() -> {
+                    build.setPluginManagement(new PluginManagement());
+                    return build.getPluginManagement();
+                });
         if (Optional.ofNullable(pluginMgmt.getPlugins()).isEmpty()) {
             pluginMgmt.setPlugins(new ArrayList<>());
         }
@@ -242,15 +241,14 @@ public class GitverModelProcessor extends DefaultModelProcessor {
         Plugin normPlugin = build.getPluginsAsMap().get(key);
         Plugin mgmtPlugin = pluginMgmt.getPluginsAsMap().get(key);
         Optional<Plugin> found =
-          Stream.of(normPlugin, mgmtPlugin).filter(Objects::nonNull).findFirst();
+                Stream.of(normPlugin, mgmtPlugin).filter(Objects::nonNull).findFirst();
 
-        found.ifPresent(existing -> log.warn(buffer()
-          .mojo(existing)
-          .warning(" version is different than ")
-          .mojo(coordinates)
-          .newline()
-          .a("This can introduce unexpected behaviors.")
-          .build()));
+        found.ifPresent(existing -> log.warn(buffer().mojo(existing)
+                .warning(" version is different than ")
+                .mojo(coordinates)
+                .newline()
+                .a("This can introduce unexpected behaviors.")
+                .build()));
 
         if (found.isEmpty()) {
             if (configurePlugin) {
@@ -263,14 +261,13 @@ public class GitverModelProcessor extends DefaultModelProcessor {
     private static void addPluginConfiguration(Plugin plugin, VersionStrategy strategy) {
         GitverConfig config = strategy.config();
         String configXml = String.format(
-          // language=xml
-          """
+                // language=xml
+                """
             <configuration>
               <tagPattern>%s</tagPattern>
             </configuration>
             """,
-          config.getTagPattern()
-        );
+                config.getTagPattern());
         try {
             Xpp3Dom configDom = Xpp3DomBuilder.build(new StringReader(configXml));
             plugin.setConfiguration(configDom);

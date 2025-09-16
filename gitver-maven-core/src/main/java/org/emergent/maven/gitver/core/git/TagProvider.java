@@ -52,18 +52,18 @@ public class TagProvider {
             Pattern pattern = Pattern.compile(tagPattern);
 
             return git.tagList().call().stream()
-              .map(ref -> {
-                  String refName = ref.getLeaf().getName();
-                  String tagName = StringUtils.substringAfter(refName, "refs/tags/");
-                  return Map.entry(ref, pattern.matcher(tagName));
-              })
-              .filter(entry -> entry.getValue().matches())
-              .collect(Collectors.groupingBy(
-                entry -> getObjectId(entry.getKey()),
-                Collectors.mapping(
-                  entry -> new ComparableVersion(entry.getValue().group(1)),
-                  Collectors.toList())
-              ));
+                    .map(ref -> {
+                        String refName = ref.getLeaf().getName();
+                        String tagName = StringUtils.substringAfter(refName, "refs/tags/");
+                        return Map.entry(ref, pattern.matcher(tagName));
+                    })
+                    .filter(entry -> entry.getValue().matches())
+                    .collect(Collectors.groupingBy(
+                            entry -> getObjectId(entry.getKey()),
+                            Collectors.mapping(
+                                    entry -> new ComparableVersion(
+                                            entry.getValue().group(1)),
+                                    Collectors.toList())));
         } catch (GitAPIException e) {
             throw new GitverException(e);
         }

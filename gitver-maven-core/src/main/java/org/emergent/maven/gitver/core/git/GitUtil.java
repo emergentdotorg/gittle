@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.NoHeadException;
@@ -16,32 +17,33 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.emergent.maven.gitver.core.GitverException;
+import org.emergent.maven.gitver.core.git.GitExec.ExecFunction;
 
 public class GitUtil {
 
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
     private static final File NULL_FILE = new File(IS_WINDOWS ? "NUL" : "/dev/null");
 
-    private final Path basePath;
+    private final File basePath;
     private final boolean useNative;
     private final Duration timeout;
 
-    private GitUtil(Path basedir) {
-        this(basedir, false);
+    public static GitUtil getInstance(Path dir) {
+        return getInstance(dir.toAbsolutePath().toFile());
     }
 
-    private GitUtil(Path basedir, boolean useNative) {
-        this.basePath = basedir.toAbsolutePath();
+    public static GitUtil getInstance(File basePath) {
+        return new GitUtil(basePath, false);
+    }
+
+    private GitUtil(File basedir, boolean useNative) {
+        this.basePath = basedir;
         this.useNative = useNative;
         this.timeout = Duration.ofSeconds(5);
     }
 
-    public static GitUtil getInstance(File dir) {
-        return getInstance(dir.toPath());
-    }
-
-    public static GitUtil getInstance(Path dir) {
-        return new GitUtil(dir.toAbsolutePath());
+    public boolean tagExists(String tagName) {
+        return execOp(git -> null != git.getRepository().findRef("refs/tags/" + tagName));
     }
 
     public String createTag(String tagName, String tagMessage, boolean force) {
@@ -53,10 +55,6 @@ public class GitUtil {
                     .call();
             return String.format("%s@%s", tag.getName(), tag.getObjectId().getName());
         });
-    }
-
-    public boolean tagExists(String tagName) {
-        return execOp(git -> null != git.getRepository().findRef("refs/tags/" + tagName));
     }
 
     public void executeCommit(String message) {
@@ -77,6 +75,7 @@ public class GitUtil {
                         .setHookErrorStream(ps)
                         .setHookOutputStream(ps)
                         .call();
+                Objects.requireNonNull(revCommit, "commit");
             } catch (Exception e) {
                 throw new GitverException(e.getMessage(), e);
             }
@@ -103,15 +102,15 @@ public class GitUtil {
         }
     }
 
-    public <R> R execOp(GitExec.Operation<Git, R> work) throws GitverException {
+    private <R> R execOp(ExecFunction<Git, R> work) throws GitverException {
         return GitExec.execOp(basePath, work);
     }
 
-    public void execOp(GitExec.ExecConsumer<Git> work) throws GitverException {
+    private void execOp(GitExec.ExecConsumer<Git> work) throws GitverException {
         GitExec.execOp(basePath, work);
     }
 
-    public String findGitDir() {
+    private String findGitDir() {
         return GitExec.findGitDir(basePath);
     }
 

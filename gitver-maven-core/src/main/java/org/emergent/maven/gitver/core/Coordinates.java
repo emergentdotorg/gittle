@@ -33,6 +33,7 @@ public class Coordinates {
                 .collect(Collectors.joining(":"));
     }
 
+    @SuppressWarnings("unused")
     public static class Builder {
         @Override
         public String toString() {

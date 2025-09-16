@@ -6,21 +6,8 @@ public class Constants {
     public static final String PROPERTY_INBOUND_PREFIX = "gv.";
     public static final String PROPERTY_OUTBOUND_PREFIX = "gitver.";
 
-    public static final String GV_INITIAL_MAJOR = "gv.initial.major";
-    public static final String GV_INITIAL_MINOR = "gv.initial.minor";
-    public static final String GV_INITIAL_PATCH = "gv.initial.patch";
-
-    public static final String GV_KEYWORDS_MAJOR = "gv.keywords.major";
-    public static final String GV_KEYWORDS_MINOR = "gv.keywords.minor";
-    public static final String GV_KEYWORDS_PATCH = "gv.keywords.patch";
-    public static final String GV_KEYWORDS_REGEX = "gv.keywords.regex";
-
-
     public static final String GV_TAG_PATTERN = "gv.tag.pattern";
     public static final String TAG_PATTERN_DEF = "v?([0-9]+\\.[0-9]+\\.[0-9]+)";
-
-    public static final String GV_VERSION_INITIAL = "gv.version.initial";
-    public static final String VERSION_INITAL_DEF = "0.0.0";
 
     public static final String GV_RELEASE_BRANCHES = "gv.version.initial";
     public static final String RELEASE_BRANCHES_DEF = "main,master";
@@ -34,9 +21,5 @@ public class Constants {
     public static final String GITVER_BRANCH = "gitver.branch";
     public static final String GITVER_HASH = "gitver.hash";
     public static final String GITVER_HASH_SHORT = "gitver.hash.short";
-    public static final String GITVER_MAJOR = "gitver.major";
-    public static final String GITVER_MINOR = "gitver.minor";
-    public static final String GITVER_PATCH = "gitver.patch";
     public static final String GITVER_COMMIT_NUMBER = "gitver.commitNumber";
-
 }

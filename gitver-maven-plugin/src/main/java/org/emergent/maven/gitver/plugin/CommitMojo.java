@@ -7,7 +7,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.emergent.maven.gitver.core.GitverException;
-import org.emergent.maven.gitver.core.git.GitUtil;
 
 public class CommitMojo extends AbstractGitverMojo {
 
@@ -26,8 +25,7 @@ public class CommitMojo extends AbstractGitverMojo {
             return;
         }
         try {
-            GitUtil gitutil = GitUtil.getInstance(mavenProject.getBasedir());
-            gitutil.executeCommit(message);
+            getGitUtil().executeCommit(message);
         } catch (GitverException e) {
             throw new MojoFailureException(e.getMessage(), e);
         }

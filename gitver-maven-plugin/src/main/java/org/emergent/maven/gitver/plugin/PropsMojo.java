@@ -17,13 +17,14 @@ public class PropsMojo extends AbstractGitverMojo {
     protected void execute0() throws MojoExecutionException, MojoFailureException {
         VersionStrategy strategy = getVersionStrategy();
         Map<String, String> properties = strategy.getPropertiesMap();
-        getLog().info("Adding properties to project " + MessageUtils.buffer()
-          .mojo(Coordinates.builder()
-            .setGroupId(mavenProject.getGroupId())
-            .setArtifactId(mavenProject.getArtifactId())
-            .setVersion(mavenProject.getVersion())
-            .build())
-          .a(Util.join(properties)));
+        getLog().info("Adding properties to project "
+                + MessageUtils.buffer()
+                        .mojo(Coordinates.builder()
+                                .setGroupId(mavenProject.getGroupId())
+                                .setArtifactId(mavenProject.getArtifactId())
+                                .setVersion(mavenProject.getVersion())
+                                .build())
+                        .a(Util.join(properties)));
         mavenProject.getProperties().putAll(properties);
     }
 }

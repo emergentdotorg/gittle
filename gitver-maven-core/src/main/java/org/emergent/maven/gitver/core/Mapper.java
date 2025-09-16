@@ -6,101 +6,55 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.TreeMap;
 
-@SuppressWarnings("UnusedReturnValue")
-public interface Mapper {
+public record Mapper(Map<String, String> map) {
 
-    static Mapper create() {
-        return create("");
+    public static Mapper create() {
+        return new Mapper(new TreeMap<>());
     }
 
-    static Mapper create(String prefix) {
-        return new MapperImpl(new TreeMap<>(), prefix);
+    public Map<String, String> toMap() {
+        return Collections.unmodifiableMap(map);
     }
 
-    Mapper putAll(Map<String, String> map);
+    public Properties toProperties() {
+        Properties properties = new Properties();
+        properties.putAll(map);
+        return properties;
+    }
 
-    Mapper putAll(Properties properties);
+    public Mapper putAll(Map<String, String> map) {
+        this.map.putAll(map);
+        return this;
+    }
 
-    Mapper put(String key, boolean value);
+    public Mapper putAll(Properties properties) {
+        return putAll(Util.flatten(properties));
+    }
 
-    Mapper put(String key, boolean value, boolean def);
+    public Mapper put(String key, boolean value) {
+        return put(key, value, false);
+    }
 
-    Mapper put(String key, int value);
+    public Mapper put(String key, int value) {
+        return put(key, value, 0);
+    }
 
-    Mapper put(String key, int value, int def);
+    public Mapper put(String key, String value) {
+        return put(key, value, "");
+    }
 
-    Mapper put(String key, String value);
+    public Mapper put(String key, boolean value, boolean def) {
+        if (value != def) map.put(key, Boolean.toString(value));
+        return this;
+    }
 
-    Mapper put(String key, String value, String def);
+    public Mapper put(String key, int value, int def) {
+        if (value != def) map.put(key, Integer.toString(value));
+        return this;
+    }
 
-    Map<String, String> toMap();
-
-    Properties toProperties();
-
-
-    class MapperImpl implements Mapper {
-        private final Map<String, String> map;
-        private final String prefix;
-
-        private MapperImpl(Map<String, String> map, String prefix) {
-            this.map = map;
-            this.prefix = prefix;
-        }
-
-        @Override
-        public Map<String, String> toMap() {
-            return Collections.unmodifiableMap(map);
-        }
-
-        @Override
-        public Properties toProperties() {
-            Properties properties = new Properties();
-            properties.putAll(map);
-            return properties;
-        }
-
-        @Override
-        public Mapper putAll(Map<String, String> map) {
-            this.map.putAll(map);
-            return this;
-        }
-
-        @Override
-        public Mapper putAll(Properties properties) {
-            return putAll(Util.flatten(properties));
-        }
-
-        @Override
-        public Mapper put(String key, boolean value) {
-            return put(key, value, false);
-        }
-
-        @Override
-        public Mapper put(String key, boolean value, boolean def) {
-            if (value != def) map.put(prefix + key, Boolean.toString(value));
-            return this;
-        }
-
-        @Override
-        public Mapper put(String key, int value) {
-            return put(key, value, 0);
-        }
-
-        @Override
-        public Mapper put(String key, int value, int def) {
-            if (value != def) map.put(prefix + key, Integer.toString(value));
-            return this;
-        }
-
-        @Override
-        public Mapper put(String key, String value) {
-            return put(key, value, "");
-        }
-
-        @Override
-        public Mapper put(String key, String value, String def) {
-            if (Util.isNotEmpty(value) && !Objects.equals(value, def)) map.put(prefix + key, value);
-            return this;
-        }
+    public Mapper put(String key, String value, String def) {
+        if (Util.isNotEmpty(value) && !Objects.equals(value, def)) map.put(key, value);
+        return this;
     }
 }

@@ -330,23 +330,6 @@ public class ExtensionTestIT {
         return "unknownTest" + new Random().nextInt(10000, 99999);
     }
 
-    private static void copyExecutionLogx(File tempProject, Verifier verifier, String logName) throws IOException {
-        Path destdir = Files.createDirectories(Paths.get("./target/it-logs/"));
-        Path target = destdir.resolve(logName);
-        if (target.toFile().exists()) target.toFile().delete();
-        Files.copy(tempProject.toPath().resolve(verifier.getLogFileName()), target);
-        String altpomname = ".gitver.pom.xml";
-        Files.copy(tempProject.toPath().resolve(altpomname), destdir.resolve(logName + ".pom.xml"));
-        Path propsfile = tempProject.toPath().resolve(".mvn/gitver-maven-extension.properties");
-        if (Files.exists(propsfile)) {
-            Files.copy(propsfile, destdir.resolve(logName + ".extension.properties"));
-        }
-        Path extFile = tempProject.toPath().resolve(".mvn/extensions.xml");
-        if (Files.exists(extFile)) {
-            Files.copy(extFile, destdir.resolve(logName + ".extensions.xml"));
-        }
-    }
-
     private static void copyExecutionLog(File tempProject, Verifier verifier) throws IOException {
         copyExecutionLog(tempProject, verifier, "");
     }

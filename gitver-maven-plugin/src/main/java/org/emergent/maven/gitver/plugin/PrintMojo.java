@@ -13,12 +13,13 @@ public class PrintMojo extends AbstractGitverMojo {
 
     @Override
     protected void execute0() throws MojoExecutionException, MojoFailureException {
-        getLog().info("Printing properties of project " + MessageUtils.buffer()
-          .mojo(Coordinates.builder()
-            .setGroupId(mavenProject.getGroupId())
-            .setArtifactId(mavenProject.getArtifactId())
-            .setVersion(mavenProject.getVersion())
-            .build())
-          .a(Util.join(getVersionStrategy().getPropertiesMap())));
+        getLog().info("Printing properties of project "
+                + MessageUtils.buffer()
+                        .mojo(Coordinates.builder()
+                                .setGroupId(mavenProject.getGroupId())
+                                .setArtifactId(mavenProject.getArtifactId())
+                                .setVersion(mavenProject.getVersion())
+                                .build())
+                        .a(Util.join(getVersionStrategy().getPropertiesMap())));
     }
 }

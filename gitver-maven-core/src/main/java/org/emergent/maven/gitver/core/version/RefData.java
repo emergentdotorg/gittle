@@ -1,14 +1,10 @@
 package org.emergent.maven.gitver.core.version;
 
-import lombok.Value;
+import lombok.Builder;
 import org.emergent.maven.gitver.core.Util;
 
-@Value
-@lombok.Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
-public class RefData {
-
-    String branch;
-    String hash;
+@Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
+public record RefData(String branch, String hash) {
 
     public String hashShort() {
         return Util.toShortHash(hash);

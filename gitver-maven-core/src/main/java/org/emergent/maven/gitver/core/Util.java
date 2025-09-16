@@ -32,22 +32,29 @@ public class Util {
 
     public static final String GITVER_PROPERTIES = "gitver.properties";
 
+    public static final Pattern UBER_REGEX = Pattern.compile("^" + "(?<prefix>refs/tags/)?"
+            + "(?<version>"
+            + "(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<patch>[0-9]+)"
+            + "(-(?<prerelease>([1-9][0-9]*|[0-9A-Za-z-]+)))?"
+            + "(\\+(?<buildmeta>[0-9A-Za-z-]+))?"
+            + ")$");
+
     public static final String VERSION_REGEX_STRING =
-      "^(refs/tags/)?(?<tag>v?(?<version>(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<patch>[0-9]+)))$";
+            "^(refs/tags/)?(?<tag>v?(?<version>(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<patch>[0-9]+)))$";
 
     public static final Pattern VERSION_REGEX = Pattern.compile(VERSION_REGEX_STRING);
 
     public static final Pattern VERSION_REGEX2 = Pattern.compile(
-      "^(?<version>(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<patch>[0-9]+)(-(?<prerelease>([1-9][0-9]*|[0-9A-Za-z-]+)))?(\\+(?<buildmeta>[0-9A-Za-z-]+))?)$");
+            "^(?<version>(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<patch>[0-9]+)(-(?<prerelease>([1-9][0-9]*|[0-9A-Za-z-]+)))?(\\+(?<buildmeta>[0-9A-Za-z-]+))?)$");
 
     public static final String DOT_MVN = ".mvn";
 
     public static boolean isDisabled() {
         return Stream.of(System.getProperty(DISABLED_SYSPROP), System.getenv(DISABLED_ENV_VAR))
-          .filter(Util::isNotEmpty)
-          .findFirst()
-          .map(Boolean::parseBoolean)
-          .orElse(false);
+                .filter(Util::isNotEmpty)
+                .findFirst()
+                .map(Boolean::parseBoolean)
+                .orElse(false);
     }
 
     public static Path getDotMvnDir(Path currentDir) {
@@ -145,29 +152,29 @@ public class Util {
 
     public static Map<String, String> flatten(Properties properties) {
         return properties.entrySet().stream()
-          .collect(Collectors.toMap(
-            e -> String.valueOf(e.getKey()),
-            e -> String.valueOf(e.getValue()),
-            (u, v) -> {
-                throw new IllegalStateException("Duplicate key");
-            },
-            TreeMap::new));
+                .collect(Collectors.toMap(
+                        e -> String.valueOf(e.getKey()),
+                        e -> String.valueOf(e.getValue()),
+                        (u, v) -> {
+                            throw new IllegalStateException("Duplicate key");
+                        },
+                        TreeMap::new));
     }
 
     public static Map<String, String> flatten(Map<String, ?> properties) {
         return properties.entrySet().stream()
-          .collect(Collectors.toMap(
-            Map.Entry::getKey,
-            e -> String.valueOf(e.getValue()),
-            (u, v) -> {
-                throw new IllegalStateException("Duplicate key");
-            },
-            TreeMap::new));
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> String.valueOf(e.getValue()),
+                        (u, v) -> {
+                            throw new IllegalStateException("Duplicate key");
+                        },
+                        TreeMap::new));
     }
 
     public static Properties toProperties(Map<String, Object> properties) {
         Map<String, String> flattened = properties.entrySet().stream()
-          .collect(Collectors.toMap(Map.Entry::getKey, e -> String.valueOf(e.getValue())));
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> String.valueOf(e.getValue())));
         Properties props = new Properties();
         props.putAll(flattened);
         return props;
@@ -182,10 +189,10 @@ public class Util {
             Properties props = new Properties();
             props.load(is);
             return Coordinates.builder()
-              .setGroupId(props.getProperty("projectGroupId"))
-              .setArtifactId(props.getProperty("projectArtifactId"))
-              .setVersion(props.getProperty("projectVersion"))
-              .build();
+                    .setGroupId(props.getProperty("projectGroupId"))
+                    .setArtifactId(props.getProperty("projectArtifactId"))
+                    .setVersion(props.getProperty("projectVersion"))
+                    .build();
         } catch (Exception e) {
             throw new GitverException(e.getMessage(), e);
         }
@@ -194,37 +201,15 @@ public class Util {
     public static Coordinates getExtensionCoordinates() {
         Coordinates core = getCoreCoordinates();
         return core.toBuilder()
-          .setArtifactId(core.getArtifactId().replace("-core", "-extension"))
-          .build();
+                .setArtifactId(core.getArtifactId().replace("-core", "-extension"))
+                .build();
     }
 
     public static Coordinates getPluginCoordinates() {
         Coordinates core = getCoreCoordinates();
         return core.toBuilder()
-          .setArtifactId(core.getArtifactId().replace("-core", "-plugin"))
-          .build();
-    }
-
-    public static void go(Map<String, String> map, String key, boolean val) {
-        map.put(key, Boolean.toString(val));
-    }
-
-    public static void go(Map<String, String> map, String key, int nbr) {
-        if (nbr != 0) {
-            map.put(key, Integer.toString(nbr));
-        }
-    }
-
-    public static void go(Map<String, String> map, String key, String val) {
-        if (isNotEmpty(val)) {
-            map.put(key, val);
-        }
-    }
-
-    public static <T> Supplier<T> memoize(Supplier<T> delegate) {
-        return (delegate instanceof MemoizingSupplier)
-          ? delegate
-          : new MemoizingSupplier<>(Objects.requireNonNull(delegate));
+                .setArtifactId(core.getArtifactId().replace("-core", "-plugin"))
+                .build();
     }
 
     public static String join(Properties properties) {
@@ -232,7 +217,8 @@ public class Util {
     }
 
     public static String join(Map<String, String> properties) {
-        return join(properties, new StringJoiner("\n", "\n---\n", "\n---").setEmptyValue("")).toString();
+        return join(properties, new StringJoiner("\n", "\n---\n", "\n---").setEmptyValue(""))
+                .toString();
     }
 
     public static StringJoiner join(Properties properties, StringJoiner joiner) {
@@ -244,9 +230,16 @@ public class Util {
         return joiner;
     }
 
+    public static <T> Supplier<T> memoize(Supplier<T> delegate) {
+        return (delegate instanceof MemoizingSupplier)
+                ? delegate
+                : new MemoizingSupplier<>(Objects.requireNonNull(delegate));
+    }
+
     private static class MemoizingSupplier<T> implements Supplier<T>, Serializable {
 
-        @Serial private static final long serialVersionUID = 0;
+        @Serial
+        private static final long serialVersionUID = 0;
 
         private final Supplier<T> delegate;
         private transient volatile boolean initialized;

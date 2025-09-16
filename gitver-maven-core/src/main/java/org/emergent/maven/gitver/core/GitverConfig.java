@@ -8,7 +8,11 @@ import static org.emergent.maven.gitver.core.Constants.RELEASE_BRANCHES_DEF;
 import static org.emergent.maven.gitver.core.Constants.TAG_PATTERN_DEF;
 import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
 
+import java.util.Arrays;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -39,20 +43,25 @@ public class GitverConfig {
 
     public static GitverConfig from(Properties props) {
         return builder()
-          .setTagPattern(props.getProperty(GV_TAG_PATTERN, TAG_PATTERN_DEF))
-          .setVersionOverride(props.getProperty(GV_VERSION_OVERRIDE, ""))
-          .setVersionPattern(props.getProperty(GV_VERSION_PATTERN, VERSION_PATTERN_DEF))
-          .setReleaseBranches(props.getProperty(GV_RELEASE_BRANCHES, RELEASE_BRANCHES_DEF))
-          .build();
+                .setTagPattern(props.getProperty(GV_TAG_PATTERN, TAG_PATTERN_DEF))
+                .setVersionOverride(props.getProperty(GV_VERSION_OVERRIDE, ""))
+                .setVersionPattern(props.getProperty(GV_VERSION_PATTERN, VERSION_PATTERN_DEF))
+                .setReleaseBranches(props.getProperty(GV_RELEASE_BRANCHES, RELEASE_BRANCHES_DEF))
+                .build();
+    }
+
+    public Set<String> getReleaseBranchesSet() {
+        return Arrays.stream(releaseBranches.split(","))
+                .map(String::trim)
+                .collect(Collectors.toCollection(TreeSet::new));
     }
 
     public Properties toProperties() {
         return Mapper.create()
-          .put(GV_TAG_PATTERN, getTagPattern(), TAG_PATTERN_DEF)
-          .put(GV_VERSION_OVERRIDE, getVersionOverride(), "")
-          .put(GV_VERSION_PATTERN, getVersionPattern(), VERSION_PATTERN_DEF)
-          .put(GV_RELEASE_BRANCHES, getReleaseBranches(), RELEASE_BRANCHES_DEF)
-          .toProperties();
+                .put(GV_TAG_PATTERN, getTagPattern(), TAG_PATTERN_DEF)
+                .put(GV_VERSION_OVERRIDE, getVersionOverride(), "")
+                .put(GV_VERSION_PATTERN, getVersionPattern(), VERSION_PATTERN_DEF)
+                .put(GV_RELEASE_BRANCHES, getReleaseBranches(), RELEASE_BRANCHES_DEF)
+                .toProperties();
     }
 }
-
