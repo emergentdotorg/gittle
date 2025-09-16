@@ -18,5 +18,7 @@ assert gitDotDir != null && gitDotDir.exists()
 assert gitverPom != null && gitverPom.exists()
 assert buildLog != null && buildLog.exists()
 
-assert gitverPomBody.contains("<version>1.0.0</version>")
-assert buildLogBody.contains("Building multi-module-parent 1.0.0")
+def expectedVersion = '1.0.0'
+def version = getVersion(gitverPomBody)
+assert version == expectedVersion
+assert buildLogBody.contains(s("Building gitver-extension-test $version"))

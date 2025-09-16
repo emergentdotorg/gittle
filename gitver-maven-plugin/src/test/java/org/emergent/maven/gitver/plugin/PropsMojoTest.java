@@ -6,10 +6,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.maven.plugin.testing.SilentLog;
+import org.apache.maven.project.MavenProject;
 import org.emergent.maven.gitver.core.Coordinates;
 import org.junit.jupiter.api.Test;
 
-public class PrintMojoTest extends AbstractMojoTest {
+public class PropsMojoTest extends AbstractMojoTest {
 
     public static class TestLog extends SilentLog {
         List<String> messages = new ArrayList<>();
@@ -41,17 +42,20 @@ public class PrintMojoTest extends AbstractMojoTest {
         File pom = new File("target/test-classes/project-to-test/");
         assertThat(pom).as("POM file").isNotNull().exists();
 
-        PrintMojo printVersionMojo = (PrintMojo) rule.lookupConfiguredMojo(pom, "print");
+        PropsMojo propsMojo = (PropsMojo) rule.lookupConfiguredMojo(pom, "props");
         TestLog testLog = new TestLog();
-        printVersionMojo.setLog(testLog);
-        assertThat(printVersionMojo).isNotNull();
-        printVersionMojo.execute();
+        propsMojo.setLog(testLog);
+        assertThat(propsMojo).isNotNull();
+        propsMojo.execute();
+        MavenProject proj = propsMojo.getMavenProject();
+        String gitverVersion = proj.getProperties().getProperty("gitver.version");
         Coordinates gav = Coordinates.builder()
-          .setGroupId("org.emergent.maven")
-          .setArtifactId("gitver-plugin-test")
-          .setVersion(printVersionMojo.getMavenProject().getVersion())
+          .setGroupId(proj.getGroupId())
+          .setArtifactId(proj.getArtifactId())
+          .setVersion(proj.getVersion())
           .build();
         assertThat(testLog.getMessages()).isNotEmpty()
-          .allMatch(s -> s.startsWith("Printing properties of project "));
+          .allMatch(s -> s.startsWith("Adding properties to project " + gav))
+          .allMatch(s -> s.contains("gitver.version=" + gitverVersion + "\n"));
     }
 }

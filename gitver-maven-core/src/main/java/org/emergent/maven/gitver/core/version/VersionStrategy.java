@@ -9,5 +9,5 @@ public interface VersionStrategy {
 
     String toVersionString();
 
-    Map<String, String> toProperties();
+    Map<String, String> getPropertiesMap();
 }

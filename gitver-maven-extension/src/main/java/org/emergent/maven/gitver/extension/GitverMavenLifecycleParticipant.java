@@ -5,8 +5,8 @@ import static org.emergent.maven.gitver.extension.ExtensionUtil.$_REVISION;
 import static org.emergent.maven.gitver.extension.ExtensionUtil.REVISION;
 
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -70,28 +70,30 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
         Optional<String> sourceVersion = source.map(Model::getVersion);
         boolean versionUpdated = sourceVersion.map(newValue -> {
             String original = targetModel.getVersion();
-            targetModel.setVersion(newValue);
-            return newValue.equals(original);
+            if (!$_REVISION.equals(original)) {
+                targetModel.setVersion(newValue);
+                return Objects.equals(original, newValue);
+            }
+            return false;
         }).orElse(false);
 
         Optional<String> sourceParentVersion = source.map(Model::getParent).map(Parent::getVersion);
         boolean parentUpdated = sourceParentVersion.map(newValue -> {
-            Parent parent = Optional.ofNullable(targetModel.getParent()).orElseGet(() -> {
-                targetModel.setParent(new Parent());
-                return targetModel.getParent();
-            });
-            String original = parent.getVersion();
-            parent.setVersion(newValue);
-            return newValue.equals(original);
+            String original = Optional.ofNullable(targetModel.getParent()).map(Parent::getVersion).orElse(null);
+            if (!$_REVISION.equals(original)) {
+                Parent parent = Optional.ofNullable(targetModel.getParent()).orElseGet(() -> {
+                    targetModel.setParent(new Parent());
+                    return targetModel.getParent();
+                });
+                parent.setVersion(newValue);
+                return Objects.equals(original, newValue);
+            }
+            return false;
         }).orElse(false);
 
         Optional<Object> sourceRevisionProperty = source.map(Model::getProperties).map(p -> p.get(REVISION));
         boolean revisionUpdated = sourceRevisionProperty.map(newValue -> {
-            Properties properties = Optional.ofNullable(targetModel.getProperties()).orElseGet(() -> {
-                targetModel.setProperties(new Properties());
-                return targetModel.getProperties();
-            });
-            Object original = properties.put($_REVISION, newValue);
+            Object original = targetModel.getProperties().put(REVISION, newValue);
             return !newValue.equals(original);
         }).orElse(false);
 

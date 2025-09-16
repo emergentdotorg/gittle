@@ -8,7 +8,6 @@ import static org.emergent.maven.gitver.core.Constants.RELEASE_BRANCHES_DEF;
 import static org.emergent.maven.gitver.core.Constants.TAG_PATTERN_DEF;
 import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
 
-import java.util.Map;
 import java.util.Properties;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -47,13 +46,13 @@ public class GitverConfig {
           .build();
     }
 
-    public Map<String, String> toProperties() {
+    public Properties toProperties() {
         return Mapper.create()
           .put(GV_TAG_PATTERN, getTagPattern(), TAG_PATTERN_DEF)
           .put(GV_VERSION_OVERRIDE, getVersionOverride(), "")
           .put(GV_VERSION_PATTERN, getVersionPattern(), VERSION_PATTERN_DEF)
           .put(GV_RELEASE_BRANCHES, getReleaseBranches(), RELEASE_BRANCHES_DEF)
-          .toMap();
+          .toProperties();
     }
 }
 

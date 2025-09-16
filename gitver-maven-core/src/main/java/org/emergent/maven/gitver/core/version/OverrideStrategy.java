@@ -23,7 +23,7 @@ public record OverrideStrategy(GitverConfig config) implements VersionStrategy {
     }
 
     @Override
-    public Map<String, String> toProperties() {
+    public Map<String, String> getPropertiesMap() {
         Mapper m = Mapper.create()
           .putAll(config.toProperties())
           .put(GITVER_VERSION, toVersionString());

@@ -32,4 +32,11 @@ public class Coordinates {
                 .filter(Util::isNotEmpty)
                 .collect(Collectors.joining(":"));
     }
+
+    public static class Builder {
+        @Override
+        public String toString() {
+            return build().toString();
+        }
+    }
 }

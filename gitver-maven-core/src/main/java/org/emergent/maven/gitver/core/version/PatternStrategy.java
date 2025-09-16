@@ -74,15 +74,14 @@ public class PatternStrategy implements VersionStrategy {
     }
 
     @Override
-    public Map<String, String> toProperties() {
-        Mapper m = Mapper.create()
+    public Map<String, String> getPropertiesMap() {
+        return Mapper.create()
           .putAll(config.toProperties())
           .put(GITVER_BRANCH, ref.getBranch(), "")
           .put(GITVER_HASH, ref.getHash())
           .put(GITVER_HASH_SHORT, ref.getHashShort())
           .put(GITVER_COMMIT_NUMBER, commits, -1)
-          .put(GITVER_VERSION, toVersionString());
-        return m.toMap();
+          .put(GITVER_VERSION, toVersionString()).toMap();
     }
 
     @Override

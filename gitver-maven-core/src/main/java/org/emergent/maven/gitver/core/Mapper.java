@@ -3,6 +3,7 @@ package org.emergent.maven.gitver.core;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.TreeMap;
 
 @SuppressWarnings("UnusedReturnValue")
@@ -18,6 +19,8 @@ public interface Mapper {
 
     Mapper putAll(Map<String, String> map);
 
+    Mapper putAll(Properties properties);
+
     Mapper put(String key, boolean value);
 
     Mapper put(String key, boolean value, boolean def);
@@ -31,6 +34,9 @@ public interface Mapper {
     Mapper put(String key, String value, String def);
 
     Map<String, String> toMap();
+
+    Properties toProperties();
+
 
     class MapperImpl implements Mapper {
         private final Map<String, String> map;
@@ -47,9 +53,21 @@ public interface Mapper {
         }
 
         @Override
+        public Properties toProperties() {
+            Properties properties = new Properties();
+            properties.putAll(map);
+            return properties;
+        }
+
+        @Override
         public Mapper putAll(Map<String, String> map) {
             this.map.putAll(map);
             return this;
+        }
+
+        @Override
+        public Mapper putAll(Properties properties) {
+            return putAll(Util.flatten(properties));
         }
 
         @Override

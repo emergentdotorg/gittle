@@ -12,7 +12,7 @@
   <description>Tools for generating and manipulating maven project versions from Git logs</description>
   <url>https://github.com/emergentdotorg/gitver-maven-tools</url>
   <inceptionYear>2025</inceptionYear>
-  
+
   <organization>
     <name>Emergent.org</name>
     <url>https://github.com/emergentdotorg</url>

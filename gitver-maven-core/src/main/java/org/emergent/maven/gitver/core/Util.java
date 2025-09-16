@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.StringJoiner;
 import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -173,7 +174,7 @@ public class Util {
     }
 
     public static Map<String, String> toProperties(VersionStrategy versionStrategy) {
-        return versionStrategy.toProperties();
+        return versionStrategy.getPropertiesMap();
     }
 
     public static Coordinates getCoreCoordinates() {
@@ -224,6 +225,23 @@ public class Util {
         return (delegate instanceof MemoizingSupplier)
           ? delegate
           : new MemoizingSupplier<>(Objects.requireNonNull(delegate));
+    }
+
+    public static String join(Properties properties) {
+        return join(flatten(properties));
+    }
+
+    public static String join(Map<String, String> properties) {
+        return join(properties, new StringJoiner("\n", "\n---\n", "\n---").setEmptyValue("")).toString();
+    }
+
+    public static StringJoiner join(Properties properties, StringJoiner joiner) {
+        return join(flatten(properties), joiner);
+    }
+
+    public static StringJoiner join(Map<String, String> properties, StringJoiner joiner) {
+        properties.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).forEach(joiner::add);
+        return joiner;
     }
 
     private static class MemoizingSupplier<T> implements Supplier<T>, Serializable {
