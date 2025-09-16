@@ -26,17 +26,17 @@ String readFile(String path) {
   return readFile(resolve(path))
 }
 
+static String readFile(File path) {
+  assert path != null && path.exists()
+  return Files.readString(path.toPath(), StandardCharsets.UTF_8)
+}
+
 static String s(Object o) {
   return String.valueOf(o)
 }
 
 static String q(String s) {
   return Pattern.quote(s)
-}
-
-static String readFile(File path) {
-  assert path != null && path.exists()
-  return Files.readString(path.toPath(), StandardCharsets.UTF_8)
 }
 
 static Element getXmlRecords(String xml) {
@@ -87,14 +87,15 @@ static ArrayList<String> exec(String[] env, File path, String execcmd, String[] 
 }
 
 static void bash(File path, String[] subcmds) {
-  def out = exec(null, path, "/usr/bin/bash", subcmds);
+  assert path != null && path.exists()
+  def out = exec(null, path, "/usr/bin/env bash", subcmds);
   println "OUT:\n" + out[0]
   println "ERR:\n" + out[1]
 }
 
-void bash(String[] subcmds) {
-  bash(this.getBasedir(), subcmds)
-}
+//void bash(String[] subcmds) {
+//  bash(getBasedir(), subcmds)
+//}
 
 //def userProperties = context.get('userProperties')
 //def server = new MockServer()
@@ -103,3 +104,34 @@ void bash(String[] subcmds) {
 
 //File scriptDirFile = new File(getClass().protectionDomain.codeSource.location.path).getParentFile().getAbsoluteFile();
 //def workPath = scriptDirFile.toPath()
+
+//  //def loadScript(String file) {
+//  //  Binding scriptBinding = new Binding()
+//  //  scriptBinding.setVariable('basedir', binding.getVariable('basedir'))
+//  //  def script = new GroovyShell(scriptBinding).parse(new File((File)binding.getVariable('basedir'), file))
+//  //  script.metaClass.methods.each {
+//  //    if (it.declaringClass.getTheClass() == script.class && !it.name.contains('$')
+//  //      && it.name != 'main' && it.name != 'run') {
+//  //      this.metaClass."$it.name" = script.&"$it.name"
+//  //    }
+//  //  }
+//  //}
+//  //loadScript('../tools/tools.groovy')
+//
+//  //@Field private CompilerConfiguration configuration
+//  //configuration = new CompilerConfiguration()
+//  //configuration.setScriptBaseClass('ToolsScript')
+//  //GroovyShell shell = new GroovyShell(configuration)
+//  //shell.setVariable('basedir', binding.getVariable('basedir'))
+//  //shell.setVariable('ToolsScript', ToolsScript)
+//  //tools = (ToolsScript)shell.parse(new File((File)binding.getVariable('basedir'),'../tools/tools.groovy'))
+//  //tools.metaClass.methods.each {
+//  //  if (it.declaringClass.getTheClass() == tools.class && Set.of('s').contains(it.name)) {
+//  //    this.metaClass."$it.name" = tools.&"$it.name"
+//  //  }
+//  //}
+//
+//  //def tools = new GroovyScriptEngine( '..' ).with {
+//  //  loadScriptByName('tools/tools.groovy')
+//  //}
+//  //this.metaClass.mixin tools
