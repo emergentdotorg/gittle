@@ -3,12 +3,12 @@ static String s(Object o) {return String.valueOf(o)}
 if (!binding.hasVariable('basedir')) {
   throw new IllegalStateException("basedir was undefined!")
 }
-File basedir = (File) binding.getVariable('basedir')
+File basedir = (File)binding.getVariable('basedir')
 GroovyShell shell = new GroovyShell()
 shell.setVariable('basedir', basedir)
-def scriptFile = new File((File) binding.getVariable('basedir'), '../tools/tools.groovy')
-println "scriptFile=$scriptFile"
+def scriptFile = new File((File)binding.getVariable('basedir'), '../tools/tools.groovy')
 def tools = shell.parse(scriptFile)
+assert !tools.resolve('.git').exists()
 
 def keyword = "[major]"
 
