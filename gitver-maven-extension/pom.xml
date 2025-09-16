@@ -194,10 +194,10 @@
             <executions>
               <execution>
                 <id>copy-failsafe-repo</id>
-                <phase>pre-integration-test</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
+                <phase>pre-integration-test</phase>
                 <configuration>
                   <outputDirectory>${project.build.directory}/local-failsafe-repo</outputDirectory>
                   <resources>
@@ -339,47 +339,6 @@
       </build>
     </profile>
     -->
-
-    <profile>
-      <id>groovy</id>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.groovy</groupId>
-          <artifactId>groovy-all</artifactId>
-          <version>5.0.0</version>
-          <type>pom</type>
-        </dependency>
-      </dependencies>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.gmavenplus</groupId>
-            <artifactId>gmavenplus-plugin</artifactId>
-            <version>1.13.1</version>
-            <configuration>
-              <scripts>
-                <script>src/it/tools/tools.groovy</script>
-              </scripts>
-            </configuration>
-            <dependencies>
-              <dependency>
-                <groupId>org.apache.groovy</groupId>
-                <artifactId>groovy</artifactId>
-                <version>5.0.0</version>
-                <scope>runtime</scope>
-              </dependency>
-            </dependencies>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>execute</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
 
   </profiles>
 </project>

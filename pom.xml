@@ -253,8 +253,7 @@
             <palantirJavaFormat>
               <version>2.74.0</version>
               <style>PALANTIR</style>
-              <formatJavadoc>false
-              </formatJavadoc>
+              <formatJavadoc>false</formatJavadoc>
             </palantirJavaFormat>
           </java>
         </configuration>
@@ -504,5 +503,47 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>groovy</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.groovy</groupId>
+          <artifactId>groovy-all</artifactId>
+          <version>5.0.0</version>
+          <type>pom</type>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmavenplus</groupId>
+            <artifactId>gmavenplus-plugin</artifactId>
+            <version>1.13.1</version>
+            <configuration>
+              <scripts>
+                <script>src/it/tools/tools.groovy</script>
+              </scripts>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.groovy</groupId>
+                <artifactId>groovy</artifactId>
+                <version>5.0.0</version>
+                <scope>runtime</scope>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
   </profiles>
 </project>
