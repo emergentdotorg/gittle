@@ -1,22 +1,14 @@
-static String s(Object o) {return String.valueOf(o)}
-
-if (!binding.hasVariable('basedir')) {
-  throw new IllegalStateException("basedir was undefined!")
-}
-File basedir = (File)binding.getVariable('basedir')
 GroovyShell shell = new GroovyShell()
-shell.setVariable('basedir', basedir)
-println "scriptFile=${new File((File)binding.getVariable('basedir'), '../tools/tools.groovy')}"
+shell.setVariable('basedir', (File)binding.getVariable('basedir'))
 def tools = shell.parse(new File((File)binding.getVariable('basedir'), '../tools/tools.groovy'))
 
-File gitDotDir = tools.resolve(".git")
+static String s(Object o) {return String.valueOf(o)}
+
+assert tools.checkNoErrors()
+assert tools.checkGitDotDirExists()
 File gitverPom = tools.resolve(".gitver.pom.xml")
-File buildLog = tools.resolve("build.log")
-String gitverPomBody = tools.readFile(gitverPom)
-String buildLogBody = tools.readFile(buildLog)
-assert gitDotDir != null && gitDotDir.exists()
 assert gitverPom != null && gitverPom.exists()
-assert buildLog != null && buildLog.exists()
+String gitverPomBody = tools.readFile(gitverPom)
 
 assert gitverPomBody.contains("<version>1.0.0</version>")
-assert buildLogBody.contains("Building multi-module-parent 1.0.0")
+assert tools.verifyTextInLog("Building multi-module-parent 1.0.0")

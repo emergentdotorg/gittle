@@ -88,10 +88,71 @@ static ArrayList<String> exec(String[] env, File path, String execcmd, String[] 
 
 static void bash(File path, String[] subcmds) {
   assert path != null && path.exists()
-  def out = exec(null, path, "/usr/bin/env bash", subcmds);
-  println "OUT:\n" + out[0]
-  println "ERR:\n" + out[1]
+  //SCRIPTDIR="$(dirname "${BASH_SOURCE[0]}")"
+  def out = exec(null, path, "/usr/bin/env bash", subcmds)
+  def stdOut = out[0]
+  if (!stdOut.isBlank()) {
+    print "OUT:\n" + stdOut
+    if (!stdOut.endsWith('\n')) {
+      println ''
+    }
+  }
+  def errOut = out[1]
+  if (!errOut.isBlank()) {
+    print "ERR:\n" + errOut
+    if (!errOut.endsWith('\n')) {
+      println ''
+    }
+  }
 }
+
+def logPwd() {
+  bash(getBasedir(), [
+    "echo PWD=\${PWD}",
+  ] as String[])
+}
+
+def gitInit(String location, String initialBranch) {
+  bash(getBasedir(), [
+    "git init --initial-branch \'$initialBranch\' \'$location\'",
+  ] as String[])
+}
+
+def gitInit() {
+  gitInit('.', 'main')
+}
+
+def gitCommit(String message) {
+  bash(getBasedir(), [
+    "git commit --allow-empty -m \'$message\'",
+  ] as String[])
+}
+
+def gitTag(String name) {
+  bash(getBasedir(), [
+    "git tag \'$name\'"
+  ] as String[])
+}
+
+def verifyTextInLog(String str) {
+  File buildLog = resolve("build.log")
+  assert buildLog != null && buildLog.exists()
+  String buildLogBody = readFile(buildLog)
+  return buildLogBody.contains(str)
+}
+
+def checkNoErrors() {
+  File buildLog = resolve("build.log")
+  assert buildLog != null && buildLog.exists()
+  String buildLogBody = readFile(buildLog)
+  return !buildLogBody.contains("[ERROR]]")
+}
+
+def checkGitDotDirExists() {
+  File gitDotDir = resolve(".git")
+  return gitDotDir != null && gitDotDir.exists()
+}
+
 
 //void bash(String[] subcmds) {
 //  bash(getBasedir(), subcmds)
