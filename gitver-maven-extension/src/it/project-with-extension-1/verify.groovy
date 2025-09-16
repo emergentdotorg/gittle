@@ -4,13 +4,13 @@ def tools = shell.parse(new File((File)binding.getVariable('basedir'), '../tools
 
 static String s(Object o) {return String.valueOf(o)}
 
-assert tools.checkNoErrors()
-assert tools.checkGitDotDirExists()
-File gitverPom = tools.resolve(".gitver.pom.xml")
-assert gitverPom != null && gitverPom.exists()
-String gitverPomBody = tools.readFile(gitverPom)
-
 def expectedVersion = '1.0.0'
-def version = tools.getVersion(gitverPomBody)
-assert version == expectedVersion
-assert tools.verifyTextInLog(s("Building gitver-extension-test $version"))
+
+assert tools.verifyNoErrorsInLog()
+def dotGitDir = tools.resolveFile('.git')
+assert dotGitDir != null || dotGitDir.exists()
+File gitverPom = tools.resolveGitverPomFile()
+assert gitverPom != null && gitverPom.exists()
+def version = tools.getGitverPomVersion(gitverPom)
+assert expectedVersion == version
+assert tools.verifyTextInLog("Building gitver-extension-test $version")

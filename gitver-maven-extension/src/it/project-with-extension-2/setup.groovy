@@ -4,11 +4,10 @@ def tools = shell.parse(new File((File)binding.getVariable('basedir'), '../tools
 
 static String s(Object o) {return String.valueOf(o)}
 
-assert !tools.resolve('.git').exists()
-
-def keyword = "[major]"
+assert !tools.resolveFile('.git').exists()
 
 tools.logPwd()
-tools.gitInit()
-tools.gitCommit(s("chore(release): $keyword"))
+tools.gitInit('.', 'development')
+tools.gitCommit("Empty commit [no ci]")
 tools.gitTag('v1.0.0')
+tools.gitCommit("Empty commit [no ci]")

@@ -49,12 +49,8 @@ public class StrategyFactory {
             commits++;
         }
         builder.setCommits(commits);
-        builder.setRef(RefData.builder()
-                .setBranch(repository.getBranch())
-                .setHash(headId.getName())
-                .build());
-        Status status =
-                git.status().setIgnoreSubmodules(IgnoreSubmoduleMode.UNTRACKED).call();
+        builder.setBranch(repository.getBranch()).setHash(headId.getName());
+        Status status = git.status().setIgnoreSubmodules(IgnoreSubmoduleMode.UNTRACKED).call();
         builder.setDirty(!status.getUncommittedChanges().isEmpty());
         return builder.build();
     }

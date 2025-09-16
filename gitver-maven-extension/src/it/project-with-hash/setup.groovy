@@ -4,7 +4,7 @@ def tools = shell.parse(new File((File)binding.getVariable('basedir'), '../tools
 
 static String s(Object o) {return String.valueOf(o)}
 
-assert !tools.resolve('.git').exists()
+assert !tools.resolveFile('.git').exists()
 
 def keyword = "[major]"
 

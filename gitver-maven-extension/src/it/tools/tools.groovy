@@ -1,3 +1,4 @@
+//file:noinspection unused
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -6,30 +7,20 @@ import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathFactory
 import org.w3c.dom.Element
 
+@groovy.transform.Field
+boolean assertiveFileLoading = binding.hasVariable('assertive')
+  ? Boolean.valueOf(String.valueOf(binding.getVariable('assertive')))
+  : true
+
 // https://maven.apache.org/plugins/maven-invoker-plugin/examples/pre-post-build-script.html
 // basedir is a predefined global File for the root of the test project
 if (!binding.hasVariable('basedir')) {
-  //  binding.setVariable('basedir', new File('.').getAbsoluteFile())
   throw new IllegalStateException("basedir was undefined!")
 }
 
-
-File getBasedir() {
-  return (File)binding.getVariable('basedir')
-}
-
-File resolve(String path) {
-  return getBasedir().toPath().toAbsolutePath().resolve(path).toFile()
-}
-
-String readFile(String path) {
-  return readFile(resolve(path))
-}
-
-static String readFile(File path) {
-  assert path != null && path.exists()
-  return Files.readString(path.toPath(), StandardCharsets.UTF_8)
-}
+@groovy.transform.Field
+@groovy.transform.Final
+File rootdir = ((File)binding.getVariable('basedir')).getAbsoluteFile()
 
 static String s(Object o) {
   return String.valueOf(o)
@@ -37,34 +28,6 @@ static String s(Object o) {
 
 static String q(String s) {
   return Pattern.quote(s)
-}
-
-static Element getXmlRecords(String xml) {
-  def builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-  def inputStream = new ByteArrayInputStream(xml.bytes)
-  return builder.parse(inputStream).documentElement
-}
-
-static String processXml(String xpathQuery, String xml) {
-  def records = getXmlRecords(xml)
-  def xpath = XPathFactory.newInstance().newXPath()
-  return xpath.evaluate(xpathQuery, records)
-}
-
-static String getVersion(String xml) {
-  def builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-  def inputStream = new ByteArrayInputStream(xml.bytes)
-  def records = builder.parse(inputStream).documentElement
-  def xpath = XPathFactory.newInstance().newXPath()
-  //  String version = processXml(xml, '//project/version')
-  String version = xpath.evaluate('//project/version', records)
-  if ('' == version) {
-    version = xpath.evaluate('//project/parent/version', records)
-  }
-  if ('${revision}' == version) {
-    version = xpath.evaluate('//project/properties/revision', records)
-  }
-  return version
 }
 
 static ArrayList<String> exec(String[] env, File path, String execcmd, String[] subcmds) {
@@ -106,15 +69,108 @@ static void bash(File path, String[] subcmds) {
   }
 }
 
-def logPwd() {
-  bash(getBasedir(), [
-    "echo PWD=\${PWD}",
-  ] as String[])
+void bash(String[] subcmds) {
+  bash(rootdir, subcmds)
 }
 
-def gitInit(String location, String initialBranch) {
-  bash(getBasedir(), [
-    "git init --initial-branch \'$initialBranch\' \'$location\'",
+static String readFile(File path) {
+  assert path != null && path.exists()
+  return Files.readString(path.toPath(), StandardCharsets.UTF_8)
+}
+
+File getBasedir() {
+  return rootdir
+}
+
+File resolveFile(String path) {
+  return rootdir.toPath().resolve(path).toFile()
+}
+
+File getBuildLogBodyFile() {
+  return resolveFile('build.log')
+}
+
+String getBuildLogBody() {
+  File file = getBuildLogBodyFile()
+  if (file != null && file.exists()) {
+    return readFile(file)
+  } else {
+    if (assertiveFileLoading) {
+      assert file != null
+      assert file.exists()
+    }
+    return null
+  }
+}
+
+def verifyTextInLog(String str) {
+  return getBuildLogBody().contains(str)
+}
+
+def verifyTextInLog(GString gstr) {
+  return verifyTextInLog(String.valueOf(gstr))
+}
+
+def verifyNoErrorsInLog() {
+  return !verifyTextInLog("[ERROR]]")
+}
+
+static File getGitverPomFile(File file) {
+  def path = file.toPath().toAbsolutePath()
+  if ('pom.xml' == path.fileName.toString()) {
+    path = path.getParent();
+  }
+  path = path.resolve('.gitver.pom.xml')
+  return path.toFile()
+}
+
+File getGitverPomFile(String subpath) {
+  def path = rootdir.toPath()
+  if (!Set.of('', '.').contains(subpath)) {
+    path = path.resolve(subpath)
+  }
+  return getGitverPomFile(path.toFile())
+}
+
+File resolveGitverPomFile() {
+  return getGitverPomFile('')
+}
+
+private static Element parseXmlElement(InputStream is) {
+  return DocumentBuilderFactory.newInstance()
+    .newDocumentBuilder()
+    .parse(is)
+    .documentElement
+}
+
+private static String extractPomVersion(Element element) {
+  def xpath = XPathFactory.newInstance().newXPath()
+  String ver = xpath.evaluate('//project/version', element)
+  if ('' == ver) {
+    ver = xpath.evaluate('//project/parent/version', element)
+  }
+  if ('${revision}' == ver) {
+    ver = xpath.evaluate('//project/properties/revision', element)
+  }
+  return ver
+}
+
+static String getGitverPomVersion(File file) {
+  assert file != null && file.isFile()
+  return extractPomVersion(parseXmlElement(new FileInputStream(file)))
+}
+
+//String getGitverPomVersion(String subpath) {
+//  return getGitverPomVersion(getGitverPomFile(subpath))
+//}
+//
+//String getGitverPomVersion() {
+//  return getGitverPomVersion('')
+//}
+
+def gitInit(String path, String initialBranch) {
+  bash([
+    "git init --initial-branch \'$initialBranch\' \'$path\'",
   ] as String[])
 }
 
@@ -122,35 +178,26 @@ def gitInit() {
   gitInit('.', 'main')
 }
 
+def gitTag(String name) {
+  bash([
+    "git tag \'$name\'",
+  ] as String[])
+}
+
 def gitCommit(String message) {
-  bash(getBasedir(), [
+  bash([
     "git commit --allow-empty -m \'$message\'",
   ] as String[])
 }
 
-def gitTag(String name) {
-  bash(getBasedir(), [
-    "git tag \'$name\'"
+def gitCommit(GString message) {
+  return gitCommit(s(message))
+}
+
+def logPwd() {
+  bash([
+    "echo PWD=\${PWD}",
   ] as String[])
-}
-
-def verifyTextInLog(String str) {
-  File buildLog = resolve("build.log")
-  assert buildLog != null && buildLog.exists()
-  String buildLogBody = readFile(buildLog)
-  return buildLogBody.contains(str)
-}
-
-def checkNoErrors() {
-  File buildLog = resolve("build.log")
-  assert buildLog != null && buildLog.exists()
-  String buildLogBody = readFile(buildLog)
-  return !buildLogBody.contains("[ERROR]]")
-}
-
-def checkGitDotDirExists() {
-  File gitDotDir = resolve(".git")
-  return gitDotDir != null && gitDotDir.exists()
 }
 
 
