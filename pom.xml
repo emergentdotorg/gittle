@@ -224,11 +224,6 @@
               <arguments>
                 <argument>-cp</argument>
                 <classpath/>
-                <!--
-                <classpath>
-                  <dependency>org.apache.maven:maven-artifact</dependency>
-                </classpath>
-                -->
                 <argument>org.apache.maven.artifact.versioning.ComparableVersion</argument>
               </arguments>
               <environmentVariables>
@@ -244,12 +239,6 @@
             <configuration>
               <mainClass>org.apache.maven.artifact.versioning.ComparableVersion</mainClass>
               <classpathScope>provided</classpathScope>
-              <systemProperties>
-                <systemProperty>
-                  <key>myproperty</key>
-                  <value>myvalue</value>
-                </systemProperty>
-              </systemProperties>
             </configuration>
           </execution>
         </executions>
@@ -512,18 +501,6 @@
             <extensions>true</extensions>
           </plugin>
         </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <id>runjava</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <build>
-        <!--<pluginManagement>-->
-        <plugins/>
-        <!--</pluginManagement>-->
       </build>
     </profile>
   </profiles>

@@ -3,51 +3,36 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0
                       https://maven.apache.org/xsd/settings-1.2.0.xsd">
-
-  <!--<interactiveMode>true</interactiveMode>-->
-  <!--<offline>true</offline>-->
-
   <profiles>
     <profile>
-      <id>miscellaneous</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <hiya>@project.version@</hiya>
-      </properties>
-      <!--
+      <id>it-repo</id>
       <repositories>
         <repository>
-          <id>central</id>
-          <url>https://repo.maven.apache.org/maven2</url>
-          <layout>default</layout>
+          <id>local.central</id>
+          <url>@localRepositoryUrl@</url>
           <releases>
             <enabled>true</enabled>
-            <updatePolicy>daily</updatePolicy>
           </releases>
           <snapshots>
-            <enabled>false</enabled>
-            <updatePolicy>always</updatePolicy>
+            <enabled>true</enabled>
           </snapshots>
         </repository>
       </repositories>
       <pluginRepositories>
         <pluginRepository>
-          <id>apache.snapshots</id>
-          <url>https://repository.apache.org/snapshots</url>
+          <id>local.central</id>
+          <url>@localRepositoryUrl@</url>
           <releases>
-            <enabled>false</enabled>
-            <updatePolicy>daily</updatePolicy>
+            <enabled>true</enabled>
           </releases>
           <snapshots>
             <enabled>true</enabled>
-            <updatePolicy>always</updatePolicy>
           </snapshots>
         </pluginRepository>
       </pluginRepositories>
-      -->
     </profile>
   </profiles>
-
+  <activeProfiles>
+    <activeProfile>it-repo</activeProfile>
+  </activeProfiles>
 </settings>
