@@ -4,7 +4,8 @@ def tools = shell.parse(new File((File)binding.getVariable('basedir'), '../tools
 
 static String s(Object o) {return String.valueOf(o)}
 
-def expectedVersionPrefix = '1.0.0-development-1-SNAPSHOT+'
+def projectName = "devel-branch-test"
+def expectedVersionPrefix = '1.0.0-devel-1-SNAPSHOT+'
 
 assert tools.verifyNoErrorsInLog()
 def dotGitDir = tools.resolveFile('.git')
@@ -12,5 +13,8 @@ assert dotGitDir != null || dotGitDir.exists()
 File gitverPom = tools.resolveGitverPomFile()
 assert gitverPom != null && gitverPom.exists()
 String version = tools.getGitverPomVersion(gitverPom)
+// should be a hash code attached to the actual version
+assert version != expectedVersionPrefix
+// but we should have the prefix right
 assert version.startsWith(expectedVersionPrefix)
-assert tools.verifyTextInLog("Building gitver-extension-test $version")
+assert tools.verifyTextInLog("Building $projectName $version")

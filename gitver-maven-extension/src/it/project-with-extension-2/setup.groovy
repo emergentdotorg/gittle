@@ -7,7 +7,7 @@ static String s(Object o) {return String.valueOf(o)}
 assert !tools.resolveFile('.git').exists()
 
 tools.logPwd()
-tools.gitInit('.', 'development')
+tools.gitInit('.', 'devel')
 tools.gitCommit("Empty commit [no ci]")
 tools.gitTag('v1.0.0')
 tools.gitCommit("Empty commit [no ci]")

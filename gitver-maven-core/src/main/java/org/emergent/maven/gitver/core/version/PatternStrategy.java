@@ -1,12 +1,11 @@
 package org.emergent.maven.gitver.core.version;
 
 import static java.util.regex.Pattern.quote;
-import static org.emergent.maven.gitver.core.Constants.GITVER_BRANCH;
-import static org.emergent.maven.gitver.core.Constants.GITVER_COMMIT_NUMBER;
-import static org.emergent.maven.gitver.core.Constants.GITVER_HASH;
-import static org.emergent.maven.gitver.core.Constants.GITVER_HASH_SHORT;
-import static org.emergent.maven.gitver.core.Constants.GITVER_VERSION;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -131,13 +130,15 @@ public class PatternStrategy implements VersionStrategy {
 
     @Override
     public Map<String, String> getPropertiesMap() {
-        return Mapper.create()
+        Mapper mapper = Mapper.create();
+        PropertiesCodec.toMap(this).forEach((k,v) -> mapper.put(k, String.valueOf(v)));
+        return mapper
                 .putAll(config.toProperties())
-                .put(GITVER_BRANCH, branch, "")
-                .put(GITVER_HASH, hash)
-                .put(GITVER_HASH_SHORT, getHashShort())
-                .put(GITVER_COMMIT_NUMBER, commits, -1)
-                .put(GITVER_VERSION, toVersionString())
+                // .put(GITVER_BRANCH, branch, "")
+                // .put(GITVER_HASH, hash)
+                // .put(GITVER_HASH_SHORT, getHashShort())
+                // .put(GITVER_COMMIT_NUMBER, commits, -1)
+                // .put(GITVER_VERSION, toVersionString())
                 .toMap();
     }
 
@@ -177,4 +178,25 @@ public class PatternStrategy implements VersionStrategy {
             return id();
         }
     }
+    public static class PropertiesCodec {
+
+        private static final TypeToken<Map<String, Object>> MAP_TYPE_TOKEN = new TypeToken<>() {};
+        private static final TypeToken<PatternStrategy> CONFIG_BASE_TYPE_TOKEN = new TypeToken<>() {};
+        private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        public static Map<String, Object> toMap(PatternStrategy bean) {
+            JsonElement json = gson.toJsonTree(bean, CONFIG_BASE_TYPE_TOKEN.getType());
+            Map<String, Object> outMap = gson.fromJson(json, MAP_TYPE_TOKEN.getType());
+            System.out.printf("PatternStrategy properties: %s%n", outMap.entrySet().stream()
+              .map(e -> e.getKey() + "=" + e.getValue()
+              ).collect(Collectors.joining("\n", "\n", "\n")));
+            return outMap;
+        }
+
+        public static PatternStrategy fromMap(Map<String, Object> map) {
+            JsonElement json = gson.toJsonTree(map, MAP_TYPE_TOKEN.getType());
+            return gson.fromJson(json, CONFIG_BASE_TYPE_TOKEN.getType());
+        }
+    }
+
 }
