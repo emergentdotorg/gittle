@@ -11,9 +11,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
-import java.beans.XMLDecoder;
-import java.beans.XMLEncoder;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,7 +48,6 @@ import org.emergent.maven.gitver.core.GitverException;
 @Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
 public class GitverConfigBase implements org.apache.maven.plugin.Mojo {
 
-
     public static final Set<Class<?>> PRIMITIVE_TYPES = Set.of(Boolean.class, String.class, Number.class);
     public static final Set<Class<?>> ALLOWED_TYPES = new HashSet<>(Set.of(List.class, Map.class));
 
@@ -77,13 +73,10 @@ public class GitverConfigBase implements org.apache.maven.plugin.Mojo {
     String releaseBranches;
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-    }
+    public void execute() throws MojoExecutionException, MojoFailureException {}
 
     @Override
-    public void setLog(Log log) {
-
-    }
+    public void setLog(Log log) {}
 
     @Override
     public Log getLog() {
@@ -108,8 +101,8 @@ public class GitverConfigBase implements org.apache.maven.plugin.Mojo {
 
     public static Set<String> getReleaseBranchesSet(String releaseBranches) {
         return Arrays.stream(releaseBranches.split(","))
-          .map(String::trim)
-          .collect(Collectors.toCollection(TreeSet::new));
+                .map(String::trim)
+                .collect(Collectors.toCollection(TreeSet::new));
     }
 
     @EagerSingleton
@@ -131,45 +124,15 @@ public class GitverConfigBase implements org.apache.maven.plugin.Mojo {
         @Parameter(defaultValue = "false", property = "gv.dirty")
         boolean dirty;
 
-        public void run() {
-
-        }
+        public void run() {}
 
         public static void main(String[] args) {
             ClassLoader classloader = StatusProvider.class.getClassLoader();
             Guice.createInjector(
-              new WireModule(                       // auto-wires unresolved dependencies
-                new SpaceModule(                     // scans and binds @Named components
-                  new URLClassSpace(classloader)    // abstracts class/resource finding
-                )));
-        }
-    }
-
-    public static class XmlCodec {
-
-        public static <T> String write(T bean) {
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-              XMLEncoder encoder = new XMLEncoder(new BufferedOutputStream(baos))) {
-                encoder.writeObject(bean);
-                encoder.close();
-                return baos.toString(StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                throw new GitverException(e.getMessage(), e);
-            }
-        }
-
-        public static <T> T read(String s) {
-            try (InputStream is = new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
-              XMLDecoder decoder = new XMLDecoder(is)) {
-                return readObject(decoder);
-            } catch (IOException e) {
-                throw new GitverException(e.getMessage(), e);
-            }
-        }
-
-        private static <T> T readObject(XMLDecoder decoder) {
-            //noinspection unchecked
-            return (T) decoder.readObject();
+                    new WireModule( // auto-wires unresolved dependencies
+                            new SpaceModule( // scans and binds @Named components
+                                    new URLClassSpace(classloader) // abstracts class/resource finding
+                                    )));
         }
     }
 

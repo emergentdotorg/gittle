@@ -37,7 +37,11 @@ public class StrategyFactory {
         Repository repository = git.getRepository();
         TagProvider tagProvider = new TagProvider(config, git);
         ObjectId headId = requireNonNull(repository.resolve(Constants.HEAD), "headId is null");
-        PatternStrategy.Builder builder = PatternStrategy.builder().setConfig(config);
+        PatternStrategy.Builder builder = PatternStrategy.builder()
+                .setVersionPattern(config.getVersionPattern())
+                .setTagPattern(config.getTagPattern())
+                .setReleaseBranches(config.getReleaseBranches())
+                .setVersionOverride(config.getVersionOverride());
         int commits = 0;
         for (RevCommit commit : git.log().add(headId).call()) {
             Optional<String> tag = tagProvider.getTag(commit).map(ComparableVersion::toString);
@@ -50,7 +54,8 @@ public class StrategyFactory {
         }
         builder.setCommits(commits);
         builder.setBranch(repository.getBranch()).setHash(headId.getName());
-        Status status = git.status().setIgnoreSubmodules(IgnoreSubmoduleMode.UNTRACKED).call();
+        Status status =
+                git.status().setIgnoreSubmodules(IgnoreSubmoduleMode.UNTRACKED).call();
         builder.setDirty(!status.getUncommittedChanges().isEmpty());
         return builder.build();
     }
