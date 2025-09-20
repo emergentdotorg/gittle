@@ -9,9 +9,11 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -220,6 +222,20 @@ public class Util {
 
     public static boolean startsWith(String str, String prefix) {
         return Strings.CS.startsWith(str, prefix);
+    }
+
+    public static Map<String, String> toStringStringMap(Properties properties) {
+        return toStringStringMap(properties.entrySet());
+    }
+
+    public static Map<String, String> toStringStringMap(Map<?, ?> map) {
+        return toStringStringMap(map.entrySet());
+    }
+
+    private static Map<String, String> toStringStringMap(Set<? extends Entry<?, ?>> entries) {
+        return entries.stream()
+          .filter(e -> e.getKey() instanceof String && e.getValue() instanceof String)
+          .collect(CollectorsEx.toMap(e -> String.valueOf(e.getKey()), e -> String.valueOf(e.getValue())));
     }
 
     private static class MemoizingSupplier<T> implements Supplier<T>, Serializable {

@@ -1,5 +1,6 @@
 package org.emergent.maven.gitver.core.version;
 
+import java.util.Map;
 import java.util.Properties;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.PropCodec;
@@ -31,5 +32,10 @@ public record OverrideStrategy(String versionOverride) implements VersionStrateg
         Properties props = new Properties();
         props.putAll(PropCodec.getInstance().toProperties(this, DEFAULT, GitverConfig.class));
         return props;
+    }
+
+    @Override
+    public Map<String, String> asMap() {
+        return PropCodec.getInstance().toProperties(this, DEFAULT, this.getClass());
     }
 }

@@ -16,33 +16,38 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
-import lombok.Getter;
-import lombok.extern.java.Log;
-import org.emergent.maven.gitver.core.version.PatternStrategy;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import java.util.stream.IntStream;
+import lombok.Getter;
+import lombok.extern.java.Log;
+import org.apache.commons.lang3.StringUtils;
+import org.emergent.maven.gitver.core.version.PatternStrategy;
 
 @Getter
 public class GsonUtil {
 
     private static final Map<Boolean, GsonUtil> INSTANCES = new ConcurrentHashMap<>();
 
-    public static final TypeToken<List<Object>> LIST_TT = new TypeToken<>() {};
-    public static final TypeToken<Map<Object, Object>> OBJ_OBJ_MAP_TT = new TypeToken<>() {};
-    public static final TypeToken<Map<String, String>> STR_STR_MAP_TT = new TypeToken<>() {};
-    public static final TypeToken<Map<String, Object>> STR_OBJ_MAP_TT = new TypeToken<>() {};
-    public static final TypeToken<PatternStrategy> PATTERN_STRATEGY_TT = new TypeToken<>() {};
-    public static final TypeToken<GitverConfig> GITVER_CONFIG_TT = new TypeToken<>() {};
+    private static final TypeToken<List<Object>> LIST_TT = new TypeToken<>() {};
+    private static final TypeToken<Map<Object, Object>> OBJ_OBJ_MAP_TT = new TypeToken<>() {};
+    private static final TypeToken<Map<String, String>> STR_STR_MAP_TT = new TypeToken<>() {};
+    private static final TypeToken<Map<String, Object>> STR_OBJ_MAP_TT = new TypeToken<>() {};
+    private static final TypeToken<PatternStrategy> PATTERN_STRATEGY_TT = new TypeToken<>() {};
+    private static final TypeToken<GitverConfig> GITVER_CONFIG_TT = new TypeToken<>() {};
 
     public static GsonUtil getInstance() {
         return getInstance(false);
@@ -68,6 +73,107 @@ public class GsonUtil {
                 .registerTypeAdapter(GitverConfig.class, new GitverConfigurationGsonAdapter())
                 .registerTypeAdapter(PatternStrategy.class, new PatternStrategyGsonAdapter())
                 .create();
+    }
+
+    public JsonObject toJsonTree(Map<String, ?> src) {
+        return gson.toJsonTree(new LinkedHashMap<>(src), STR_OBJ_MAP_TT.getType()).getAsJsonObject();
+    }
+
+    public Map<String, Object> toObjectMap(JsonObject src) {
+        return gson.fromJson(src, STR_OBJ_MAP_TT.getType());
+    }
+
+    public Map<String, String> toStringMap(JsonObject src) {
+        return gson.fromJson(src, STR_STR_MAP_TT.getType());
+    }
+
+    public Object unwrap(JsonElement src) {
+        return BasicCodec.extract(src);
+    }
+
+    public JsonObject toDotted(JsonElement in) {
+        JsonObject dest = new JsonObject();
+        toDotted(dest, "", in);
+        return dest;
+    }
+
+    private void toDotted(JsonObject dest, String prefix, JsonElement in) {
+        if (in.isJsonObject() || in.isJsonArray()) {
+            Map<String, JsonElement> map = Collections.emptyMap();
+            if (in.isJsonObject()) {
+                map = in.getAsJsonObject().asMap();
+            } else if (in.isJsonArray()) {
+                AtomicInteger idx = new AtomicInteger();
+                map = in.getAsJsonArray().asList().stream()
+                  .map(v -> Map.entry("" + idx.incrementAndGet(), v))
+                  .collect(CollectorsEx.toMap(LinkedHashMap::new));
+            }
+            String prefixWithDot = prefix.isEmpty() ? "" : prefix + ".";
+            map.forEach((k, v) -> {
+                toDotted(dest, prefixWithDot + k, v);
+            });
+        } else {
+            dest.add(prefix, in);
+        }
+    }
+
+    public Map<String, Object> toUndotted(Map<String, ?> in) {
+        JsonElement el = toJsonTree(new LinkedHashMap<String, Object>(in));
+        JsonElement transformed = toUndotted(el);
+        return toObjectMap(transformed.getAsJsonObject());
+    }
+
+    public JsonElement toUndotted(JsonElement in) {
+        if (!in.isJsonObject() && !in.isJsonArray()) {
+            return in;
+        }
+
+        if (in.isJsonObject() && in.getAsJsonObject().keySet().stream().anyMatch(k -> k.contains("."))) {
+            JsonObject out = new JsonObject();
+
+            in.getAsJsonObject().asMap().forEach((k, v) -> {
+                if (k.contains(".")) {
+                    String grpkey = StringUtils.substringBefore(k, ".");
+                    String subkey = StringUtils.substringAfter(k, ".");
+
+                    JsonObject grpmap = Optional.ofNullable(out.get(grpkey))
+                      .filter(j -> j.isJsonObject())
+                      .map(j -> j.getAsJsonObject())
+                      .orElseGet(() -> {
+                          JsonObject o = new JsonObject();
+                          out.add(grpkey, o);
+                          return o;
+                      });
+
+                    grpmap.add(subkey, toUndotted(v));
+                } else {
+                    out.add(k, v);
+                }
+            });
+
+            LinkedHashSet<String> outkeys = new LinkedHashSet<>(out.keySet());
+
+            outkeys.forEach(k -> Optional.ofNullable(out.get(k))
+              .filter(JsonElement::isJsonObject)
+              .map(JsonElement::getAsJsonObject)
+              // .filter(jsonObj -> !jsonObj.isJsonArray())
+              .ifPresent(v -> {
+                  Set<String> keys = new HashSet<>(v.keySet());
+                  JsonArray arr = new JsonArray();
+                  IntStream.range(1, keys.size() + 1).boxed().forEach(ii -> {
+                      JsonElement item = v.get(Integer.toString(ii));
+                      if (item != null) {
+                          arr.add(item);
+                      }
+                  });
+                  if (arr.size() == keys.size()) {
+                      out.add(k, arr);
+                  }
+              }));
+
+            return out;
+        }
+        return in;
     }
 
     public static class GitverConfigurationGsonAdapter implements InstanceCreator<GitverConfig> {
@@ -101,7 +207,8 @@ public class GsonUtil {
                     .filter(e -> e.getKey() instanceof String && e.getValue() instanceof String)
                     .map(e -> Map.entry(String.valueOf(e.getKey()), String.valueOf(e.getValue())))
                     .collect(CollectorsEx.toMap(LinkedHashMap::new));
-            return PropCodec.getInstance().toUndotted(ctx.serialize(PropCodec.getInstance().toUndotted(map), STR_STR_MAP_TT.getType()));
+            GsonUtil util = getInstance();
+            return util.toUndotted(ctx.serialize(util.toUndotted(map), STR_STR_MAP_TT.getType()));
         }
     }
 
@@ -122,6 +229,18 @@ public class GsonUtil {
 
     @Log
     public static class BasicCodec {
+
+        public static Object extract(JsonElement json) {
+            if (json.isJsonNull()) {
+                return null;
+            } else if (json.isJsonArray()) {
+                return extractList(json.getAsJsonArray());
+            } else if (json.isJsonObject()) {
+                return extractMap(json.getAsJsonObject());
+            } else {
+                return extractPrimitive(json.getAsJsonPrimitive());
+            }
+        }
 
         public static List<Object> extractList(JsonArray array) {
             return array.asList().stream().map(v -> {

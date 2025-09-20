@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.junit.jupiter.api.Test;
 
@@ -69,12 +70,26 @@ public class PatternStrategyTest {
     }
 
     @Test
+    public void testPropertiesNames() {
+        PatternStrategy strategy = getPatternStrategy();
+        Map<String, String> props = strategy.asMap();
+        String collect = props.entrySet().stream()
+          .map(e -> e.getKey() + "=" + e.getValue())
+          .collect(Collectors.joining("\n\t", "\n\t", "\n"));
+        System.out.printf("props:%s%n", collect);
+        PatternStrategy reborn = PatternStrategy.from(props);
+        assertThat(reborn).isEqualTo(strategy);
+        PatternStrategy def = PatternStrategy.builder().build();
+        Properties map = def.toProperties();
+        assertThat(map).isEqualTo(EMPTY);
+    }
+
+    @Test
     public void testPropertiesRoundTrip() {
         PatternStrategy strategy = getPatternStrategy();
         Properties props = strategy.toProperties();
         PatternStrategy reborn = PatternStrategy.from(props);
         assertThat(reborn).isEqualTo(strategy);
-
         PatternStrategy def = PatternStrategy.builder().build();
         Properties map = def.toProperties();
         assertThat(map).isEqualTo(EMPTY);

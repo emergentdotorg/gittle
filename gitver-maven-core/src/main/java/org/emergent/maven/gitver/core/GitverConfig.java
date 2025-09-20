@@ -5,6 +5,7 @@ import static org.emergent.maven.gitver.core.Constants.TAG_PATTERN_DEF;
 import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -45,13 +46,17 @@ public class GitverConfig {
           .collect(Collectors.toCollection(TreeSet::new));
     }
 
+    public static GitverConfig from(Properties props) {
+        return PropCodec.getInstance().fromProperties(props, GitverConfig.class);
+    }
+
     public Properties toProperties() {
         Properties props = new Properties();
-        props.putAll(PropCodec.getInstance().toProperties(this, DEFAULT, GitverConfig.class));
+        props.putAll(PropCodec.getInstance().toProperties(this, DEFAULT, this.getClass()));
         return props;
     }
 
-    public static GitverConfig from(Properties props) {
-        return PropCodec.getInstance().fromProperties(props, GitverConfig.class);
+    public Map<String, String> asMap() {
+        return PropCodec.getInstance().toProperties(this, DEFAULT, this.getClass());
     }
 }

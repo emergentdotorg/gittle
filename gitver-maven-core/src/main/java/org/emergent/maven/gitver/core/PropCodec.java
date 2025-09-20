@@ -1,7 +1,6 @@
 package org.emergent.maven.gitver.core;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.lang.reflect.Type;
@@ -9,22 +8,18 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.java.Log;
-import org.apache.commons.lang3.StringUtils;
 
 @Log
 public class PropCodec {
@@ -51,7 +46,7 @@ public class PropCodec {
     public <V> V fromProperties(Map<String, String> props, Type type) {
         Map<String, Object> undotted = props.entrySet().stream()
           .collect(CollectorsEx.toMapAndThen(m -> toUndotted(m)));
-        JsonElement json = getGson().toJsonTree(undotted, GsonUtil.STR_OBJ_MAP_TT.getType());
+        JsonElement json = gsonUtil.toJsonTree(undotted);
         return getGson().fromJson(json, type);
     }
 
@@ -79,14 +74,19 @@ public class PropCodec {
         if (src == null) {
             return Collections.emptyMap();
         }
-        JsonElement json = getGson().toJsonTree(src, type);
-        return getGson().fromJson(json, GsonUtil.STR_OBJ_MAP_TT.getType());
+        try {
+            JsonElement json = getGson().toJsonTree(src, type);
+            return gsonUtil.toObjectMap(json.getAsJsonObject());
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Could not convert " + src + " to Map", e);
+            return Collections.emptyMap();
+        }
     }
 
     Map<String, String> toDotted(Map<String, ?> map) {
-        JsonElement json = getGson().toJsonTree(map, GsonUtil.STR_OBJ_MAP_TT.getType());
+        JsonElement json = getGson().toJsonTree(map);
         JsonObject dotted = toDotted(json);
-        Map<String, Object> objmap = getGson().fromJson(dotted, GsonUtil.STR_OBJ_MAP_TT.getType());
+        Map<String, Object> objmap = gsonUtil.toObjectMap(dotted);
         return objmap.entrySet().stream()
           .filter(e -> Allowed.isValuePrimitive(e))
           .map(e -> Map.entry(e.getKey(), String.valueOf(e.getValue())))
@@ -94,9 +94,9 @@ public class PropCodec {
     }
 
     private Map<String, String> toDottedCollector(Map<String, ?> map) {
-        JsonElement json = getGson().toJsonTree(map, GsonUtil.STR_OBJ_MAP_TT.getType());
+        JsonElement json = getGson().toJsonTree(map);
         JsonObject dotted = toDotted(json);
-        Map<String, Object> objmap = getGson().fromJson(dotted, GsonUtil.STR_OBJ_MAP_TT.getType());
+        Map<String, Object> objmap = gsonUtil.toObjectMap(dotted);
         Collector<Entry<String, String>, ?, Map<String, String>> col = CollectorsEx.toMap();
         return objmap.entrySet().stream()
           .filter(e -> Allowed.isPrimitive(e))
@@ -115,94 +115,11 @@ public class PropCodec {
     }
 
     public JsonObject toDotted(JsonElement in) {
-        JsonObject dest = new JsonObject();
-        toDotted(dest, "", in);
-        return dest;
-    }
-
-    private JsonObject toDotted(String prefix, JsonElement in) {
-        JsonObject dest = new JsonObject();
-        toDotted(dest, prefix, in);
-        return dest;
-    }
-
-    private void toDotted(JsonObject dest, String prefix, JsonElement in) {
-        if (in.isJsonObject() || in.isJsonArray()) {
-            Map<String, JsonElement> map = Collections.emptyMap();
-            if (in.isJsonObject()) {
-                map = in.getAsJsonObject().asMap();
-            } else if (in.isJsonArray()) {
-                AtomicInteger idx = new AtomicInteger();
-                map = in.getAsJsonArray().asList().stream()
-                  .map(v -> Map.entry("" + idx.incrementAndGet(), v))
-                  .collect(CollectorsEx.toMap(LinkedHashMap::new));
-            }
-            String prefixWithDot = prefix.isEmpty() ? "" : prefix + ".";
-            map.forEach((k, v) -> {
-                toDotted(dest, prefixWithDot + k, v);
-            });
-        } else {
-            dest.add(prefix, in);
-        }
+        return gsonUtil.toDotted(in);
     }
 
     public Map<String, Object> toUndotted(Map<String, ?> in) {
-        JsonElement el = getGson().toJsonTree(new LinkedHashMap<String, Object>(in), GsonUtil.STR_OBJ_MAP_TT.getType());
-        JsonElement transformed = toUndotted(el);
-        return getGson().fromJson(transformed, GsonUtil.STR_OBJ_MAP_TT.getType());
-    }
-
-    public JsonElement toUndotted(JsonElement in) {
-        if (!in.isJsonObject() && !in.isJsonArray()) {
-            return in;
-        }
-
-        if (in.isJsonObject() && in.getAsJsonObject().keySet().stream().anyMatch(k -> k.contains("."))) {
-            JsonObject out = new JsonObject();
-
-            in.getAsJsonObject().asMap().forEach((k, v) -> {
-                if (k.contains(".")) {
-                    String grpkey = StringUtils.substringBefore(k, ".");
-                    String subkey = StringUtils.substringAfter(k, ".");
-
-                    JsonObject grpmap = Optional.ofNullable(out.get(grpkey))
-                      .filter(j -> j.isJsonObject())
-                      .map(j -> j.getAsJsonObject())
-                      .orElseGet(() -> {
-                          JsonObject o = new JsonObject();
-                          out.add(grpkey, o);
-                          return o;
-                      });
-
-                    grpmap.add(subkey, toUndotted(v));
-                } else {
-                    out.add(k, v);
-                }
-            });
-
-            LinkedHashSet<String> outkeys = new LinkedHashSet<>(out.keySet());
-
-            outkeys.forEach(k -> Optional.ofNullable(out.get(k))
-              .filter(JsonElement::isJsonObject)
-              .map(JsonElement::getAsJsonObject)
-              // .filter(jsonObj -> !jsonObj.isJsonArray())
-              .ifPresent(v -> {
-                  Set<String> keys = new HashSet<>(v.keySet());
-                  JsonArray arr = new JsonArray();
-                  IntStream.range(1, keys.size() + 1).boxed().forEach(ii -> {
-                      JsonElement item = v.get(Integer.toString(ii));
-                      if (item != null) {
-                          arr.add(item);
-                      }
-                  });
-                  if (arr.size() == keys.size()) {
-                      out.add(k, arr);
-                  }
-              }));
-
-            return out;
-        }
-        return in;
+        return gsonUtil.toUndotted(in);
     }
 
     private static void log(Map<String, Object> outMap, Type typeOfSrc) {
@@ -215,17 +132,11 @@ public class PropCodec {
     }
 
     public Map<String, String> toStringStringMap(Properties properties) {
-        return toStringStringMap(properties.entrySet());
+        return Util.toStringStringMap(properties);
     }
 
     public Map<String, String> toStringStringMap(Map<?, ?> map) {
-        return toStringStringMap(map.entrySet());
-    }
-
-    private static Map<String, String> toStringStringMap(Set<? extends Entry<?, ?>> entries) {
-        return entries.stream()
-          .filter(e -> e.getKey() instanceof String && e.getValue() instanceof String)
-          .collect(CollectorsEx.toMap(e -> String.valueOf(e.getKey()), e -> String.valueOf(e.getValue())));
+        return Util.toStringStringMap(map);
     }
 
     public static class Allowed {

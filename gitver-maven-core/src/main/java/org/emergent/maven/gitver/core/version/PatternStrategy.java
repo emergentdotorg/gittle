@@ -188,11 +188,20 @@ public class PatternStrategy implements VersionStrategy<PatternStrategy> {
         return PropCodec.getInstance().fromProperties(props, PatternStrategy.class);
     }
 
+    public static PatternStrategy from(Map<String, String> props) {
+        return PropCodec.getInstance().fromProperties(props, PatternStrategy.class);
+    }
+
     @Override
     public Properties toProperties() {
         Properties props = new Properties();
-        props.putAll(PropCodec.getInstance().toProperties(this, DEFAULT, GitverConfig.class));
+        props.putAll(PropCodec.getInstance().toProperties(this, DEFAULT, this.getClass()));
         return props;
+    }
+
+    @Override
+    public Map<String, String> asMap() {
+        return PropCodec.getInstance().toProperties(this, DEFAULT, this.getClass());
     }
 
     @Getter

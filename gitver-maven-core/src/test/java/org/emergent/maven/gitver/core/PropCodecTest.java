@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import com.google.gson.reflect.TypeToken;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 class PropCodecTest {
 
+    private static final TypeToken<Map<String, Object>> STR_OBJ_MAP_TT = new TypeToken<>() {};
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     @Test
@@ -59,9 +61,9 @@ class PropCodecTest {
           .isEqualTo(GSON.toJson(new TreeMap<>(expectedMap), PropCodec.OBJ_OBJ_MAP_TT.getType()));
         */
 
-        assertThat(GSON.toJson(actualProps, GsonUtil.STR_OBJ_MAP_TT.getType()))
+        assertThat(GSON.toJson(actualProps, STR_OBJ_MAP_TT.getType()))
           .isNotNull()
-          .isEqualTo(GSON.toJson(expectedProps, GsonUtil.STR_OBJ_MAP_TT.getType()));
+          .isEqualTo(GSON.toJson(expectedProps, STR_OBJ_MAP_TT.getType()));
 
         // assertThat(GSON.toJson(actualProps, PropCodec.OBJ_OBJ_MAP_TT.getType()))
         //   .isNotNull()
