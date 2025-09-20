@@ -7,7 +7,6 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -44,22 +43,21 @@ public class PropCodec {
     }
 
     public <V> V fromProperties(Map<String, String> props, Type type) {
-        Map<String, Object> undotted = props.entrySet().stream()
-          .collect(CollectorsEx.toMapAndThen(m -> toUndotted(m)));
+        Map<String, Object> undotted = toUndotted(props);
         JsonElement json = gsonUtil.toJsonTree(undotted);
-        return getGson().fromJson(json, type);
+        return gsonUtil.fromJson(json, type);
     }
 
     public <T> Map<String, String> toProperties(T src, T def, Type type) {
         Objects.requireNonNull(src, "src is null");
         Objects.requireNonNull(type, "type is null");
 
-        Map<String, String> defmap = Optional.ofNullable(def)
-          .map(d -> toMap(def, type)).orElseGet(Collections::emptyMap)
-          .entrySet().stream().collect(toDottedCol());
+        Map<String, String> defmap = toDotted(Optional.ofNullable(def)
+          .map(d -> toMap(def, type)).orElseGet(Collections::emptyMap));
 
-        Map<String, String> srcmap = toMap(src, type).entrySet().stream()
-          .collect(toDottedCol());
+        Map<String, Object> map = toMap(src, type);
+//                .entrySet().stream().collect(CollectorsEx.toMap());
+        Map<String, String> srcmap = toDotted(map);
 
         return srcmap.entrySet().stream()
           .filter(e -> !(Objects.isNull(e.getValue()) || Objects.equals(e.getValue(), defmap.get(e.getKey()))))
@@ -84,11 +82,11 @@ public class PropCodec {
     }
 
     Map<String, String> toDotted(Map<String, ?> map) {
-        JsonElement json = getGson().toJsonTree(map);
+        JsonElement json = gsonUtil.toJsonTree(map);
         JsonObject dotted = toDotted(json);
         Map<String, Object> objmap = gsonUtil.toObjectMap(dotted);
         return objmap.entrySet().stream()
-          .filter(e -> Allowed.isValuePrimitive(e))
+          .filter(Allowed::nonContainerEntry)
           .map(e -> Map.entry(e.getKey(), String.valueOf(e.getValue())))
           .collect(CollectorsEx.toMap());
     }
@@ -158,7 +156,12 @@ public class PropCodec {
           Stream.of(Boolean.class, String.class), NUMBER_TYPES.stream()
         ).collect(Collectors.toUnmodifiableSet());
 
+        private static final Set<Class<?>> KNOWN_TYPES = Stream.concat(
+                CONTAINER_TYPES.stream(), PRIMITIVE_TYPES.stream()
+        ).collect(Collectors.toUnmodifiableSet());
+
         public static boolean isKnownType(Object value) {
+            assert (!(value instanceof Map.Entry));
             return isAllowedValue0(getAllowedTypes(), value);
         }
 
@@ -167,6 +170,7 @@ public class PropCodec {
         }
 
         public static boolean isPrimitive(Object value) {
+            assert (!(value instanceof Map.Entry));
             return isAllowedValue0(getPrimitiveTypes(), value);
         }
 
@@ -175,6 +179,7 @@ public class PropCodec {
         }
 
         public static boolean isContainer(Object value) {
+            assert (!(value instanceof Map.Entry));
             return isAllowedValue0(getContainerTypes(), value);
         }
 
@@ -182,7 +187,18 @@ public class PropCodec {
             return isAllowedEntry0(getContainerTypes(), entry);
         }
 
+        public static boolean nonContainerValue(Object value) {
+            assert (!(value instanceof Map.Entry));
+            return isAllowedValue0(getPrimitiveTypes(), value)
+                    && isBlockedValue0(getContainerTypes(), value);
+        }
+
+        public static boolean nonContainerEntry(Entry<?, ?> entry) {
+            return nonContainerValue(entry.getValue());
+        }
+
         private static boolean isAllowedValue0(Set<Class<?>> types, Object value) {
+            assert (!(value instanceof Map.Entry));
             return types.stream().anyMatch(t -> t.isInstance(value));
         }
 
@@ -190,11 +206,17 @@ public class PropCodec {
             return (entry.getKey() instanceof String) && isAllowedValue0(types, entry.getValue());
         }
 
+        private static boolean isBlockedValue0(Set<Class<?>> types, Object value) {
+            assert (!(value instanceof Map.Entry));
+            return types.stream().noneMatch(t -> t.isInstance(value));
+        }
+
+        private static boolean isBlockedEntry0(Set<Class<?>> types, Entry<?, ?> entry) {
+            return (entry.getKey() instanceof String) && !isAllowedValue0(types, entry.getValue());
+        }
+
         public static Set<Class<?>> getAllowedTypes() {
-            Set<Class<?>> types = new HashSet<>();
-            types.addAll(getPrimitiveTypes());
-            types.addAll(getContainerTypes());
-            return types;
+            return KNOWN_TYPES;
         }
 
         public static Set<Class<?>> getContainerTypes() {
@@ -202,10 +224,7 @@ public class PropCodec {
         }
 
         public static Set<Class<?>> getPrimitiveTypes() {
-            Set<Class<?>> types = new HashSet<>(PRIMITIVE_TYPES);
-            types.addAll(getIntegralTypes());
-            types.addAll(getFloatTypes());
-            return Collections.unmodifiableSet(types);
+            return PRIMITIVE_TYPES;
         }
 
         public static Set<Class<?>> getIntegralTypes() {

@@ -4,6 +4,7 @@ import static java.util.regex.Pattern.quote;
 import static org.emergent.maven.gitver.core.Constants.RELEASE_BRANCHES_DEF;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
@@ -26,7 +29,7 @@ import org.emergent.maven.gitver.core.PropCodec;
 import org.emergent.maven.gitver.core.Util;
 
 @Value
-@Accessors(fluent = true)
+//@Accessors(fluent = true)
 @lombok.Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
 public class PatternStrategy implements VersionStrategy<PatternStrategy> {
 
@@ -34,6 +37,7 @@ public class PatternStrategy implements VersionStrategy<PatternStrategy> {
 
     public static final String VERSION_PATTERN_DEF = "%t(-%B)(-%c)(-%S)+%h(.%d)";
 
+    @SerializedName("gitver")
     @NonNull
     @lombok.Builder.Default
     GitverConfig config = GitverConfig.builder().build();
@@ -54,25 +58,31 @@ public class PatternStrategy implements VersionStrategy<PatternStrategy> {
     // @lombok.Builder.Default
     // String releaseBranches = RELEASE_BRANCHES_DEF;
 
+    @SerializedName("gv_branch")
     @lombok.Builder.Default
     @NonNull
     String branch = "main";
 
+    @SerializedName("gv_hash")
     @lombok.Builder.Default
     @NonNull
     String hash = "abcdef01";
 
+    @SerializedName("gv_tagged")
     @lombok.Builder.Default
     @NonNull
     String tagged = "0.0.0";
 
+    @SerializedName("gv_commits")
     int commits;
+
+    @SerializedName("gv_dirty")
     boolean dirty;
 
-    @Override
-    public GitverConfig getConfig() {
-        return config;
-    }
+//    @Override
+//    public GitverConfig getConfig() {
+//        return config;
+//    }
 
     public String getHashShort() {
         return hash.substring(0, 8);
@@ -91,16 +101,8 @@ public class PatternStrategy implements VersionStrategy<PatternStrategy> {
         return performTokenReplacements(pattern, values);
     }
 
-    public Set<String> getReleaseBranchesSet() {
-        return Arrays.stream(Optional.ofNullable(config.getReleaseBranches())
-            .orElse(RELEASE_BRANCHES_DEF)
-            .split(","))
-          .map(String::trim)
-          .collect(Collectors.toCollection(TreeSet::new));
-    }
-
     Map<String, String> getReplacementMap() {
-        String devBranch = getReleaseBranchesSet().contains(branch) ? "" : branch;
+        String devBranch = config.getReleaseBranchesSet().contains(branch) ? "" : branch;
         return Arrays.stream(PatternToken.values())
           .collect(Collectors.toMap(
             PatternToken::id,
@@ -185,23 +187,33 @@ public class PatternStrategy implements VersionStrategy<PatternStrategy> {
     }
 
     public static PatternStrategy from(Properties props) {
-        return PropCodec.getInstance().fromProperties(props, PatternStrategy.class);
+        return from(Util.toStringStringMap(props));
     }
 
     public static PatternStrategy from(Map<String, String> props) {
-        return PropCodec.getInstance().fromProperties(props, PatternStrategy.class);
+        Map<String, String> fixed = new LinkedHashMap<>();
+        props.forEach((k, v) -> fixed.put(
+                k,
+//                Util.substringAfter(k, "gv."),
+                v));
+        return PropCodec.getInstance().fromProperties(fixed, PatternStrategy.class);
     }
 
     @Override
     public Properties toProperties() {
         Properties props = new Properties();
-        props.putAll(PropCodec.getInstance().toProperties(this, DEFAULT, this.getClass()));
+        asMap().forEach(props::setProperty);
         return props;
     }
 
     @Override
     public Map<String, String> asMap() {
-        return PropCodec.getInstance().toProperties(this, DEFAULT, this.getClass());
+        Map<String, String> map = PropCodec.getInstance()
+                .toProperties(this, DEFAULT, this.getClass());
+        return map.entrySet().stream()
+                .collect(Collectors.toMap(e ->
+//                        "gv." +
+                                e.getKey(), Map.Entry::getValue));
     }
 
     @Getter

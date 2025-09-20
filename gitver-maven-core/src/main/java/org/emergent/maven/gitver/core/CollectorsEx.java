@@ -8,6 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -19,6 +20,15 @@ public class CollectorsEx {
 
     private static <K, V> Supplier<Map<K, V>> getDefaultMapSupplier() {
         return USE_SORTED_MAP ? TreeMap::new : LinkedHashMap::new;
+    }
+
+    private static <K, V> UnaryOperator<Map<K, V>> getDefaultMapConstructor() {
+        return USE_SORTED_MAP ? TreeMap::new : LinkedHashMap::new;
+    }
+
+    public static <K,V> Map<K,V> wrap(Map<K,V> map) {
+        UnaryOperator<Map<K, V>> op = getDefaultMapConstructor();
+        return op.apply(map);
     }
 
     public static <T extends Map.Entry<K, V>, K, V, R> Collector<T, Map<K, V>, R> toMapAndThen(

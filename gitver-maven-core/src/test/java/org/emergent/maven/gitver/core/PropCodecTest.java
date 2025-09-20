@@ -18,6 +18,7 @@ class PropCodecTest {
 
     private static final TypeToken<Map<String, Object>> STR_OBJ_MAP_TT = new TypeToken<>() {};
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private final PropCodec codec = PropCodec.getInstance();
 
     @Test
     void testPatternStrategyToProperties() {
@@ -40,7 +41,7 @@ class PropCodecTest {
         PatternStrategy expected = getPatternStrategy();
         Properties expectedProps = expected.toProperties();
 
-        PatternStrategy actual = PropCodec.getInstance().fromProperties(expectedProps, PatternStrategy.class);
+        PatternStrategy actual = codec.fromProperties(expectedProps, PatternStrategy.class);
         Properties actualProps = actual.toProperties();
 
         // Optional.ofNullable(actualMap.get("config"))
@@ -84,7 +85,7 @@ class PropCodecTest {
 
     @Test
     void toToDottedKeys() {
-        Map<String, String> actual = PropCodec.getInstance().toDotted(Map.of(
+        Map<String, String> actual = codec.toDotted(Map.of(
                 "astring",
                 "stringx",
                 "aboolean",
@@ -98,7 +99,7 @@ class PropCodecTest {
         assertThat(actual)
                 .isNotNull()
                 // .isInstanceOf(JsonObject.class)
-                .isEqualTo(PropCodec.getInstance().toDotted(Map.of(
+                .isEqualTo(codec.toDotted(Map.of(
                         "astring",
                         "stringx",
                         "aboolean",
@@ -121,7 +122,7 @@ class PropCodecTest {
 
     @Test
     void fromToDottedKeys() {
-        Map<String, Object> actual = new TreeMap<>(PropCodec.getInstance().toUndotted(Map.of(
+        Map<String, Object> actual = codec.toUndotted(Map.of(
                 "astring", "stringx",
                 "aboolean", true,
                 "anumber", 5,
@@ -131,21 +132,27 @@ class PropCodecTest {
                 "amap.astring", "stringz",
                 "amap.aboolean", false,
                 "amap.anumber", 9
-        )));
-        assertThat(GSON.toJson(actual))
+        ));
+        Map<String, Object> expected = Map.of(
+                "astring", "stringx",
+                "aboolean", true,
+                "anumber", 5,
+                "alist", List.of(
+                        "stringy",
+                        true,
+                        7
+                ),
+                "amap", Map.of(
+                        "astring", "stringz",
+                        "aboolean", false,
+                        "anumber", 9
+                )
+        );
+        assertThat(actual)
                 .isNotNull()
+                .as(() -> GSON.toJson(Map.of("actual", actual, "expected", expected)))
                 // .isInstanceOf(JsonObject.class)
-                .isEqualTo(GSON.toJson(new TreeMap<>(Map.of(
-                  "astring", "stringx",
-                  "aboolean", true,
-                  "anumber", 5,
-                  "alist", List.of("stringy", true, 7),
-                  "amap", Map.of(
-                    "astring", "stringz",
-                    "aboolean", false,
-                    "anumber", 9
-                  )
-                ))));
+                .isEqualTo(expected);
     }
 
     // private static JsonElement toJsonElement(Object var) {

@@ -61,7 +61,7 @@ public class PatternStrategyTest {
     public void testPatternSansHash() {
         PatternStrategy st = getPatternStrategy();
         PatternStrategy strategy = st.toBuilder()
-                  .setConfig(st.config().toBuilder()
+                  .setConfig(st.getConfig().toBuilder()
                     .setVersionPattern("%t(-%B)(-%c)(-%S)(.%d)")
                     .build())
                   .build();
@@ -87,7 +87,8 @@ public class PatternStrategyTest {
     @Test
     public void testPropertiesRoundTrip() {
         PatternStrategy strategy = getPatternStrategy();
-        Properties props = strategy.toProperties();
+        Map<String, String> props = strategy.asMap();
+
         PatternStrategy reborn = PatternStrategy.from(props);
         assertThat(reborn).isEqualTo(strategy);
         PatternStrategy def = PatternStrategy.builder().build();

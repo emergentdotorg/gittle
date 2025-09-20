@@ -6,6 +6,7 @@ import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -39,6 +40,14 @@ public class GitverConfig {
     @NonNull
     @lombok.Builder.Default
     String releaseBranches = RELEASE_BRANCHES_DEF;
+
+//    public Set<String> getReleaseBranchesSet() {
+//        return Arrays.stream(Optional.ofNullable(getReleaseBranches())
+//                        .orElse(RELEASE_BRANCHES_DEF)
+//                        .split(","))
+//                .map(String::trim)
+//                .collect(Collectors.toCollection(TreeSet::new));
+//    }
 
     public Set<String> getReleaseBranchesSet() {
         return Arrays.stream(releaseBranches.split(","))
