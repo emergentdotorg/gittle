@@ -1,6 +1,7 @@
 package org.emergent.maven.gitver.plugin;
 
 import java.util.Map;
+import java.util.Properties;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.shared.utils.logging.MessageUtils;
@@ -14,7 +15,7 @@ public class PropsMojo extends AbstractGitverMojo {
     @Override
     protected void execute0() {
         VersionStrategy strategy = getVersionStrategy();
-        Map<String, String> properties = strategy.getPropertiesMap();
+        Properties properties = strategy.toProperties();
         getLog().info("Adding properties to project "
                 + MessageUtils.buffer()
                         .mojo(Coordinates.builder()

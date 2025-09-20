@@ -38,15 +38,17 @@ public class StrategyFactory {
         TagProvider tagProvider = new TagProvider(config, git);
         ObjectId headId = requireNonNull(repository.resolve(Constants.HEAD), "headId is null");
         PatternStrategy.Builder builder = PatternStrategy.builder()
+          .setConfig(GitverConfig.builder()
                 .setVersionPattern(config.getVersionPattern())
                 .setTagPattern(config.getTagPattern())
                 .setReleaseBranches(config.getReleaseBranches())
-                .setVersionOverride(config.getVersionOverride());
+                .setVersionOverride(config.getVersionOverride())
+            .build());
         int commits = 0;
         for (RevCommit commit : git.log().add(headId).call()) {
             Optional<String> tag = tagProvider.getTag(commit).map(ComparableVersion::toString);
             if (tag.isPresent()) {
-                builder.setTag(tag.get());
+                builder.setTagged(tag.get());
                 break;
             }
             boolean isMergeCommit = commit.getParentCount() > 1;

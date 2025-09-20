@@ -13,13 +13,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.StringJoiner;
-import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.emergent.maven.gitver.core.version.VersionStrategy;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 public class Util {
 
@@ -151,37 +151,11 @@ public class Util {
     }
 
     public static Map<String, String> flatten(Properties properties) {
-        return properties.entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> String.valueOf(e.getKey()),
-                        e -> String.valueOf(e.getValue()),
-                        (u, v) -> {
-                            throw new IllegalStateException("Duplicate key");
-                        },
-                        TreeMap::new));
+        return PropCodec.getInstance().toStringStringMap(properties);
     }
 
-    public static Map<String, String> flatten(Map<String, ?> properties) {
-        return properties.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> String.valueOf(e.getValue()),
-                        (u, v) -> {
-                            throw new IllegalStateException("Duplicate key");
-                        },
-                        TreeMap::new));
-    }
-
-    public static Properties toProperties(Map<String, Object> properties) {
-        Map<String, String> flattened = properties.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> String.valueOf(e.getValue())));
-        Properties props = new Properties();
-        props.putAll(flattened);
-        return props;
-    }
-
-    public static Map<String, String> toProperties(VersionStrategy versionStrategy) {
-        return versionStrategy.getPropertiesMap();
+    public static Map<String, String> flatten(Map<String, ?> map) {
+        return PropCodec.getInstance().toStringStringMap(map);
     }
 
     public static Coordinates getCoreCoordinates() {
@@ -216,7 +190,7 @@ public class Util {
         return join(flatten(properties));
     }
 
-    public static String join(Map<String, String> properties) {
+    public static String join(Map<String, ?> properties) {
         return join(properties, new StringJoiner("\n", "\n---\n", "\n---").setEmptyValue(""))
                 .toString();
     }
@@ -225,7 +199,7 @@ public class Util {
         return join(flatten(properties), joiner);
     }
 
-    public static StringJoiner join(Map<String, String> properties, StringJoiner joiner) {
+    public static StringJoiner join(Map<String, ?> properties, StringJoiner joiner) {
         properties.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).forEach(joiner::add);
         return joiner;
     }
@@ -234,6 +208,18 @@ public class Util {
         return (delegate instanceof MemoizingSupplier)
                 ? delegate
                 : new MemoizingSupplier<>(Objects.requireNonNull(delegate));
+    }
+
+    public static String replacePrefix(String str, String old, String neo) {
+        return neo + substringAfter(str, old);
+    }
+
+    public static String substringAfter(String str, String separator) {
+        return StringUtils.substringAfter(str, separator);
+    }
+
+    public static boolean startsWith(String str, String prefix) {
+        return Strings.CS.startsWith(str, prefix);
     }
 
     private static class MemoizingSupplier<T> implements Supplier<T>, Serializable {

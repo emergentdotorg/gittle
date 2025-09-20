@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -43,6 +44,7 @@ import org.emergent.maven.gitver.core.Coordinates;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
+import org.emergent.maven.gitver.core.PropCodec;
 import org.emergent.maven.gitver.core.version.StrategyFactory;
 import org.emergent.maven.gitver.core.version.VersionStrategy;
 
@@ -198,7 +200,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
                 });
 
         if (addProperties) {
-            Map<String, String> newProps = strategy.getPropertiesMap();
+            Properties newProps = strategy.toProperties();
             log.info(
                     "Adding properties to project {}", buffer().mojo(projectGav).a(join(newProps)));
             model.getProperties().putAll(newProps);
@@ -251,14 +253,15 @@ public class GitverModelProcessor extends DefaultModelProcessor {
 
         if (found.isEmpty()) {
             if (configurePlugin) {
-                addPluginConfiguration(plugin, strategy.getPropertiesMap());
+                addPluginConfiguration(plugin, strategy.getConfig());
             }
             pluginMgmt.getPlugins().add(0, plugin);
         }
     }
 
-    private static void addPluginConfiguration(Plugin plugin, Map<String, String> props) {
-        String serialized = XmlCodec.write(props);
+    private static void addPluginConfiguration(Plugin plugin, GitverConfig config) {
+        String serialized = PropCodec.getInstance().toStringStringMap(config.toProperties()).entrySet().stream()
+          .map(GitverModelProcessor::element).collect(Collectors.joining());
         if (!serialized.isEmpty()) {
             try {
                 plugin.setConfiguration(Xpp3DomBuilder.build(new StringReader(String.format(
@@ -272,6 +275,10 @@ public class GitverModelProcessor extends DefaultModelProcessor {
                 throw new GitverException(e.getMessage(), e);
             }
         }
+    }
+
+    private static String element(Entry<String, String> e) {
+        return "<" + e.getKey() + ">" + e.getValue() + "<" + e.getKey() + ">";
     }
 
     private static Optional<String> getGroupId(Model projectModel) {

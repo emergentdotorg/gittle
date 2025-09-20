@@ -1,4 +1,4 @@
-package org.emergent.maven.gitver.extension;
+package org.emergent.maven.gitver.core;
 
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
@@ -8,8 +8,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import org.emergent.maven.gitver.core.GitverException;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class XmlCodec {
 
     public static <T> String write(T bean) {

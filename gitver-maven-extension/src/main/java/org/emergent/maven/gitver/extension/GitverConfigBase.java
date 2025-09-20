@@ -40,6 +40,7 @@ import org.eclipse.sisu.space.URLClassSpace;
 import org.eclipse.sisu.wire.WireModule;
 import org.emergent.maven.gitver.core.Constants;
 import org.emergent.maven.gitver.core.GitverException;
+import org.emergent.maven.gitver.core.XmlCodec;
 
 @Mojo(name = "yoyoma")
 @Data

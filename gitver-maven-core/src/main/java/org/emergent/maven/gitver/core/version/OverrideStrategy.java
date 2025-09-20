@@ -1,30 +1,35 @@
 package org.emergent.maven.gitver.core.version;
 
-import static org.emergent.maven.gitver.core.Constants.GITVER_VERSION;
-
-import java.util.Map;
-import java.util.Objects;
+import java.util.Properties;
 import org.emergent.maven.gitver.core.GitverConfig;
-import org.emergent.maven.gitver.core.MapperEx;
+import org.emergent.maven.gitver.core.PropCodec;
 
-public record OverrideStrategy(GitverConfig config) implements VersionStrategy {
+public record OverrideStrategy(String versionOverride) implements VersionStrategy<OverrideStrategy> {
 
-    public OverrideStrategy(String version) {
-        this(GitverConfig.builder().setVersionOverride(version).build());
-    }
+    private static final OverrideStrategy DEFAULT = new OverrideStrategy(GitverConfig.DEFAULT);
 
     public OverrideStrategy(GitverConfig config) {
-        this.config = Objects.requireNonNull(config);
+        this(config.getVersionOverride());
     }
 
     @Override
     public String toVersionString() {
-        return config.getVersionOverride();
+        return versionOverride;
     }
 
     @Override
-    public Map<String, String> getPropertiesMap() {
-        MapperEx m = MapperEx.create().putAll(config.toProperties()).put(GITVER_VERSION, toVersionString());
-        return m.toFlattened();
+    public GitverConfig getConfig() {
+        return GitverConfig.builder().setVersionOverride(versionOverride).build();
+    }
+
+    public static OverrideStrategy from(Properties props) {
+        return PropCodec.getInstance().fromProperties(props, OverrideStrategy.class);
+    }
+
+    @Override
+    public Properties toProperties() {
+        Properties props = new Properties();
+        props.putAll(PropCodec.getInstance().toProperties(this, DEFAULT, GitverConfig.class));
+        return props;
     }
 }

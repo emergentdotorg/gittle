@@ -3,78 +3,106 @@ package org.emergent.maven.gitver.core.version;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import org.emergent.maven.gitver.core.GitverConfig;
 import org.junit.jupiter.api.Test;
 
 public class PatternStrategyTest {
 
+    private static final HashMap<Object, Object> EMPTY = new HashMap<>();
+
     @Test
     public void testReleaseSansCommits() {
-        PatternStrategy st = getStrategy();
-        PatternStrategy strategy = st.toBuilder().build();
-        String expected = "1.2.3+c9f54782";
-        assertThat(strategy.toVersionString()).asString().isEqualTo(expected);
+        PatternStrategy strategy = getPatternStrategy();
+        assertThat(strategy.toVersionString()).isNotNull()
+          .isEqualTo("1.2.3+c9f54782");
     }
 
     @Test
     public void testDevelSansCommits() {
-        PatternStrategy st = getStrategy();
-        PatternStrategy strategy = st.toBuilder().setBranch("development").build();
-        String expected = "1.2.3-development+c9f54782";
-        assertThat(strategy.toVersionString()).asString().isEqualTo(expected);
+        PatternStrategy strategy = getPatternStrategy().toBuilder()
+          .setBranch("development")
+          .build();
+        assertThat(strategy.toVersionString()).isNotNull()
+          .isEqualTo("1.2.3-development+c9f54782");
     }
 
     @Test
     public void testReleaseWithCommits() {
-        PatternStrategy st = getStrategy();
-        PatternStrategy strategy = st.toBuilder().setCommits(1).build();
-        String expected = "1.2.3-1-SNAPSHOT+c9f54782";
-        assertThat(strategy.toVersionString()).asString().isEqualTo(expected);
+        PatternStrategy strategy = getPatternStrategy().toBuilder()
+          .setCommits(1)
+          .build();
+        assertThat(strategy.toVersionString()).isNotNull()
+          .isEqualTo("1.2.3-1-SNAPSHOT+c9f54782");
     }
 
     @Test
     public void testDevelopmentWithCommits() {
-        PatternStrategy st = getStrategy();
-        PatternStrategy strategy =
-                st.toBuilder().setBranch("development").setCommits(1).build();
-        String expected = "1.2.3-development-1-SNAPSHOT+c9f54782";
-        assertThat(strategy.toVersionString()).asString().isEqualTo(expected);
+        PatternStrategy strategy = getPatternStrategy().toBuilder()
+          .setBranch("development")
+          .setCommits(1)
+          .build();
+        assertThat(strategy.toVersionString()).isNotNull()
+          .isEqualTo("1.2.3-development-1-SNAPSHOT+c9f54782");
     }
 
     @Test
     public void testDirty() {
-        PatternStrategy st = getStrategy();
-        PatternStrategy strategy = st.toBuilder().setDirty(true).build();
-        String expected = "1.2.3+c9f54782.dirty";
-        assertThat(strategy.toVersionString()).asString().isEqualTo(expected);
+        PatternStrategy strategy = getPatternStrategy().toBuilder()
+          .setDirty(true)
+          .build();
+        assertThat(strategy.toVersionString()).isNotNull()
+          .isEqualTo("1.2.3+c9f54782.dirty");
     }
 
     @Test
     public void testPatternSansHash() {
-        PatternStrategy st = getStrategy();
-        PatternStrategy strategy =
-                st.toBuilder().setVersionPattern("%t(-%B)(-%c)(-%S)(.%d)").build();
-        String expected = "1.2.3";
-        assertThat(strategy.toVersionString()).asString().isEqualTo(expected);
+        PatternStrategy st = getPatternStrategy();
+        PatternStrategy strategy = st.toBuilder()
+                  .setConfig(st.config().toBuilder()
+                    .setVersionPattern("%t(-%B)(-%c)(-%S)(.%d)")
+                    .build())
+                  .build();
+        assertThat(strategy.toVersionString()).isNotNull()
+          .isEqualTo("1.2.3");
     }
 
     @Test
     public void testPropertiesRoundTrip() {
+        PatternStrategy strategy = getPatternStrategy();
+        Properties props = strategy.toProperties();
+        PatternStrategy reborn = PatternStrategy.from(props);
+        assertThat(reborn).isEqualTo(strategy);
+
         PatternStrategy def = PatternStrategy.builder().build();
-        PatternStrategy tst = getStrategy();
-        String expected = "1.2.3";
-        HashMap<String, Object> empty = new HashMap<>() {};
-        assertThat(def.getPropertiesMap()).isEqualTo(empty);
-        assertThat(tst.getPropertiesMap()).isEqualTo(def.getPropertiesMap());
+        Properties map = def.toProperties();
+        assertThat(map).isEqualTo(EMPTY);
     }
 
-    private static PatternStrategy getStrategy() {
-        return PatternStrategy.builder()
-                .setTag("1.2.3")
-                .setBranch("main")
-                .setHash("c9f54782")
-                .setCommits(0)
-                .setDirty(false)
-                .setVersionPattern("%t(-%B)(-%c)(-%S)+%h(.%d)")
-                .build();
+    @Test
+    public void testXmlOutput() {
+        // PatternStrategy strategy = getStrategy();
+        // String xml = PropCodec.toXml(strategy);
+        // assertThat(xml).asString().isEqualTo("");
     }
-}
+
+    private static PatternStrategy getPatternStrategy() {
+        return PatternStrategy.builder()
+          .setConfig(getGitverConfig())
+          .setTagged("1.2.3")
+          .setBranch("release")
+          .setHash("c9f54782")
+          .setCommits(0)
+          .setDirty(false)
+          .build();
+    }
+
+    private static GitverConfig getGitverConfig() {
+        return GitverConfig.builder()
+          .setReleaseBranches("release,stable")
+          .setTagPattern("v?([0-9]+\\.[0-9]+\\.[0-9]+)")
+          .setVersionPattern("%t(-%B)(-%c)(-%S)+%h(.%d)")
+          .setVersionOverride("0.1.2")
+          .build();
+    }}
