@@ -87,8 +87,8 @@ public class PatternStrategyTest {
         PatternStrategy reborn = PatternStrategy.from(props);
         assertThat(reborn).isEqualTo(strategy);
         PatternStrategy def = PatternStrategy.create();
-        Properties map = def.toProperties();
-//        assertThat(map).isEqualTo(EMPTY);
+        Map<String, String> map = def.asMap();
+        assertThat(map).isEqualTo(EMPTY);
     }
 
     @Test
@@ -99,8 +99,8 @@ public class PatternStrategyTest {
         PatternStrategy reborn = PatternStrategy.from(props);
         assertThat(reborn).isEqualTo(strategy);
         PatternStrategy def = PatternStrategy.create();
-        Properties map = def.toProperties();
-//        assertThat(map).isEqualTo(EMPTY);
+        Map<String, String> map = def.asMap();
+        assertThat(map).isEqualTo(EMPTY);
     }
 
     @Test

@@ -18,6 +18,6 @@ public class PrintMojo extends AbstractGitverMojo {
                                 .setArtifactId(mavenProject.getArtifactId())
                                 .setVersion(mavenProject.getVersion())
                                 .build())
-                        .a(Util.join(getVersionStrategy().toProperties())));
+                        .a(Util.join(getVersionStrategy().asMap())));
     }
 }

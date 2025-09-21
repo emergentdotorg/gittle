@@ -43,9 +43,4 @@ public record OverrideStrategy(String newVersion) implements VersionStrategy {
     public Map<String, String> asMap() {
         return getConfig().asMap();
     }
-
-    @Override
-    public Properties toProperties() {
-        return Util.toProperties(asMap());
-    }
 }

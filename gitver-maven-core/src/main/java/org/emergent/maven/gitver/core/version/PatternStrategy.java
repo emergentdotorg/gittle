@@ -152,11 +152,6 @@ public class PatternStrategy implements VersionStrategy {
         return map;
     }
 
-    @Override
-    public Properties toProperties() {
-        return Util.toProperties(asMap());
-    }
-
     private static String toVersionString(GitverConfig config, ResolvedData resolved) {
         String pattern = config.getVersionPattern();
         Map<String, String> values = getReplacementMap(config, resolved);

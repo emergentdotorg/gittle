@@ -213,7 +213,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
                 });
 
         if (addProperties) {
-            Properties newProps = strategy.toProperties();
+            Map<String, String> newProps = strategy.asMap();
             log.info(
                     "Adding properties to project {}", buffer().mojo(projectGav).a(join(newProps)));
             model.getProperties().putAll(newProps);
