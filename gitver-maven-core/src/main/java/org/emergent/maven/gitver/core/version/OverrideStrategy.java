@@ -36,13 +36,12 @@ public record OverrideStrategy(String newVersion) implements VersionStrategy {
     }
 
     public static OverrideStrategy from(Map<String, String> props) {
-        props = Util.removePrefix(GITTLE_PREFIX, props);
-        return new OverrideStrategy(PropCodec.fromProperties(props, GitverConfig.class));
+        return new OverrideStrategy(GitverConfig.from(props));
     }
 
     @Override
     public Map<String, String> asMap() {
-        return Util.appendPrefix(GITTLE_PREFIX, getConfig().asMap());
+        return getConfig().asMap();
     }
 
     @Override

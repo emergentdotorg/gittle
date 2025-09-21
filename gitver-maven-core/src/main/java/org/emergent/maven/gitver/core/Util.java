@@ -71,7 +71,7 @@ public class Util {
 
     public static GitverConfig loadConfig(Path currentDir) {
         Properties extensionProps = loadProperties(currentDir);
-        return GitverConfig.from(extensionProps);
+        return GitverConfig.from(Util.toStringStringMap(extensionProps));
     }
 
     public static Properties loadProperties(Path currentDir) {
@@ -194,17 +194,20 @@ public class Util {
         return join(flatten(properties));
     }
 
-    public static String join(Map<String, ?> properties) {
+    public static String join(Map<String, String> properties) {
         return join(properties, new StringJoiner("\n", "\n---\n", "\n---").setEmptyValue(""))
                 .toString();
     }
 
-    public static StringJoiner join(Properties properties, StringJoiner joiner) {
+    private static StringJoiner join(Properties properties, StringJoiner joiner) {
         return join(flatten(properties), joiner);
     }
 
-    public static StringJoiner join(Map<String, ?> properties, StringJoiner joiner) {
-        properties.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).forEach(joiner::add);
+    private static StringJoiner join(Map<String, String> properties, StringJoiner joiner) {
+        properties.forEach((k, v) -> joiner.add(k + "=" + v));
+//        properties.entrySet().stream()
+//                .map(e -> e.getKey() + "=" + e.getValue())
+//                .forEachOrdered(joiner::add);
         return joiner;
     }
 
@@ -230,7 +233,7 @@ public class Util {
         return Strings.CS.startsWith(str, prefix);
     }
 
-    public static Map<String, String> getReversed(Map<String, String> map) {
+    public static <K,V> Map<V, K> getReversed(Map<K, V> map) {
         return map.entrySet().stream()
                 .collect(CollectorsEx.toLinkedHashMap(Entry::getValue, Entry::getKey));
     }
@@ -273,7 +276,7 @@ public class Util {
     public static <V> Map<String, V> replacePrefixInline(Map<String, V> props, String pre, String rep) {
         props.keySet().stream().toList().stream()
                 .filter(k -> Util.startsWith(k, pre))
-                .forEach(k -> props.put(rep + substringAfter(k, pre), props.remove(k)));
+                .forEachOrdered(k -> props.put(rep + substringAfter(k, pre), props.remove(k)));
         return props;
     }
 

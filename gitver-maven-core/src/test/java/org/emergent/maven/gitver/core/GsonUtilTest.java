@@ -17,7 +17,7 @@ class GsonUtilTest {
 
     @Test
     void toFlattenKeys() {
-        Map<String, String> actual = gsonUtil.flatten(Map.of(
+        Map<String, String> actual = gsonUtil.flattenMap(Map.of(
                 "astring",
                 "stringx",
                 "aboolean",
@@ -27,11 +27,11 @@ class GsonUtilTest {
                 "alist",
                 List.of("stringy", true, 7),
                 "amap",
-                Map.of("astring", "stringz", "aboolean", false, "anumber", 9)), GsonUtil.STR_OBJ_MAP_TT.getType());
+                Map.of("astring", "stringz", "aboolean", false, "anumber", 9)));
         assertThat(actual)
                 .isNotNull()
                 // .isInstanceOf(JsonObject.class)
-                .isEqualTo(gsonUtil.flatten(Map.of(
+                .isEqualTo(gsonUtil.flattenMap(Map.of(
                         "astring",
                         "stringx",
                         "aboolean",
@@ -49,7 +49,7 @@ class GsonUtilTest {
                         "amap.aboolean",
                         false,
                         "amap.anumber",
-                        9), GsonUtil.STR_OBJ_MAP_TT.getType()));
+                        9)));
     }
 
     @Test

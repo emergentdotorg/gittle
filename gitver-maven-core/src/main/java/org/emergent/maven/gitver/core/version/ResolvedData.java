@@ -1,5 +1,6 @@
 package org.emergent.maven.gitver.core.version;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -53,6 +54,10 @@ public class ResolvedData implements PropCodec.Codable<ResolvedData> {
 
     public String getHashShort() {
         return Optional.ofNullable(hash).map(s -> s.substring(0, Math.min(8, s.length()))).orElse("");
+    }
+
+    public static ResolvedData from(Map<String, String> props) {
+        return PropCodec.fromProperties(props, ResolvedData.class);
     }
 
     public Map<String, String> asMap() {

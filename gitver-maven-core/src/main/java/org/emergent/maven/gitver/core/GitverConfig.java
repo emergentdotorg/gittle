@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static org.emergent.maven.gitver.core.Constants.GITTLE_PREFIX;
 import static org.emergent.maven.gitver.core.Constants.RELEASE_BRANCHES_DEF;
 import static org.emergent.maven.gitver.core.Constants.TAG_PATTERN_DEF;
 import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
@@ -59,14 +60,6 @@ public class GitverConfig implements PropCodec.Codable<GitverConfig> {
         return Arrays.stream(releaseBranches.split(","))
                 .map(String::trim)
                 .collect(Collectors.toCollection(TreeSet::new));
-    }
-
-    public static GitverConfig defaults() {
-        return builder().build();
-    }
-
-    public static GitverConfig from(Properties props) {
-        return PropCodec.fromProperties(props, GitverConfig.class);
     }
 
     public static GitverConfig from(Map<String, String> props) {

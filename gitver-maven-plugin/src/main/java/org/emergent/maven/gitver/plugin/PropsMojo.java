@@ -66,7 +66,7 @@ public class PropsMojo extends AbstractGitverMojo {
         of(releaseBranches).ifPresent(v -> loaded.setProperty(RELEASE_BRANCHES_PROP, v));
         of(tagNamePattern).ifPresent(v -> loaded.setProperty(TAG_NAME_PATTERN_PROP, v));
         of(versionPattern).ifPresent(v -> loaded.setProperty(VERSION_PATTERN_PROP, v));
-        return GitverConfig.from(loaded);
+        return GitverConfig.from(Util.toStringStringMap(loaded));
     }
 
     private Optional<String> of(String value) {

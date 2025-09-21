@@ -39,7 +39,7 @@ public class GsonUtil {
     };
     private static final TypeToken<Map<Object, Object>> OBJ_OBJ_MAP_TT = new TypeToken<>() {
     };
-    private static final TypeToken<Map<String, String>> STR_STR_MAP_TT = new TypeToken<>() {
+    public static final TypeToken<Map<String, String>> STR_STR_MAP_TT = new TypeToken<>() {
     };
     public static final TypeToken<Map<String, Object>> STR_OBJ_MAP_TT = new TypeToken<>() {
     };
@@ -70,23 +70,26 @@ public class GsonUtil {
     }
 
     public Map<String, Object> toMapTree(Object src) {
-        JsonElement tree = gson.toJsonTree(src, src.getClass());
-        return gson.fromJson(tree, STR_OBJ_MAP_TT.getType());
-    }
-
-    public Map<String, Object> toSortedMapTree(Object src) {
         Map<String, String> flattened = flatten(src);
-        Map<String, String> sorted = new TreeMap<>(flattened);
-        JsonElement tree = gson.toJsonTree(sorted, STR_STR_MAP_TT.getType());
+        JsonElement tree = gson.toJsonTree(flattened, STR_STR_MAP_TT.getType());
         return gson.fromJson(tree, STR_OBJ_MAP_TT.getType());
     }
 
     public Map<String, String> flatten(Object src) {
-        return flatten(src, src.getClass());
+        if (src instanceof Map<?, ?> map) {
+            return flattenMap(map);
+        } else {
+            JsonElement json = flatten(gson.toJsonTree(src, src.getClass()));
+            Map<String, String> map = gson.fromJson(json, STR_STR_MAP_TT.getType());
+            return new TreeMap<>(map);
+        }
     }
 
-    public Map<String, String> flatten(Object src, Type type) {
-        JsonElement json = flatten(gson.toJsonTree(src, type));
+    public Map<String, String> flattenMap(Map<?, ?> src) {
+        Map<String, Object> map = src.entrySet().stream()
+                .filter(e -> e.getKey() instanceof String)
+                .collect(CollectorsEx.toLinkedHashMap(e -> String.valueOf(e.getKey()), Map.Entry::getValue));
+        JsonElement json = flatten(gson.toJsonTree(map, STR_OBJ_MAP_TT.getType()));
         return gson.fromJson(json, STR_STR_MAP_TT.getType());
     }
 
@@ -120,7 +123,7 @@ public class GsonUtil {
         if (in.isJsonArray()) {
             JsonArray arr = in.getAsJsonArray();
             IntStream.range(0, arr.size())
-                    .forEach(i -> flatten(dst, prefixWithDot + (i + 1), arr.get(i)));
+                    .forEachOrdered(i -> flatten(dst, prefixWithDot + (i + 1), arr.get(i)));
         }
     }
 
@@ -133,7 +136,7 @@ public class GsonUtil {
 
         dottedKeys.stream().map(k -> Util.substringBefore(k, "."))
                 .filter(groupKey -> !(jobj.has(groupKey) && jobj.get(groupKey).isJsonObject()))
-                .forEach(groupKey -> jobj.add(groupKey, new JsonObject()));
+                .forEachOrdered(groupKey -> jobj.add(groupKey, new JsonObject()));
 
         dottedKeys.forEach(key -> {
             String groupKey = Util.substringBefore(key, ".");

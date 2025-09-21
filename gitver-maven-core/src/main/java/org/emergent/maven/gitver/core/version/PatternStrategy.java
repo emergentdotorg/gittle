@@ -7,6 +7,7 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.experimental.Tolerate;
+import org.emergent.maven.gitver.core.CollectorsEx;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.PropCodec;
 import org.emergent.maven.gitver.core.Util;
@@ -20,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -132,24 +134,22 @@ public class PatternStrategy implements VersionStrategy {
     }
 
     public static PatternStrategy from(Map<String, String> props) {
-        Map<String, String> resolvedMap = Util.removePrefix(GITTLE_RESOLVED_PREFIX, props);
-        resolvedMap.remove(VERSION_STRING);
-        Map<String, String> configMap = Util.removePrefix(GITTLE_PREFIX, props);
         return PatternStrategy.builder()
-                .setResolved(PropCodec.fromProperties(resolvedMap, ResolvedData.class))
-                .setConfig(PropCodec.fromProperties(configMap, GitverConfig.class))
+                .setResolved(ResolvedData.from(props))
+                .setConfig(GitverConfig.from(props))
                 .build();
     }
 
     @Override
     public Map<String, String> asMap() {
-        Map<String, String> map = new LinkedHashMap<>(getConfig().asMap());
+        Map<String, String> map = new TreeMap<>();
         Map<String, String> resolvedMap = resolved.asMap();
         if (!resolvedMap.isEmpty()) {
-            resolvedMap.put(VERSION_STRING, toVersionString());
+            map.put(GITTLE_RESOLVED_PREFIX + VERSION_STRING, toVersionString());
         }
-        map.putAll(Util.appendPrefix(RESOLVED_PREFIX, resolvedMap));
-        return Util.appendPrefix(GITTLE_PREFIX, map);
+        map.putAll(resolvedMap);
+        map.putAll(config.asMap());
+        return map;
     }
 
     @Override
