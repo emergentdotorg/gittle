@@ -6,18 +6,20 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.Serial;
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +28,7 @@ import org.apache.commons.lang3.Strings;
 public class Util {
 
     public static final String DISABLED_ENV_VAR = "GV_EXTENSION_DISABLED";
-    public static final String DISABLED_SYSPROP = "gv.extension.disabled";
+    public static final String DISABLED_SYSPROP = "gittle.extension.disabled";
 
     public static final String GITVER_POM_XML = ".gitver.pom.xml";
 
@@ -68,9 +70,13 @@ public class Util {
     }
 
     public static GitverConfig loadConfig(Path currentDir) {
-        Path extConfigFile = Util.getExtensionPropsFile(currentDir);
-        Properties extensionProps = Util.loadPropsFromFile(extConfigFile);
+        Properties extensionProps = loadProperties(currentDir);
         return GitverConfig.from(extensionProps);
+    }
+
+    public static Properties loadProperties(Path currentDir) {
+        Path extConfigFile = getExtensionPropsFile(currentDir);
+        return Util.loadPropsFromFile(extConfigFile);
     }
 
     public static Path getExtensionPropsFile(Path currentDir) {
@@ -153,11 +159,7 @@ public class Util {
     }
 
     public static Map<String, String> flatten(Properties properties) {
-        return PropCodec.getInstance().toStringStringMap(properties);
-    }
-
-    public static Map<String, String> flatten(Map<String, ?> map) {
-        return PropCodec.getInstance().toStringStringMap(map);
+        return toStringStringMap(properties);
     }
 
     public static Coordinates getCoreCoordinates() {
@@ -216,6 +218,10 @@ public class Util {
         return neo + substringAfter(str, old);
     }
 
+    public static String substringBefore(String str, String separator) {
+        return StringUtils.substringBefore(str, separator);
+    }
+
     public static String substringAfter(String str, String separator) {
         return StringUtils.substringAfter(str, separator);
     }
@@ -224,18 +230,51 @@ public class Util {
         return Strings.CS.startsWith(str, prefix);
     }
 
+    public static Map<String, String> getReversed(Map<String, String> map) {
+        return map.entrySet().stream()
+                .collect(CollectorsEx.toLinkedHashMap(Entry::getValue, Entry::getKey));
+    }
+
     public static Map<String, String> toStringStringMap(Properties properties) {
-        return toStringStringMap(properties.entrySet());
+        return properties.stringPropertyNames().stream().collect(Collectors.toMap(n -> n, properties::getProperty));
     }
 
-    public static Map<String, String> toStringStringMap(Map<?, ?> map) {
-        return toStringStringMap(map.entrySet());
+    public static Properties toProperties(Map<String, String> map) {
+        Properties props = new Properties();
+        map.forEach(props::setProperty);
+        return props;
     }
 
-    private static Map<String, String> toStringStringMap(Set<? extends Entry<?, ?>> entries) {
-        return entries.stream()
-          .filter(e -> e.getKey() instanceof String && e.getValue() instanceof String)
-          .collect(CollectorsEx.toMap(e -> String.valueOf(e.getKey()), e -> String.valueOf(e.getValue())));
+    private static void log(Map<String, Object> outMap, Type typeOfSrc) {
+        System.out.printf(
+                "%s properties: %s%n",
+                typeOfSrc.getTypeName(),
+                outMap.entrySet().stream()
+                        .map(e -> e.getKey() + "=" + e.getValue())
+                        .collect(Collectors.joining("\n", "\n", "\n")));
+    }
+
+    public static <V> Map<String, V> appendPrefix(String prefix, Map<String, V> props) {
+        return props.entrySet().stream().map(e -> appendPrefix(prefix, e)).collect(CollectorsEx.toLinkedHashMap());
+    }
+
+    public static <V> Map.Entry<String, V> appendPrefix(String prefix, Map.Entry<String, V> e) {
+        return Map.entry(prefix + e.getKey(), e.getValue());
+    }
+
+    public static <V> Map<String, V> removePrefix(String prefix, Map<String, V> props) {
+        return removePrefixInline(prefix, new LinkedHashMap<>(props));
+    }
+
+    public static <V> Map<String, V> removePrefixInline(String prefix, Map<String, V> props) {
+        return replacePrefixInline(props, prefix, "");
+    }
+
+    public static <V> Map<String, V> replacePrefixInline(Map<String, V> props, String pre, String rep) {
+        props.keySet().stream().toList().stream()
+                .filter(k -> Util.startsWith(k, pre))
+                .forEach(k -> props.put(rep + substringAfter(k, pre), props.remove(k)));
+        return props;
     }
 
     private static class MemoizingSupplier<T> implements Supplier<T>, Serializable {

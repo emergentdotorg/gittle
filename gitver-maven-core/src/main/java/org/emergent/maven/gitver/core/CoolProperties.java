@@ -29,7 +29,7 @@ public class CoolProperties extends AbstractMap<String, String> {
     public void load(InputStream is) throws IOException {
         Properties props = new Properties();
         props.load(is);
-        impl.putAll(PropCodec.getInstance().toStringStringMap(props));
+        impl.putAll(Util.toStringStringMap(props));
     }
 
     public void store(OutputStream os, @Nullable String comment) throws IOException {

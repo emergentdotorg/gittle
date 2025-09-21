@@ -42,7 +42,7 @@ public class TagProvider {
     private Map<ObjectId, List<ComparableVersion>> createTagMap() {
         // create a map of commit-refs and corresponding list of tags
         try {
-            String tagPattern = config.getTagPattern();
+            String tagPattern = config.getTagNamePattern();
             if (!tagPattern.startsWith("^")) {
                 tagPattern = "^" + tagPattern;
             }

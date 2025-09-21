@@ -41,6 +41,10 @@ public class CollectorsEx {
         return toMap(T::getKey, T::getValue, getDefaultMapSupplier());
     }
 
+    public static <T extends Map.Entry<K, V>, K, V> Collector<T, ?, Map<K, V>> toUnmodifiableMap() {
+        return Collectors.collectingAndThen(toMap(), Map::copyOf);
+    }
+
     public static <T extends Map.Entry<K, V>, K, V> Collector<T, ?, Map<K, V>> toLinkedHashMap() {
         return CollectorsEx.toMap(LinkedHashMap::new);
     }

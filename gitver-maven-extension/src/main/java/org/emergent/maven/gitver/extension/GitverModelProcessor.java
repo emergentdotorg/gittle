@@ -1,19 +1,46 @@
 package org.emergent.maven.gitver.extension;
 
-import static org.apache.maven.shared.utils.logging.MessageUtils.buffer;
-import static org.emergent.maven.gitver.core.Util.join;
-import static org.emergent.maven.gitver.extension.ExtensionUtil.$_REVISION;
-import static org.emergent.maven.gitver.extension.ExtensionUtil.REVISION;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.maven.building.Source;
+import org.apache.maven.model.Build;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Parent;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginManagement;
+import org.apache.maven.model.building.DefaultModelProcessor;
+import org.apache.maven.model.building.ModelProcessor;
+import org.codehaus.plexus.util.StringUtils;
+import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
+import org.codehaus.plexus.util.xml.XMLWriter;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
+import org.codehaus.plexus.util.xml.Xpp3DomWriter;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.codehaus.plexus.util.xml.pull.XmlSerializer;
+import org.eclipse.sisu.Priority;
+import org.eclipse.sisu.Typed;
+import org.emergent.maven.gitver.core.Coordinates;
+import org.emergent.maven.gitver.core.GitverConfig;
+import org.emergent.maven.gitver.core.GitverException;
+import org.emergent.maven.gitver.core.PropCodec;
+import org.emergent.maven.gitver.core.Util;
+import org.emergent.maven.gitver.core.version.StrategyFactory;
+import org.emergent.maven.gitver.core.version.VersionStrategy;
 
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,28 +52,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.maven.building.Source;
-import org.apache.maven.model.Build;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.Parent;
-import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginManagement;
-import org.apache.maven.model.building.DefaultModelProcessor;
-import org.apache.maven.model.building.ModelProcessor;
-import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.eclipse.sisu.Priority;
-import org.eclipse.sisu.Typed;
-import org.emergent.maven.gitver.core.Coordinates;
-import org.emergent.maven.gitver.core.GitverConfig;
-import org.emergent.maven.gitver.core.GitverException;
-import org.emergent.maven.gitver.core.Util;
-import org.emergent.maven.gitver.core.PropCodec;
-import org.emergent.maven.gitver.core.version.StrategyFactory;
-import org.emergent.maven.gitver.core.version.VersionStrategy;
+
+import static org.apache.maven.shared.utils.logging.MessageUtils.buffer;
+import static org.emergent.maven.gitver.core.Constants.GITTLE_PREFIX;
+import static org.emergent.maven.gitver.core.Util.join;
+import static org.emergent.maven.gitver.extension.ExtensionUtil.$_REVISION;
+import static org.emergent.maven.gitver.extension.ExtensionUtil.REVISION;
 
 /**
  * Handles calculating version properties from the Git history.
@@ -95,7 +106,7 @@ public class GitverModelProcessor extends DefaultModelProcessor {
             return projectModel;
         }
 
-        Source pomSource = (Source) options.get(ModelProcessor.SOURCE);
+        Source pomSource = (Source)options.get(ModelProcessor.SOURCE);
         Optional<String> pomLoc = Optional.ofNullable(pomSource).map(Source::getLocation);
         pomLoc.ifPresent(loc -> projectModel.setPomFile(new File(loc)));
         if (pomLoc.filter(loc -> loc.endsWith(".xml")).isEmpty()) {
@@ -134,11 +145,13 @@ public class GitverModelProcessor extends DefaultModelProcessor {
     private GitverConfig loadConfig(Model projectModel) {
         Path currentDir = projectModel.getProjectDirectory().toPath().toAbsolutePath();
         Path extConfigFile = Util.getExtensionPropsFile(currentDir);
-        Properties fileProps = Util.loadPropsFromFile(extConfigFile);
+        Map<String, String> fileProps = Util.toStringStringMap(Util.loadPropsFromFile(extConfigFile));
         log.info("Loaded configuration from file {}:{}", extConfigFile, join(fileProps));
-        GitverConfig config = GitverConfig.from(fileProps);
-        if (!fileProps.equals(config.toProperties())) {
-            log.warn("Round-trip configuration to properties:{}", join(config.toProperties()));
+        Map<String, String> normalized = Util.removePrefix(GITTLE_PREFIX, fileProps);
+        GitverConfig config = GitverConfig.from(normalized);
+        if (!fileProps.equals(config.asMap())) {
+            log.warn("Round-trip configuration to properties:{}",
+                    join(Util.appendPrefix(GITTLE_PREFIX, config.asMap())));
         }
         return config;
     }
@@ -260,25 +273,10 @@ public class GitverModelProcessor extends DefaultModelProcessor {
     }
 
     private static void addPluginConfiguration(Plugin plugin, GitverConfig config) {
-        String serialized = PropCodec.getInstance().toStringStringMap(config.toProperties()).entrySet().stream()
-          .map(GitverModelProcessor::element).collect(Collectors.joining());
-        if (!serialized.isEmpty()) {
-            try {
-                plugin.setConfiguration(Xpp3DomBuilder.build(new StringReader(String.format(
-                        """
-                      <configuration>
-                        %s
-                      </configuration>
-                    """,
-                        serialized))));
-            } catch (XmlPullParserException | IOException e) {
-                throw new GitverException(e.getMessage(), e);
-            }
+        Xpp3Dom dom = PropCodec.toXml(config);
+        if (dom.getChildCount() != 0 || Util.isNotEmpty(dom.getValue())) {
+            plugin.setConfiguration(dom);
         }
-    }
-
-    private static String element(Entry<String, String> e) {
-        return "<" + e.getKey() + ">" + e.getValue() + "<" + e.getKey() + ">";
     }
 
     private static Optional<String> getGroupId(Model projectModel) {

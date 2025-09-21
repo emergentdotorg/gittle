@@ -42,13 +42,13 @@ public class PropsMojoTest extends AbstractMojoTest {
         File pom = new File("target/test-classes/project-to-test/");
         assertThat(pom).as("POM file").isNotNull().exists();
 
-        PropsMojo propsMojo = (PropsMojo) rule.lookupConfiguredMojo(pom, "props");
+        PropsMojo propsMojo = (PropsMojo) rule.lookupConfiguredMojo(pom, PropsMojo.NAME);
         TestLog testLog = new TestLog();
         propsMojo.setLog(testLog);
         assertThat(propsMojo).isNotNull();
         propsMojo.execute();
         MavenProject proj = propsMojo.getMavenProject();
-        String gitverVersion = proj.getProperties().getProperty("gitver.version");
+        String gitverVersion = proj.getProperties().getProperty("gittle.resolved.version");
         Coordinates gav = Coordinates.builder()
           .setGroupId(proj.getGroupId())
           .setArtifactId(proj.getArtifactId())
@@ -56,6 +56,6 @@ public class PropsMojoTest extends AbstractMojoTest {
           .build();
         assertThat(testLog.getMessages()).isNotEmpty()
           .allMatch(s -> s.startsWith("Adding properties to project " + gav))
-          .allMatch(s -> s.contains("gitver.version=" + gitverVersion + "\n"));
+          .allMatch(s -> s.contains("gittle.resolved.version=" + gitverVersion + "\n"));
     }
 }

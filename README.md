@@ -85,9 +85,9 @@ You can add following properties to `.mvn/gitver-maven-extension.properties` fil
 .Example configuration for initial version for extension mode
 
 ```properties
-gv.initial.major=1
-gv.initial.minor=3
-gv.initial.patch=4
+gittle.initial.major=1
+gittle.initial.minor=3
+gittle.initial.patch=4
 ```
 
 With above initial version configuration, the first version calculated by this extension will be -
@@ -111,7 +111,7 @@ CAUTION: Use `--non-recursive` flag when running commit goal in a multi-module m
 per included module.
 
 The default message pattern is `chore(release): [%k]` where `[%k]` is the keyword token. To change the default message
-pattern, you could pass `-gv.commitMessage=<message>` argument when running the goal.
+pattern, you could pass `-gittle.commitMessage=<message>` argument when running the goal.
 
 NOTE: When this extension is configured, it automatically makes `gitver` plugin goals available
 with *NO* any additional configuration.
@@ -119,7 +119,7 @@ with *NO* any additional configuration.
 .Example commit patch with a custom message
 
 ```shell
-mvn gitver:commit-patch "-Dgv.commitMessage=chore: [%k] release" --non-recursive
+mvn gitver:commit-patch "-Dgittle.commitMessage=chore: [%k] release" --non-recursive
 ```
 
 Of course, you can also add commits manually with appropriate version keywords.
@@ -142,7 +142,7 @@ The following example will generate versions as `major.minor.patch+shorthash`, e
 .Example configuration for version pattern in extension mode
 
 ```properties
-gv.version.pattern=%t+%h
+gittle.versionPattern=%t+%h
 ```
 
 Available Tokens for Version Pattern
@@ -166,9 +166,9 @@ the configuration. To use different keywords, you can add following properties t
 Example configuration for initial version for extension mode
 
 ```properties
-gv.keywords.major=[BIG]
-gv.keywords.minor=[SMALL]
-gv.keywords.patch=[FIX]
+gittle.keywords.major=[BIG]
+gittle.keywords.minor=[SMALL]
+gittle.keywords.patch=[FIX]
 ```
 
 ## Keyword Regex
@@ -182,10 +182,10 @@ To use regex for version keywords, you can add following properties to `.mvn/git
 Example configuration for regex version keywords
 
 ```properties
-gv.keywords.regex=true
-gv.keywords.major=^\\[major\\].*
-gv.keywords.minor=^\\[minor\\].*
-gv.keywords.patch=^\\[patch\\].*
+gittle.keywords.regex=true
+gittle.keywords.major=^\\[major\\].*
+gittle.keywords.minor=^\\[minor\\].*
+gittle.keywords.patch=^\\[patch\\].*
 ```
 
 ## Generated Version Access

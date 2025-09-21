@@ -1,41 +1,52 @@
 package org.emergent.maven.gitver.core.version;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import org.apache.commons.lang3.StringUtils;
+import org.emergent.maven.gitver.core.CollectorsEx;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.PropCodec;
+import org.emergent.maven.gitver.core.Util;
 
-public record OverrideStrategy(String versionOverride) implements VersionStrategy<OverrideStrategy> {
+import static org.emergent.maven.gitver.core.Constants.GITTLE_PREFIX;
+import static org.emergent.maven.gitver.core.Constants.GITTLE_RESOLVED_PREFIX;
+import static org.emergent.maven.gitver.core.Util.startsWith;
+import static org.emergent.maven.gitver.core.Util.substringAfter;
 
-    private static final OverrideStrategy DEFAULT = new OverrideStrategy(GitverConfig.DEFAULT);
+public record OverrideStrategy(String newVersion) implements VersionStrategy {
 
     public OverrideStrategy(GitverConfig config) {
-        this(config.getVersionOverride());
+        this(config.getNewVersion());
     }
 
     @Override
     public String toVersionString() {
-        return versionOverride;
+        return newVersion;
     }
 
     @Override
     public GitverConfig getConfig() {
-        return GitverConfig.builder().setVersionOverride(versionOverride).build();
+        return GitverConfig.builder().setNewVersion(newVersion).build();
     }
 
     public static OverrideStrategy from(Properties props) {
-        return PropCodec.getInstance().fromProperties(props, OverrideStrategy.class);
+        return from(Util.toStringStringMap(props));
     }
 
-    @Override
-    public Properties toProperties() {
-        Properties props = new Properties();
-        props.putAll(PropCodec.getInstance().toProperties(this, DEFAULT, GitverConfig.class));
-        return props;
+    public static OverrideStrategy from(Map<String, String> props) {
+        props = Util.removePrefix(GITTLE_PREFIX, props);
+        return new OverrideStrategy(PropCodec.fromProperties(props, GitverConfig.class));
     }
 
     @Override
     public Map<String, String> asMap() {
-        return PropCodec.getInstance().toProperties(this, DEFAULT, this.getClass());
+        return Util.appendPrefix(GITTLE_PREFIX, getConfig().asMap());
+    }
+
+    @Override
+    public Properties toProperties() {
+        return Util.toProperties(asMap());
     }
 }

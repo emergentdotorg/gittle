@@ -28,7 +28,7 @@ public class StrategyFactory {
 
     private static Optional<VersionStrategy> getOverrideStrategy(GitverConfig config) {
         return Optional.ofNullable(config)
-                .filter(c -> Util.isNotEmpty(c.getVersionOverride()))
+                .filter(c -> Util.isNotEmpty(c.getNewVersion()))
                 .map(OverrideStrategy::new)
                 .map(s -> s);
     }
@@ -37,28 +37,29 @@ public class StrategyFactory {
         Repository repository = git.getRepository();
         TagProvider tagProvider = new TagProvider(config, git);
         ObjectId headId = requireNonNull(repository.resolve(Constants.HEAD), "headId is null");
-        PatternStrategy.Builder builder = PatternStrategy.builder()
-          .setConfig(GitverConfig.builder()
-                .setVersionPattern(config.getVersionPattern())
-                .setTagPattern(config.getTagPattern())
-                .setReleaseBranches(config.getReleaseBranches())
-                .setVersionOverride(config.getVersionOverride())
-            .build());
+
+        ResolvedData.Builder resolved = ResolvedData.builder()
+                .branch(repository.getBranch())
+                .hash(headId.getName());
+
         int commits = 0;
         for (RevCommit commit : git.log().add(headId).call()) {
             Optional<String> tag = tagProvider.getTag(commit).map(ComparableVersion::toString);
             if (tag.isPresent()) {
-                builder.setTagged(tag.get());
+                resolved.tagged(tag.get());
                 break;
             }
             boolean isMergeCommit = commit.getParentCount() > 1;
             commits++;
         }
-        builder.setCommits(commits);
-        builder.setBranch(repository.getBranch()).setHash(headId.getName());
-        Status status =
-                git.status().setIgnoreSubmodules(IgnoreSubmoduleMode.UNTRACKED).call();
-        builder.setDirty(!status.getUncommittedChanges().isEmpty());
-        return builder.build();
+        resolved.commits(commits);
+
+        Status status = git.status().setIgnoreSubmodules(IgnoreSubmoduleMode.UNTRACKED).call();
+        resolved.dirty(!status.getUncommittedChanges().isEmpty());
+
+        return PatternStrategy.builder()
+                .setConfig(config)
+                .setResolved(resolved)
+                .build();
     }
 }

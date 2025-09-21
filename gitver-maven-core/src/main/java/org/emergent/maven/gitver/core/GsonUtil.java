@@ -1,8 +1,5 @@
 package org.emergent.maven.gitver.core;
 
-import com.google.common.collect.Maps;
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,37 +10,27 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.google.gson.TypeAdapter;
+import com.google.gson.ToNumberPolicy;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
-import lombok.extern.java.Log;
-import org.apache.commons.lang3.StringUtils;
 import org.emergent.maven.gitver.core.version.PatternStrategy;
+import org.emergent.maven.gitver.core.version.ResolvedData;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
-import java.util.logging.Level;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@Getter
 public class GsonUtil {
 
     private static final Map<Boolean, GsonUtil> INSTANCES = new ConcurrentHashMap<>();
@@ -54,22 +41,13 @@ public class GsonUtil {
     };
     private static final TypeToken<Map<String, String>> STR_STR_MAP_TT = new TypeToken<>() {
     };
-    private static final TypeToken<Map<String, Object>> STR_OBJ_MAP_TT = new TypeToken<>() {
+    public static final TypeToken<Map<String, Object>> STR_OBJ_MAP_TT = new TypeToken<>() {
     };
-    private static final TypeToken<PatternStrategy> PATTERN_STRATEGY_TT = new TypeToken<>() {
-    };
-    private static final TypeToken<GitverConfig> GITVER_CONFIG_TT = new TypeToken<>() {
-    };
+    private static final Predicate<String> IS_INT = Pattern.compile("^[0-9]+$").asMatchPredicate();
 
-    private static Map<Class<?>, Object> getDefaultTypeAdapters() {
-        return Map.of(
-                List.class, ListDeserializer.INSTANCE,
-                Map.class, MapDeserializer.INSTANCE,
-                Properties.class, PropertiesGsonAdapter.INSTANCE,
-                GitverConfig.class, GitverConfigurationGsonAdapter.INSTANCE,
-                PatternStrategy.class, PatternStrategyGsonAdapter2.INSTANCE
-        );
-    }
+    @Getter
+    private final boolean pretty;
+    private final Gson gson;
 
     public static GsonUtil getInstance() {
         return getInstance(false);
@@ -79,188 +57,176 @@ public class GsonUtil {
         return INSTANCES.computeIfAbsent(pretty, GsonUtil::new);
     }
 
-    private final Gson gson;
-
     private GsonUtil(boolean pretty) {
-        this(pretty, getDefaultTypeAdapters());
-    }
-
-    private GsonUtil(boolean pretty, Map<Class<?>, Object> typeAdapters) {
-        GsonBuilder builder = new GsonBuilder();
+        this.pretty = pretty;
+        GsonBuilder builder = getGsonBuilder(Map.of(
+//                Properties.class, PropertiesGsonAdapter.INSTANCE,
+//                PatternStrategy.class, PatternStrategyGsonAdapter.INSTANCE
+        ));
         if (pretty) {
             builder.setPrettyPrinting();
         }
-        typeAdapters.forEach(builder::registerTypeAdapter);
-        gson = builder
-                .setExclusionStrategies(new MyExclusionStrategy())
-                .setFieldNamingStrategy(new MyFieldNamingStrategy())
-                .create();
+        this.gson = builder.create();
     }
 
-    public <V> V fromJson(JsonElement src, Type type) {
-        return gson.fromJson(src, type);
+    public Map<String, Object> toMapTree(Object src) {
+        JsonElement tree = gson.toJsonTree(src, src.getClass());
+        return gson.fromJson(tree, STR_OBJ_MAP_TT.getType());
     }
 
-    public JsonObject toJsonTree(Map<String, ?> src) {
-        return gson.toJsonTree(new LinkedHashMap<>(src), STR_OBJ_MAP_TT.getType()).getAsJsonObject();
+    public Map<String, Object> toSortedMapTree(Object src) {
+        Map<String, String> flattened = flatten(src);
+        Map<String, String> sorted = new TreeMap<>(flattened);
+        JsonElement tree = gson.toJsonTree(sorted, STR_STR_MAP_TT.getType());
+        return gson.fromJson(tree, STR_OBJ_MAP_TT.getType());
     }
 
-    public Map<String, Object> toObjectMap(JsonObject src) {
-        return gson.fromJson(src, STR_OBJ_MAP_TT.getType());
+    public Map<String, String> flatten(Object src) {
+        return flatten(src, src.getClass());
     }
 
-    public Map<String, String> toStringMap(JsonObject src) {
-        return gson.fromJson(src, STR_STR_MAP_TT.getType());
+    public Map<String, String> flatten(Object src, Type type) {
+        JsonElement json = flatten(gson.toJsonTree(src, type));
+        return gson.fromJson(json, STR_STR_MAP_TT.getType());
     }
 
-    public Object unwrap(JsonElement src) {
-        return BasicCodec.extract(src);
+    public <V> V rebuild(Map<String, ?> in, Type type) {
+        JsonElement json = gson.toJsonTree(in, STR_OBJ_MAP_TT.getType());
+        JsonElement rebuilt = rebuild(json);
+        return gson.fromJson(rebuilt, type);
     }
 
-    public JsonObject toDotted(JsonElement in) {
-        JsonObject dest = new JsonObject();
-        toDotted(dest, "", in);
-        return dest;
+    private static JsonElement flatten(JsonElement src) {
+        if (src.isJsonArray() || src.isJsonObject()) {
+            JsonObject dst = new JsonObject();
+            flatten(dst, "", src);
+            return dst;
+        }
+        return src;
     }
 
-    private void toDotted(JsonObject dest, String prefix, JsonElement in) {
-        if (in.isJsonNull() || in.isJsonPrimitive()) {
-            dest.add(prefix, in);
+    private static void flatten(JsonObject dst, String prefix, JsonElement in) {
+        if (in.isJsonNull()) {
+            return;
+        }
+        if (in.isJsonPrimitive()) {
+            dst.add(prefix, in);
         }
         String prefixWithDot = prefix.isEmpty() ? "" : prefix + ".";
         if (in.isJsonObject()) {
             in.getAsJsonObject().asMap()
-                    .forEach((k, v) -> toDotted(dest, prefixWithDot + k, v));
+                    .forEach((k, v) -> flatten(dst, prefixWithDot + k, v));
         }
         if (in.isJsonArray()) {
             JsonArray arr = in.getAsJsonArray();
             IntStream.range(0, arr.size())
-                    .forEach(i -> toDotted(dest, prefixWithDot + (i+1), arr.get(i)));
+                    .forEach(i -> flatten(dst, prefixWithDot + (i + 1), arr.get(i)));
         }
     }
 
-    public Map<String, Object> toUndotted(Map<String, ?> in) {
-        JsonElement el = toJsonTree(new LinkedHashMap<String, Object>(in));
-        JsonElement transformed = toUndotted(el);
-        return toObjectMap(transformed.getAsJsonObject());
-    }
-
-    public JsonElement toUndotted(JsonElement in) {
-        if (!in.isJsonObject() && !in.isJsonArray()) {
+    private static JsonElement rebuild(JsonElement in) {
+        if (!in.isJsonObject() || in.getAsJsonObject().keySet().stream().noneMatch(k -> k.contains("."))) {
             return in;
         }
+        JsonObject jobj = in.getAsJsonObject();
+        List<String> dottedKeys = jobj.keySet().stream().filter(k -> k.contains(".")).toList();
 
-        if (in.isJsonObject() && in.getAsJsonObject().keySet().stream().anyMatch(k -> k.contains("."))) {
-            JsonObject out = new JsonObject();
+        dottedKeys.stream().map(k -> Util.substringBefore(k, "."))
+                .filter(groupKey -> !(jobj.has(groupKey) && jobj.get(groupKey).isJsonObject()))
+                .forEach(groupKey -> jobj.add(groupKey, new JsonObject()));
 
-            in.getAsJsonObject().asMap().forEach((k, v) -> {
-                if (k.contains(".")) {
-                    String grpkey = StringUtils.substringBefore(k, ".");
-                    String subkey = StringUtils.substringAfter(k, ".");
-                    JsonObject grpmap = Optional.ofNullable(out.get(grpkey))
-                            .filter(j -> j.isJsonObject())
-                            .map(j -> j.getAsJsonObject())
-                            .orElseGet(() -> {
-                                JsonObject o = new JsonObject();
-                                out.add(grpkey, o);
-                                return o;
-                            });
+        dottedKeys.forEach(key -> {
+            String groupKey = Util.substringBefore(key, ".");
+            String subKey = Util.substringAfter(key, ".");
+            JsonObject groupObj = jobj.getAsJsonObject(groupKey);
+            JsonElement dottedValue = jobj.remove(key);
+            groupObj.add(subKey, rebuild(dottedValue));
+        });
 
-                    grpmap.add(subkey, toUndotted(v));
-                } else {
-                    out.add(k, v);
-                }
-            });
-
-            LinkedHashSet<String> outkeys = new LinkedHashSet<>(out.keySet());
-
-            outkeys.forEach(k -> Optional.ofNullable(out.get(k))
-                    .filter(JsonElement::isJsonObject)
-                    .map(JsonElement::getAsJsonObject)
-                    // .filter(jsonObj -> !jsonObj.isJsonArray())
-                    .ifPresent(v -> {
-                        Set<String> keys = new HashSet<>(v.keySet());
-                        JsonArray arr = new JsonArray();
-                        IntStream.range(1, keys.size() + 1).boxed().forEach(ii -> {
-                            JsonElement item = v.get(Integer.toString(ii));
-                            if (item != null) {
-                                arr.add(item);
-                            }
-                        });
-                        if (arr.size() == keys.size()) {
-                            out.add(k, arr);
-                        }
-                    }));
-
-            return out;
-        }
-        return in;
+        jobj.keySet().stream().filter(k -> jobj.get(k).isJsonObject()).toList().forEach(k -> {
+            JsonObject groupObj = jobj.getAsJsonObject(k);
+            List<String> intKeys = IntStream.range(1, groupObj.size() + 1).boxed()
+                    .map(String::valueOf)
+                    .filter(groupObj::has)
+                    .toList();
+            if (intKeys.size() == groupObj.size()) {
+                JsonArray arr = new JsonArray();
+                intKeys.forEach(ii -> arr.add(groupObj.get(ii)));
+                jobj.add(k, arr);
+            }
+        });
+        return jobj;
     }
 
-    public static class GitverConfigurationGsonAdapter implements InstanceCreator<GitverConfig> {
-        public static final GitverConfigurationGsonAdapter INSTANCE = new GitverConfigurationGsonAdapter();
+    private static GsonBuilder getGsonBuilder(Map<Class<?>, Object> typeAdapters) {
+        GsonBuilder builder = new GsonBuilder()
+//                .setFieldNamingStrategy(MyFieldNamingStrategy.INSTANCE)
+                .registerTypeAdapter(GitverConfig.class, new GitverConfigGsonAdapter())
+                .registerTypeAdapter(ResolvedData.class, new ResolvedDataGsonAdapter())
+                .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+                .setNumberToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE);
+        typeAdapters.forEach(builder::registerTypeAdapter);
+        return builder;
+    }
 
+    private static class GitverConfigGsonAdapter implements InstanceCreator<GitverConfig> {
         @Override
         public GitverConfig createInstance(Type type) {
             return GitverConfig.builder().build();
         }
     }
 
-    public static class PatternStrategyGsonAdapter
-            implements InstanceCreator<PatternStrategy>
-    {
-        public static final PatternStrategyGsonAdapter INSTANCE = new PatternStrategyGsonAdapter();
-
+    private static class ResolvedDataGsonAdapter implements InstanceCreator<ResolvedData> {
         @Override
-        public PatternStrategy createInstance(Type type) {
-            return PatternStrategy.builder().build();
+        public ResolvedData createInstance(Type type) {
+            return ResolvedData.builder().build();
         }
     }
 
-    public static class PatternStrategyGsonAdapter2
-            implements InstanceCreator<PatternStrategy>,
-           JsonSerializer<PatternStrategy>,
+    public static class PatternStrategyGsonAdapter implements
+//            InstanceCreator<PatternStrategy>,
+            JsonSerializer<PatternStrategy>,
             JsonDeserializer<PatternStrategy>
     {
-        public static final PatternStrategyGsonAdapter2 INSTANCE = new PatternStrategyGsonAdapter2();
+        public static final PatternStrategyGsonAdapter INSTANCE = new PatternStrategyGsonAdapter();
 
-        private final Gson gson;
+        private static final Map<String, String> NAME_REPL_MAP = Map.of("config", "gittle");
+        private static final Map<String, String> REPL_NAME_MAP = Util.getReversed(NAME_REPL_MAP);
+        private static final String STANDARD_PREFIX = "gittle_resolved_";
+        private static final String VERSION_STRING = "versionString";
 
-        public PatternStrategyGsonAdapter2() {
-            GsonBuilder builder = new GsonBuilder()
-                    .setExclusionStrategies(new MyExclusionStrategy())
-                    .setFieldNamingStrategy(new MyFieldNamingStrategy())
-                    .setPrettyPrinting();
-            Map.of(
-                    List.class, ListDeserializer.INSTANCE,
-                    Map.class, MapDeserializer.INSTANCE,
-                    Properties.class, PropertiesGsonAdapter.INSTANCE,
-                    GitverConfig.class, GitverConfigurationGsonAdapter.INSTANCE,
-                    PatternStrategy.class, PatternStrategyGsonAdapter.INSTANCE
-            ).forEach(builder::registerTypeAdapter);
-            gson = builder.create();
-        }
+        private final Gson gson = getGsonBuilder(Map.of()).create();
 
-        @Override
-        public PatternStrategy createInstance(Type type) {
-            return PatternStrategy.builder().build();
-        }
+//        @Override
+//        public PatternStrategy createInstance(Type type) {
+//            return PatternStrategy.create();
+//        }
 
         @Override
         public JsonElement serialize(PatternStrategy src, Type type, JsonSerializationContext ctx) {
             JsonElement json = gson.toJsonTree(src, type);
-            if (json.isJsonObject()) {
-                json.getAsJsonObject().addProperty("gv.versionString", src.toVersionString());
-            }
+//            if (json.isJsonObject()) {
+//                JsonObject jobj = json.getAsJsonObject();
+//                jobj.addProperty(VERSION_STRING, src.toVersionString());
+//                jobj.keySet().stream().toList().forEach(key -> {
+//                    String repl = NAME_REPL_MAP.getOrDefault(key, STANDARD_PREFIX + key);
+//                    jobj.add(repl, jobj.remove(key));
+//                });
+//            }
             return json;
         }
 
         @Override
         public PatternStrategy deserialize(JsonElement json, Type type, JsonDeserializationContext ctx)
                 throws JsonParseException {
-            if (json.isJsonObject()) {
-                json.getAsJsonObject().remove("gv.versionString");
-            }
+//            if (json.isJsonObject()) {
+//                JsonObject jobj = json.getAsJsonObject();
+//                jobj.keySet().stream().toList().forEach(k -> {
+//                    String name = REPL_NAME_MAP.getOrDefault(k, substringAfter(k, STANDARD_PREFIX));
+//                    jobj.add(name, jobj.remove(k));
+//                });
+//                jobj.remove(VERSION_STRING);
+//            }
             return gson.fromJson(json, type);
         }
     }
@@ -269,10 +235,16 @@ public class GsonUtil {
 
         public static final PropertiesGsonAdapter INSTANCE = new PropertiesGsonAdapter();
 
+        private final Gson gson;
+
+        public PropertiesGsonAdapter() {
+            this.gson = getGsonBuilder(Map.of()).create();
+        }
+
         @Override
         public Properties deserialize(JsonElement json, Type type, JsonDeserializationContext ctx)
                 throws JsonParseException {
-            Map<String, String> map = ctx.deserialize(PropCodec.getInstance().toDotted(json), STR_STR_MAP_TT.getType());
+            Map<String, String> map = ctx.deserialize(json, STR_STR_MAP_TT.getType());
             Properties props = new Properties();
             props.putAll(map);
             return props;
@@ -280,132 +252,7 @@ public class GsonUtil {
 
         @Override
         public JsonElement serialize(Properties src, Type type, JsonSerializationContext ctx) {
-            Map<String, String> map = src.entrySet().stream()
-                    .filter(e -> e.getKey() instanceof String && e.getValue() instanceof String)
-                    .map(e -> Map.entry(String.valueOf(e.getKey()), String.valueOf(e.getValue())))
-                    .collect(CollectorsEx.toMap(LinkedHashMap::new));
-            GsonUtil util = getInstance();
-            return util.toUndotted(ctx.serialize(util.toUndotted(map), STR_STR_MAP_TT.getType()));
-        }
-    }
-
-    private static class MapDeserializer extends BasicCodec implements JsonDeserializer<Map<String, Object>> {
-
-        public static final MapDeserializer INSTANCE = new MapDeserializer();
-
-        public Map<String, Object> deserialize(JsonElement json, Type type, JsonDeserializationContext ctx)
-                throws JsonParseException {
-            return extractMap(json.getAsJsonObject());
-        }
-    }
-
-    private static class ListDeserializer extends BasicCodec implements JsonDeserializer<List<Object>> {
-
-        public static final ListDeserializer INSTANCE = new ListDeserializer();
-
-        public List<Object> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext ctx)
-                throws JsonParseException {
-            return extractList(json.getAsJsonArray());
-        }
-    }
-
-    @Log
-    public static class BasicCodec {
-
-        public static Object extract(JsonElement json) {
-            if (json.isJsonNull()) {
-                return null;
-            } else if (json.isJsonArray()) {
-                return extractList(json.getAsJsonArray());
-            } else if (json.isJsonObject()) {
-                return extractMap(json.getAsJsonObject());
-            } else {
-                return extractPrimitive(json.getAsJsonPrimitive());
-            }
-        }
-
-        public static List<Object> extractList(JsonArray array) {
-            return array.asList().stream().map(v -> {
-                String typeName = v.isJsonArray()
-                        ? "array" : (v.isJsonObject()
-                        ? "object" : (v.isJsonPrimitive()
-                        ? "primitive"
-                        : "null"));
-                Object val = switch (typeName) {
-                    case "array" -> extractList(v.getAsJsonArray());
-                    case "object" -> extractMap(v.getAsJsonObject());
-                    case "primitive" -> extractPrimitive(v.getAsJsonPrimitive());
-                    default -> null;
-                };
-                return val;
-            }).toList();
-        }
-
-        public static Map<String, Object> extractMap(JsonObject object) {
-            return object.asMap().entrySet().stream().map(e -> {
-                String k = e.getKey();
-                JsonElement v = e.getValue();
-                String typeName = v.isJsonArray()
-                        ? "array" : (v.isJsonObject()
-                        ? "object" : (v.isJsonPrimitive()
-                        ? "primitive"
-                        : "null"));
-                Object val = switch (typeName) {
-                    case "array" -> extractList(v.getAsJsonArray());
-                    case "object" -> extractMap(v.getAsJsonObject());
-                    case "primitive" -> extractPrimitive(v.getAsJsonPrimitive());
-                    default -> null;
-                };
-                return Map.entry(e.getKey(), val);
-            }).collect(CollectorsEx.toMap(LinkedHashMap::new));
-        }
-
-        public static Object extractPrimitive(JsonPrimitive v) {
-            if (v.isJsonNull()) {
-                return null;
-            } else if (v.isBoolean()) {
-                return v.getAsBoolean();
-            } else if (v.isNumber()) {
-                try {
-                    return Optional.of(v)
-                            .filter(JsonElement::isJsonPrimitive)
-                            .map(JsonElement::getAsJsonPrimitive)
-                            .filter(JsonPrimitive::isNumber)
-                            .map(JsonElement::toString)
-                            .map(BigDecimal::new)
-                            .map(BigDecimal::stripTrailingZeros)
-                            .map(bd -> {
-                                if (bd.scale() <= 0) {
-                                    return bd.toBigInteger().intValueExact();
-                                } else {
-                                    return bd.doubleValue();
-                                }
-                            })
-                            .orElseGet(() -> v.getAsNumber().longValue());
-                } catch (Exception e) {
-                    // log.log(Level.WARNING, "Could not parse " + v.getAsJsonPrimitive().getAsString(), e);
-                    return v.getAsNumber();
-                }
-            } else {
-                String str = v.getAsString();
-                try {
-                    if (java.util.Set.of("true", "false").contains(str)) {
-                        return Boolean.parseBoolean(str);
-                    }
-                } catch (Exception e) {
-                    log.log(Level.WARNING, "Failed parsing string as a boolean " + str, e);
-                }
-                try {
-                    if (str.matches("^([-])?[0-9]+$")) {
-                        return Long.parseLong(str);
-                    } else if (str.matches("^([-])?[0-9]+\\.[0-9]+$")) {
-                        return Double.parseDouble(str);
-                    }
-                } catch (Exception e) {
-                    log.log(Level.WARNING, "Failed parsing string as a number " + str, e);
-                }
-                return str;
-            }
+            return gson.toJsonTree(src, STR_STR_MAP_TT.getType());
         }
     }
 
@@ -413,36 +260,23 @@ public class GsonUtil {
 
         @Override
         public String translateName(Field f) {
-//            if (f.getDeclaringClass().equals(PatternStrategy.class)) {
-//                return "gv." + f.getName();
-//            }
+            if (f.getDeclaringClass().equals(GitverConfig.class)) {
+                return "gitver_" + f.getName();
+            }
+            if (f.getDeclaringClass().equals(PatternStrategy.class)) {
+                return "gv_" + f.getName();
+            }
             return f.getName();
         }
 
         @Override
         public List<String> alternateNames(Field f) {
             List<String> altnames = FieldNamingStrategy.super.alternateNames(f);
-//            if (f.getDeclaringClass().equals(PatternStrategy.class)) {
-//                altnames = new ArrayList<>(altnames);
-//                altnames.add("gv." + f.getName());
-//            }
+            if (f.getDeclaringClass().equals(PatternStrategy.class)) {
+                altnames = new ArrayList<>(altnames);
+                altnames.add("gv_" + f.getName());
+            }
             return altnames.stream().sorted().distinct().collect(Collectors.toList());
-        }
-    }
-
-    private static class MyExclusionStrategy implements ExclusionStrategy {
-
-        @Override
-        public boolean shouldSkipField(FieldAttributes f) {
-            // if (ConversionHelper.class.isAssignableFrom(f.getDeclaringClass())) {
-            //     return Set.of("conversionHelper", "getConversionHelper").contains(f.getName());
-            // }
-            return false;
-        }
-
-        @Override
-        public boolean shouldSkipClass(Class<?> clazz) {
-            return false;
         }
     }
 }

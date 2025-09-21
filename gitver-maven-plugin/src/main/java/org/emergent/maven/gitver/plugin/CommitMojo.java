@@ -10,7 +10,7 @@ import org.emergent.maven.gitver.core.GitverException;
 public class CommitMojo extends AbstractGitverMojo {
 
     @Setter
-    @Parameter(name = "message", property = "gv.commitMessage", defaultValue = "Empty Commit")
+    @Parameter(name = "message", property = "gittle.commitMessage", defaultValue = "Empty Commit")
     private String message;
 
     @Setter
