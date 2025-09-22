@@ -1,13 +1,5 @@
 package org.emergent.maven.gitver.core.git;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.internal.JGitText;
@@ -18,6 +10,15 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.git.GitExec.ExecFunction;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class GitUtil {
 

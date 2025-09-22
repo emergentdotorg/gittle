@@ -37,7 +37,7 @@ public class CollectorsEx {
         return toMap(T::getKey, T::getValue, getDefaultMapSupplier(), finisher);
     }
 
-    public static <T extends Map.Entry<K, V>, K, V> Collector<T, ?, Map<K, V>> toMap() {
+    public static <T extends Map.Entry<? extends K, ? extends V>, K, V> Collector<T, ?, Map<K, V>> toMap() {
         return toMap(T::getKey, T::getValue, getDefaultMapSupplier());
     }
 

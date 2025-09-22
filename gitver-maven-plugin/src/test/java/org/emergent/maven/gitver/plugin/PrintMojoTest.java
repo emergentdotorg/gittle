@@ -1,13 +1,14 @@
 package org.emergent.maven.gitver.plugin;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.apache.maven.plugin.testing.SilentLog;
+import org.emergent.maven.gitver.core.Coordinates;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.maven.plugin.testing.SilentLog;
-import org.emergent.maven.gitver.core.Coordinates;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PrintMojoTest extends AbstractMojoTest {
 

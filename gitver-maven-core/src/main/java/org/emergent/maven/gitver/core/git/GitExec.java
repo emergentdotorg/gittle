@@ -1,12 +1,13 @@
 package org.emergent.maven.gitver.core.git;
 
-import java.io.File;
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.emergent.maven.gitver.core.GitverException;
+
+import java.io.File;
+import java.io.IOException;
 
 @Slf4j
 public class GitExec {

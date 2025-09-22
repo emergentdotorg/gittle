@@ -1,11 +1,13 @@
 //file:noinspection unused
+
+import org.w3c.dom.Element
+
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.xpath.XPathFactory
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.regex.Pattern
-import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.xpath.XPathFactory
-import org.w3c.dom.Element
 
 @groovy.transform.Field
 boolean assertiveFileLoading = binding.hasVariable('assertive')

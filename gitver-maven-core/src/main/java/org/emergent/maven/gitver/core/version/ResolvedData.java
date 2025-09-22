@@ -1,70 +1,47 @@
 package org.emergent.maven.gitver.core.version;
 
-import com.google.gson.annotations.SerializedName;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.Value;
-import lombok.experimental.Accessors;
+import lombok.experimental.NonFinal;
+import lombok.experimental.SuperBuilder;
 import org.emergent.maven.gitver.core.GitverConfig;
-import org.emergent.maven.gitver.core.PropCodec;
-import org.emergent.maven.gitver.core.Util;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static java.util.regex.Pattern.quote;
 
 @Value
-@Accessors(fluent = true)
-//@NoArgsConstructor(access = AccessLevel.PUBLIC)
-@Builder(toBuilder = true, builderClassName = "Builder")
-public class ResolvedData implements PropCodec.Codable<ResolvedData> {
+@NonFinal
+@SuperBuilder(toBuilder = true)
+@EqualsAndHashCode(callSuper = false)
+@lombok.experimental.FieldDefaults(level = AccessLevel.PROTECTED)
+@lombok.experimental.Accessors(fluent = false)
+public class ResolvedData extends GitverConfig {
 
-    @NonNull
+//    @NonNull
     @lombok.Builder.Default
     String branch = "";
-    @NonNull
+//    @NonNull
     @lombok.Builder.Default
     String hash = "";
-    @NonNull
+//    @NonNull
     @lombok.Builder.Default
     String tagged = "0.0.0";
-    int commits;
-    boolean dirty;
-
-    public static Builder builder() {
-        return new Builder();
-    }
+    @lombok.Builder.Default
+    int commits = 0;
+    @lombok.Builder.Default
+    boolean dirty = false;
 
     public String getHashShort() {
         return Optional.ofNullable(hash).map(s -> s.substring(0, Math.min(8, s.length()))).orElse("");
     }
 
-    public static ResolvedData from(Map<String, String> props) {
-        return PropCodec.fromProperties(props, ResolvedData.class);
-    }
-
-    public Map<String, String> asMap() {
-        return PropCodec.toProperties(this);
-    }
-
-    public static class Builder {
-
+    public GitverConfig getConfig() {
+        return GitverConfig.builder()
+                .newVersion(getNewVersion())
+                .releaseBranches(getReleaseBranches())
+                .tagNamePattern(getTagNamePattern())
+                .versionPattern(getVersionPattern())
+                .build();
     }
 }

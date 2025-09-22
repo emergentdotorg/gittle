@@ -1,6 +1,5 @@
 package org.emergent.maven.gitver.core;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -10,18 +9,10 @@ import org.emergent.maven.gitver.core.version.ResolvedData;
 import org.junit.jupiter.api.Test;
 
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.emergent.maven.gitver.core.GsonUtil.STR_STR_MAP_TT;
 
 class PropCodecTest {
 
@@ -213,10 +204,10 @@ class PropCodecTest {
 
     private static GitverConfig getGitverConfig() {
         return GitverConfig.builder()
-                .setReleaseBranches("release,stable")
-                .setTagNamePattern("v?([0-9]+\\.[0-9]+\\.[0-9]+)")
-                .setVersionPattern("%t(-%B)(-%c)(-%S)+%h(.%d)")
-                .setNewVersion("0.1.2")
+                .newVersion("0.1.2")
+                .releaseBranches("release,stable")
+                .tagNamePattern("v?([0-9]+\\.[0-9]+\\.[0-9]+)")
+                .versionPattern("%t(-%B)(-%c)(-%S)+%h(.%d)")
                 .build();
     }
 

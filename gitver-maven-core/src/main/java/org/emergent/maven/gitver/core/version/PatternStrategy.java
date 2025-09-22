@@ -1,176 +1,145 @@
 package org.emergent.maven.gitver.core.version;
 
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Accessors;
-import lombok.experimental.Tolerate;
-import org.emergent.maven.gitver.core.CollectorsEx;
+import lombok.experimental.NonFinal;
+import lombok.experimental.SuperBuilder;
+import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.PropCodec;
 import org.emergent.maven.gitver.core.Util;
+import org.emergent.maven.gitver.core.git.GitExec;
+import org.emergent.maven.gitver.core.git.TagProvider;
 
+import java.io.File;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.regex.Pattern.quote;
-import static org.emergent.maven.gitver.core.Constants.GITTLE_PREFIX;
-import static org.emergent.maven.gitver.core.Constants.GITTLE_RESOLVED_PREFIX;
 
 @Value
-//@Accessors(fluent = true)
-//@NoArgsConstructor(access = AccessLevel.PUBLIC)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@lombok.Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")
-public class PatternStrategy implements VersionStrategy {
+@NonFinal
+@SuperBuilder(toBuilder = true)
+@EqualsAndHashCode(callSuper = false)
+@lombok.experimental.FieldDefaults(level = AccessLevel.PROTECTED)
+@lombok.experimental.Accessors(fluent = false)
+public class PatternStrategy extends ResolvedData implements VersionStrategy {
     public static final String VERSION_PATTERN_DEF = "%t(-%B)(-%c)(-%S)+%h(.%d)";
 
     private static final String STANDARD_PREFIX = "gittle.resolved.";
     private static final String VERSION_STRING = "version";
     private static final String RESOLVED_PREFIX = "resolved.";
 
-    @NonNull
-    @lombok.Builder.Default
-    private GitverConfig config = GitverConfig.builder().build();
+//    @lombok.Builder.ObtainVia(method = "getInitialBuilderVersion", isStatic = true)
+//    @Getter(value =  AccessLevel.PRIVATE)
+    String version;
 
-    @NonNull
-    @lombok.Builder.Default
-    private ResolvedData resolved = ResolvedData.builder().build();
+    public String getVersion() {
+        return Util.isEmpty(version) ? "" : version;
+    }
 
-    // @NonNull
-    // @lombok.Builder.Default
-    // String tagPattern = TAG_PATTERN_DEF;
-    //
-    // @NonNull
-    // @lombok.Builder.Default
-    // String versionOverride = "";
-    //
-    // @NonNull
-    // @lombok.Builder.Default
-    // String versionPattern = VERSION_PATTERN_DEF;
-    //
-    // @NonNull
-    // @lombok.Builder.Default
-    // String releaseBranches = RELEASE_BRANCHES_DEF;
+    static VersionStrategy getPatternStrategy(GitverConfig config, File basePath) {
+        return GitExec.execOp(basePath, git -> {
+            return getPatternStrategy(config, git);
+        });
+    }
 
-//    @lombok.Builder.Default
-//    @NonNull
-//    private String branch = "main";
-//
-//    @lombok.Builder.Default
-//    @NonNull
-//    private String hash = "abcdef01";
-//
-//    @lombok.Builder.Default
-//    @NonNull
-//    private String tagged = "0.0.0";
-//
-//    private int commits;
-//
-//    private boolean dirty;
+    private static VersionStrategy getPatternStrategy(GitverConfig config, Git git) throws Exception {
+        Repository repository = git.getRepository();
+        TagProvider tagProvider = new TagProvider(config, git);
+        ObjectId headId = requireNonNull(repository.resolve(Constants.HEAD), "headId is null");
 
-//    @Override
-//    public GitverConfig getConfig() {
-//        return config;
-//    }
+        PatternStrategyBuilder<?, ?> builder = builder()
+                .newVersion(config.getNewVersion())
+                .releaseBranches(config.getReleaseBranches())
+                .tagNamePattern(config.getTagNamePattern())
+                .versionPattern(config.getVersionPattern())
+                .branch(repository.getBranch())
+                .hash(headId.getName());
 
-    public static PatternStrategy create() {
+        int commits = 0;
+        for (RevCommit commit : git.log().add(headId).call()) {
+            Optional<String> tag = tagProvider.getTag(commit).map(ComparableVersion::toString);
+            if (tag.isPresent()) {
+                builder.tagged(tag.get());
+                break;
+            }
+            boolean isMergeCommit = commit.getParentCount() > 1;
+            commits++;
+        }
+        builder.commits(commits);
+
+        Status status = git.status().setIgnoreSubmodules(SubmoduleWalk.IgnoreSubmoduleMode.UNTRACKED).call();
+        builder.dirty(!status.getUncommittedChanges().isEmpty());
+
         return builder().build();
     }
 
-    private String getBranch() {
-        return resolved.branch();
-    }
+//    public PatternStrategy roundTrip() {
+//        String versionString = calculateVersion(this);
+//        return new PatternStrategy(toBuilder().version(versionString));
+//    }
 
-
-    private String getHash() {
-        return resolved.hash();
-    }
-
-    private String getTagged() {
-        return resolved.tagged();
-    }
-
-    private int getCommits() {
-        return resolved.commits();
-    }
-
-    private boolean getDirty() {
-        return resolved.dirty();
-    }
-
-    public String getHashShort() {
-        return resolved.getHashShort();
-    }
-
-    @Override
-    public String toString() {
-        return String.format(
-                "%s [branch: %s, version: %s, hash: %s]",
-                getClass().getSimpleName(),
-                resolved.branch(),
-                toVersionString(),
-                resolved.hash());
-    }
+//    @Override
+//    public String toString() {
+//        return String.format(
+//                "%s [branch: %s, version: %s, hash: %s]",
+//                getClass().getSimpleName(),
+//                getBranch(),
+//                toVersionString(),
+//                getHash());
+//    }
 
     @Override
     public String toVersionString() {
-        return toVersionString(config, resolved);
-    }
-
-    public static PatternStrategy from(Map<String, String> props) {
-        return PatternStrategy.builder()
-                .setResolved(ResolvedData.from(props))
-                .setConfig(GitverConfig.from(props))
-                .build();
+        return getVersion();
     }
 
     @Override
     public Map<String, String> asMap() {
-        Map<String, String> map = new TreeMap<>();
-        Map<String, String> resolvedMap = resolved.asMap();
-        if (!resolvedMap.isEmpty()) {
-            map.put(GITTLE_RESOLVED_PREFIX + VERSION_STRING, toVersionString());
-        }
-        map.putAll(resolvedMap);
-        map.putAll(config.asMap());
-        return map;
+        return PropCodec.toProperties(this);
     }
 
-    private static String toVersionString(GitverConfig config, ResolvedData resolved) {
-        String pattern = config.getVersionPattern();
-        Map<String, String> values = getReplacementMap(config, resolved);
+    private static String calculateVersion(ResolvedData resolved) {
+        String pattern = resolved.getVersionPattern();
+        Map<String, String> values = getReplacementMap(resolved);
         return performTokenReplacements(pattern, values);
     }
 
-    private static Map<String, String> getReplacementMap(GitverConfig config, ResolvedData resolved) {
-        Set<String> releaseSet = config.getReleaseBranchesSet();
-        String branch = Optional.ofNullable(resolved.branch()).orElse(releaseSet.stream().findFirst().orElse("unknown"));
+    private static Map<String, String> getReplacementMap(ResolvedData resolved) {
+        Set<String> releaseSet = resolved.getReleaseBranchesSet();
+        String branch = Optional.ofNullable(resolved.getBranch()).orElse(releaseSet.stream().findFirst().orElse("unknown"));
         String devBranch = releaseSet.contains(branch) ? "" : branch;
-        int commits = resolved.commits();
-        String hash = resolved.hash();
-        boolean dirty = resolved.dirty();
+        int commits = resolved.getCommits();
+        String hash = resolved.getHash();
+        boolean dirty = resolved.isDirty();
         return Arrays.stream(PatternToken.values())
                 .collect(Collectors.toMap(
                         PatternToken::id,
                         t -> String.valueOf(
                                 switch (t) {
-                                    case TAG -> resolved.tagged();
+                                    case TAG -> resolved.getTagged();
                                     case COMMIT -> commits;
                                     case SNAPSHOT -> commits > 0 ? "SNAPSHOT" : "";
                                     case BRANCH -> branch;
@@ -274,43 +243,43 @@ public class PatternStrategy implements VersionStrategy {
         }
     }
 
-    public static class Builder {
+//    public static abstract class PatternStrategyBuilder<C extends PatternStrategy, B extends PatternStrategyBuilder<C, B>> extends ResolvedDataBuilder<C, B> {
+//        private String version;
+//
+//        private static void $fillValuesFromInstanceIntoBuilder(PatternStrategy instance, PatternStrategyBuilder<?, ?> b) {
+//            b.version(PatternStrategy.toVersionString0(instance));
+//        }
+//
+//        public B version(String version) {
+//            this.version = version;
+//            return self();
+//        }
+//
+//        protected B $fillValuesFrom(C instance) {
+//            super.$fillValuesFrom(instance);
+//            PatternStrategyBuilder.$fillValuesFromInstanceIntoBuilder(instance, this);
+//            return self();
+//        }
+//
+//        protected abstract B self();
+//
+//        public abstract C build();
+//
+//        public String toString() {
+//            return "PatternStrategy.PatternStrategyBuilder(super=" + super.toString() + ", version=" + this.version + ")";
+//        }
+//    }
 
-        @Tolerate
-        public Builder setConfig(GitverConfig.Builder builder) {
-            return setConfig(builder.build());
+    private static final class PatternStrategyBuilderImpl extends PatternStrategyBuilder<PatternStrategy, PatternStrategyBuilderImpl> {
+//        private PatternStrategyBuilderImpl() {
+//        }
+//
+//        protected PatternStrategyBuilderImpl self() {
+//            return this;
+//        }
+//
+        public PatternStrategy build() {
+            return new PatternStrategy(version(calculateVersion(new ResolvedData(this))));
         }
-
-        @Tolerate
-        public Builder setResolved(ResolvedData.Builder builder) {
-            return setResolved(builder.build());
-        }
-
-//        private ResolvedData getResolved() {
-//            if (!resolved$set) {
-//                setResolved(new ResolvedData());
-//            }
-//            return resolved$value;
-//        }
-//
-//        public Builder setBranch(String v) {
-//            getResolved().branch(v);
-//            return this;
-//        }
-//
-//        public Builder setHash(String v) {
-//            getResolved().hash(v);
-//            return this;
-//        }
-//
-//        public Builder setCommits(int v) {
-//            getResolved().commits(v);
-//            return this;
-//        }
-//
-//        public Builder setDirty(boolean v) {
-//            getResolved().dirty(v);
-//            return this;
-//        }
     }
 }

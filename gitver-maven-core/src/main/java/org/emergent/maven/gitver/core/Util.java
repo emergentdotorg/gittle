@@ -1,5 +1,11 @@
 package org.emergent.maven.gitver.core;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
+import org.emergent.maven.gitver.core.version.OverrideStrategy;
+import org.emergent.maven.gitver.core.version.PatternStrategy;
+import org.emergent.maven.gitver.core.version.ResolvedData;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,9 +27,6 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Strings;
 
 public class Util {
 
@@ -67,11 +70,6 @@ public class Util {
             refDir = refDir.getParent();
         }
         return Optional.ofNullable(refDir).map(r -> r.resolve(DOT_MVN)).orElse(currentDir);
-    }
-
-    public static GitverConfig loadConfig(Path currentDir) {
-        Properties extensionProps = loadProperties(currentDir);
-        return GitverConfig.from(Util.toStringStringMap(extensionProps));
     }
 
     public static Properties loadProperties(Path currentDir) {
@@ -278,6 +276,27 @@ public class Util {
                 .filter(k -> Util.startsWith(k, pre))
                 .forEachOrdered(k -> props.put(rep + substringAfter(k, pre), props.remove(k)));
         return props;
+    }
+
+    public static GitverConfig newGitverConfig(Map<String, String> props) {
+        return PropCodec.fromProperties(props, GitverConfig.class);
+    }
+
+    public static GitverConfig newGitverConfig(Path currentDir) {
+        Properties extensionProps = loadProperties(currentDir);
+        return newGitverConfig(toStringStringMap(extensionProps));
+    }
+
+    public static ResolvedData newResolvedData(Map<String, String> props) {
+        return PropCodec.fromProperties(props, ResolvedData.class);
+    }
+
+    public static PatternStrategy newPatternStrategy(Map<String, String> props) {
+        return PropCodec.fromProperties(props, PatternStrategy.class);
+    }
+
+    public static OverrideStrategy newOverrideStrategy(Map<String, String> props) {
+        return PropCodec.fromProperties(props, OverrideStrategy.class);
     }
 
     private static class MemoizingSupplier<T> implements Supplier<T>, Serializable {

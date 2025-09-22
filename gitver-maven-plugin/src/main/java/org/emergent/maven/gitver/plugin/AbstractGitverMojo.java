@@ -26,7 +26,7 @@ public abstract class AbstractGitverMojo extends org.apache.maven.plugin.Abstrac
 
     @Parameter(name = "skip", defaultValue = "false", property = "gittle.skip")
     protected boolean skip;
-    
+
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     protected MavenProject mavenProject;
 
@@ -41,14 +41,15 @@ public abstract class AbstractGitverMojo extends org.apache.maven.plugin.Abstrac
         }
     }
 
-    protected void execute0() throws Exception {}
+    protected void execute0() throws Exception {
+    }
 
     protected GitUtil getGitUtil() {
         return GitUtil.getInstance(mavenProject.getBasedir());
     }
 
     public GitverConfig getConfig() {
-        return Util.loadConfig(mavenProject.getBasedir().toPath());
+        return Util.newGitverConfig(mavenProject.getBasedir().toPath());
     }
 
     protected VersionStrategy getVersionStrategy() {

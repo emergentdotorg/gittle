@@ -1,12 +1,12 @@
 package org.emergent.maven.gitver.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
 
 public class GitverConfigTest {
 
@@ -32,7 +32,7 @@ public class GitverConfigTest {
     public void testPropertiesRoundTrip() {
         GitverConfig config = getGitverConfig();
         Map<String, String> props = config.asMap();
-        GitverConfig reborn = GitverConfig.from(props);
+        GitverConfig reborn = Util.newGitverConfig(props);
         assertThat(reborn).isEqualTo(config);
 
         GitverConfig def = GitverConfig.builder().build();
@@ -42,10 +42,10 @@ public class GitverConfigTest {
 
     private static GitverConfig getGitverConfig() {
         return GitverConfig.builder()
-          .setReleaseBranches("release,stable")
-          .setTagNamePattern("v?([0-9]+\\.[0-9]+\\.[0-9]+)")
-          .setVersionPattern("%t(-%c)")
-          .setNewVersion("0.1.2")
+          .releaseBranches("release,stable")
+          .tagNamePattern("v?([0-9]+\\.[0-9]+\\.[0-9]+)")
+          .versionPattern("%t(-%c)")
+          .newVersion("0.1.2")
           .build();
     }
 }

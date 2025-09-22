@@ -1,9 +1,10 @@
 package org.emergent.maven.gitver.core;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.Value;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Value
 @lombok.Builder(setterPrefix = "set", toBuilder = true, builderClassName = "Builder")

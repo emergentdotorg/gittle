@@ -1,10 +1,5 @@
 package org.emergent.maven.gitver.core.version;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.Locale;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Value;
 import org.assertj.core.api.Assertions;
 import org.emergent.maven.gitver.core.Util;
@@ -14,6 +9,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class StrategyFactoryTest {
 

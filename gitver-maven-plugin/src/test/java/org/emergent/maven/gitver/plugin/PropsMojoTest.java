@@ -1,15 +1,22 @@
 package org.emergent.maven.gitver.plugin;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.java.Log;
+import org.apache.maven.plugin.testing.SilentLog;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.utils.logging.MessageBuilder;
+import org.emergent.maven.gitver.core.Coordinates;
+import org.emergent.maven.gitver.core.Util;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.maven.plugin.testing.SilentLog;
-import org.apache.maven.project.MavenProject;
-import org.emergent.maven.gitver.core.Coordinates;
-import org.junit.jupiter.api.Test;
+import java.util.logging.Level;
 
+import static org.apache.maven.shared.utils.logging.MessageUtils.buffer;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@Log
 public class PropsMojoTest extends AbstractMojoTest {
 
     public static class TestLog extends SilentLog {
@@ -54,6 +61,17 @@ public class PropsMojoTest extends AbstractMojoTest {
           .setArtifactId(proj.getArtifactId())
           .setVersion(proj.getVersion())
           .build();
+        log.log(Level.WARNING, buffer()
+                .a("--- ")
+                        .mojo(gav)
+                        .a(" ")
+                        .strong("[core-extension]")
+                        .a(" ---")
+                .a(Util.join(proj.getProperties()))
+                .a("--- ")
+                        .strong("properties" )
+                .a(" ---")
+                .build());
         assertThat(testLog.getMessages()).isNotEmpty()
           .allMatch(s -> s.startsWith("Adding properties to project " + gav))
           .allMatch(s -> s.contains("gittle.resolved.version=" + gitverVersion + "\n"));

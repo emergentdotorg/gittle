@@ -1,16 +1,5 @@
 package org.emergent.maven.gitver.core.git;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.eclipse.jgit.api.Git;
@@ -26,6 +15,18 @@ import org.eclipse.jgit.revwalk.RevTag;
 import org.emergent.maven.gitver.core.GitverConfig;
 import org.emergent.maven.gitver.core.GitverException;
 import org.emergent.maven.gitver.core.Util;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class TagProvider {
 

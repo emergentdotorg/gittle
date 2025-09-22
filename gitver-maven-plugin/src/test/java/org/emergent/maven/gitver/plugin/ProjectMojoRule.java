@@ -1,7 +1,5 @@
 package org.emergent.maven.gitver.plugin;
 
-import java.io.File;
-import java.io.FileReader;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
@@ -10,6 +8,9 @@ import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+
+import java.io.File;
+import java.io.FileReader;
 
 public class ProjectMojoRule extends MojoRule implements BeforeEachCallback, AfterEachCallback {
 

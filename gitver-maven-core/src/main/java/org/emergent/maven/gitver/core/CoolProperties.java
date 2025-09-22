@@ -1,5 +1,8 @@
 package org.emergent.maven.gitver.core;
 
+import lombok.NonNull;
+import org.eclipse.jgit.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,8 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import lombok.NonNull;
-import org.eclipse.jgit.annotations.Nullable;
 
 public class CoolProperties extends AbstractMap<String, String> {
 

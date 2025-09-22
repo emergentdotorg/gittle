@@ -1,15 +1,5 @@
 package org.emergent.maven.gitver.extension;
 
-import static org.emergent.maven.gitver.core.Util.GITVER_POM_XML;
-import static org.emergent.maven.gitver.extension.ExtensionUtil.$_REVISION;
-import static org.emergent.maven.gitver.extension.ExtensionUtil.REVISION;
-
-import java.nio.file.Path;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
@@ -19,6 +9,17 @@ import org.apache.maven.project.MavenProject;
 import org.emergent.maven.gitver.core.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.emergent.maven.gitver.core.Util.GITVER_POM_XML;
+import static org.emergent.maven.gitver.extension.ExtensionUtil.$_REVISION;
+import static org.emergent.maven.gitver.extension.ExtensionUtil.REVISION;
 
 /**
  * Handles creating the updated pom file, and assigning it to the project model.

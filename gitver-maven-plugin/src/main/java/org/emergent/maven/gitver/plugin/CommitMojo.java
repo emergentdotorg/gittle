@@ -1,11 +1,12 @@
 package org.emergent.maven.gitver.plugin;
 
-import java.util.Objects;
 import lombok.Setter;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.emergent.maven.gitver.core.GitverException;
+
+import java.util.Objects;
 
 public class CommitMojo extends AbstractGitverMojo {
 

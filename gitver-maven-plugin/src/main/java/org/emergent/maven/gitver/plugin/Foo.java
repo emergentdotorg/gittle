@@ -1,23 +1,16 @@
 package org.emergent.maven.gitver.plugin;
 
 import com.google.inject.Guice;
-import java.awt.BorderLayout;
-import java.util.Enumeration;
-import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.swing.AbstractButton;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
 import org.eclipse.sisu.space.SpaceModule;
 import org.eclipse.sisu.space.URLClassSpace;
 import org.eclipse.sisu.wire.WireModule;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.swing.*;
+import java.awt.*;
+import java.util.Enumeration;
+import java.util.Map;
 
 // let's create some simple Swing tabs...
 

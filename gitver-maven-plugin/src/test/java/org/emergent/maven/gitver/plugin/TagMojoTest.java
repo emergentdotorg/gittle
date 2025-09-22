@@ -1,9 +1,10 @@
 package org.emergent.maven.gitver.plugin;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TagMojoTest extends AbstractMojoTest {
 
