@@ -27,7 +27,7 @@ import static org.emergent.maven.gitver.core.Constants.TAG_PATTERN_DEF;
 import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN;
 import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
 
-@Log
+//@Log
 @Getter
 @Setter
 @Mojo(name = PropsMojo.NAME, defaultPhase = LifecyclePhase.INITIALIZE)
@@ -73,7 +73,7 @@ public class PropsMojo extends AbstractGitverMojo {
         of(releaseBranches).ifPresent(v -> loaded.setProperty(RELEASE_BRANCHES_PROP, v));
         of(tagNamePattern).ifPresent(v -> loaded.setProperty(TAG_NAME_PATTERN_PROP, v));
         of(versionPattern).ifPresent(v -> loaded.setProperty(VERSION_PATTERN_PROP, v));
-        log.log(Level.WARNING, "LOADED:\n" + Util.join(loaded));
+        //getLog().warn("LOADED:\n" + Util.join(loaded));
         return Util.newGitverConfig(Util.toStringStringMap(loaded));
     }
 

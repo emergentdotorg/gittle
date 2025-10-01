@@ -5,8 +5,10 @@ import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.experimental.SuperBuilder;
 import org.emergent.maven.gitver.core.GitverConfig;
+import org.emergent.maven.gitver.core.PropCodec;
 import org.emergent.maven.gitver.core.Util;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Value
@@ -41,5 +43,10 @@ public class OverrideStrategy extends GitverConfig implements VersionStrategy {
                 .tagNamePattern(getTagNamePattern())
                 .versionPattern(getVersionPattern())
                 .build();
+    }
+
+    @Override
+    public Map<String, String> asMap() {
+        return PropCodec.toProperties(this).getProperties();
     }
 }

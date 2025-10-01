@@ -1,8 +1,11 @@
 package org.emergent.maven.gitver.core.version;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.experimental.NonFinal;
@@ -40,6 +43,8 @@ import static java.util.regex.Pattern.quote;
 
 @Value
 @NonFinal
+@NoArgsConstructor
+@AllArgsConstructor
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = false)
 @lombok.experimental.FieldDefaults(level = AccessLevel.PROTECTED)
@@ -53,10 +58,16 @@ public class PatternStrategy extends ResolvedData implements VersionStrategy {
 
 //    @lombok.Builder.ObtainVia(method = "getInitialBuilderVersion", isStatic = true)
 //    @Getter(value =  AccessLevel.PRIVATE)
-    String version;
+    @Builder.Default
+    String version = "";
+
+    @SuppressWarnings("unused")
+    public static PatternStrategy newInstance() {
+        return builder().build();
+    }
 
     public String getVersion() {
-        return Util.isEmpty(version) ? "" : version;
+        return !Util.isEmpty(version) ? version : calculateVersion(this);
     }
 
     static VersionStrategy getPatternStrategy(GitverConfig config, File basePath) {
@@ -71,6 +82,7 @@ public class PatternStrategy extends ResolvedData implements VersionStrategy {
         ObjectId headId = requireNonNull(repository.resolve(Constants.HEAD), "headId is null");
 
         PatternStrategyBuilder<?, ?> builder = builder()
+                .basePath(git.getRepository().getDirectory().getAbsolutePath())
                 .newVersion(config.getNewVersion())
                 .releaseBranches(config.getReleaseBranches())
                 .tagNamePattern(config.getTagNamePattern())
@@ -93,7 +105,7 @@ public class PatternStrategy extends ResolvedData implements VersionStrategy {
         Status status = git.status().setIgnoreSubmodules(SubmoduleWalk.IgnoreSubmoduleMode.UNTRACKED).call();
         builder.dirty(!status.getUncommittedChanges().isEmpty());
 
-        return builder().build();
+        return builder.build();
     }
 
 //    public PatternStrategy roundTrip() {
@@ -118,8 +130,12 @@ public class PatternStrategy extends ResolvedData implements VersionStrategy {
 
     @Override
     public Map<String, String> asMap() {
-        return PropCodec.toProperties(this);
+        return PropCodec.toProperties(this).getProperties();
     }
+
+    //{
+        //version(calculateVersion(this));
+    //}
 
     private static String calculateVersion(ResolvedData resolved) {
         String pattern = resolved.getVersionPattern();
@@ -279,7 +295,10 @@ public class PatternStrategy extends ResolvedData implements VersionStrategy {
 //        }
 //
         public PatternStrategy build() {
-            return new PatternStrategy(version(calculateVersion(new ResolvedData(this))));
+            ResolvedData resolved = new ResolvedData(this);
+            String calculatedVersion = calculateVersion(resolved);
+            this.version(calculatedVersion);
+            return new PatternStrategy(this);
         }
     }
 }

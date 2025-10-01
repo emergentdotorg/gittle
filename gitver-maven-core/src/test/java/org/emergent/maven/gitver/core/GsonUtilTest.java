@@ -1,5 +1,6 @@
 package org.emergent.maven.gitver.core;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.jupiter.api.Test;
@@ -13,11 +14,11 @@ class GsonUtilTest {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private final GsonUtil gsonUtil = GsonUtil.getInstance(true);
+//    private final GsonUtil gsonUtil = GsonUtil.getInstance(true);
 
     @Test
     void toFlattenKeys() {
-        Map<String, String> actual = gsonUtil.flattenMap(Map.of(
+        Map<String, String> actual = PropCodec.toProperties(ImmutableMap.of(
                 "astring",
                 "stringx",
                 "aboolean",
@@ -27,11 +28,12 @@ class GsonUtilTest {
                 "alist",
                 List.of("stringy", true, 7),
                 "amap",
-                Map.of("astring", "stringz", "aboolean", false, "anumber", 9)));
+                Map.of("astring", "stringz", "aboolean", false, "anumber", 9)
+        )).getProperties();
         assertThat(actual)
                 .isNotNull()
                 // .isInstanceOf(JsonObject.class)
-                .isEqualTo(gsonUtil.flattenMap(Map.of(
+                .isEqualTo(PropCodec.toProperties(ImmutableMap.of(
                         "astring",
                         "stringx",
                         "aboolean",
@@ -49,12 +51,13 @@ class GsonUtilTest {
                         "amap.aboolean",
                         false,
                         "amap.anumber",
-                        9)));
+                        9)
+                ).getProperties());
     }
 
     @Test
     void fromFlattenKeys() {
-        Map<String, Object> actual = gsonUtil.rebuild(Map.of(
+        Map<String, Object> actual = PropCodec.toMap(PropCodec.toJsonTree(ImmutableMap.of(
                 "astring", "stringx",
                 "aboolean", true,
                 "anumber", 5L,
@@ -64,8 +67,8 @@ class GsonUtilTest {
                 "amap.astring", "stringz",
                 "amap.aboolean", false,
                 "amap.anumber", 9L
-        ), GsonUtil.STR_OBJ_MAP_TT.getType());
-        Map<String, Object> expected = Map.of(
+        )));
+        Map<String, Object> expected = ImmutableMap.of(
                 "astring", "stringx",
                 "aboolean", true,
                 "anumber", 5L,
@@ -74,7 +77,7 @@ class GsonUtilTest {
                         true,
                         7L
                 ),
-                "amap", Map.of(
+                "amap", ImmutableMap.of(
                         "astring", "stringz",
                         "aboolean", false,
                         "anumber", 9L

@@ -48,7 +48,7 @@ class PropCodecTest {
     @Test
     void testResolvedDataToProperties() {
         Map<String, String> expected = getResolvedDataProperties();
-        Map<String, String> actual = PropCodec.toProperties(getResolvedData());
+        Map<String, String> actual = PropCodec.toProperties(getResolvedData()).getProperties();
         assertThat(actual).isNotNull()
                         .as(() -> GSON.toJson(Map.of(
                                 "actual", actual,
@@ -62,8 +62,8 @@ class PropCodecTest {
         ResolvedData expected = getResolvedData();
         Map<String, String> expectedProps = getResolvedDataProperties();
 
-        ResolvedData actual = PropCodec.fromProperties(expectedProps, ResolvedData.class);
-        Map<String, String> actualProps = PropCodec.toProperties(actual);
+        ResolvedData actual = PropCodec.toResolvedData(FlatProperties.from(expectedProps));
+        Map<String, String> actualProps = PropCodec.toProperties(actual).getProperties();
 
 //        assertThat(expectedProps.getClass())
 //                .isNotNull()
@@ -89,7 +89,7 @@ class PropCodecTest {
     @Test
     void testGitverConfigToProperties() {
         Map<String, String> expected = getGitverConfigProperties();
-        Map<String, String> actual = PropCodec.toProperties(getGitverConfig());
+        Map<String, String> actual = PropCodec.toProperties(getGitverConfig()).getProperties();
         assertThat(actual).isNotNull()
                 .as(() -> GSON.toJson(Map.of(
                         "actual", actual,
@@ -103,8 +103,8 @@ class PropCodecTest {
         GitverConfig expected = getGitverConfig();
         Map<String, String> expectedProps = getGitverConfigProperties();
 
-        GitverConfig actual = PropCodec.fromProperties(expectedProps, GitverConfig.class);
-        Map<String, String> actualProps = PropCodec.toProperties(actual);
+        GitverConfig actual = PropCodec.toGitverConfig(FlatProperties.from(expectedProps));
+        Map<String, String> actualProps = PropCodec.toProperties(actual).getProperties();
 
         assertThat(GSON.toJson(actualProps))
                 .isNotNull()
@@ -119,6 +119,7 @@ class PropCodecTest {
     void toXml_GitverConfig() throws Exception {
         Xpp3Dom expected = Xpp3DomBuilder.build(new StringReader("""
                 <configuration>
+                  <basePath>.</basePath>
                   <newVersion>0.1.2</newVersion>
                   <releaseBranches>release,stable</releaseBranches>
                   <tagNamePattern>v?([0-9]+\\.[0-9]+\\.[0-9]+)</tagNamePattern>
@@ -212,7 +213,7 @@ class PropCodecTest {
     }
 
     private static Map<String, String> flattenMap(Map<String, ?> src) {
-        return PropCodec.flattenMap(new TreeMap<>(src));
+        return PropCodec.toProperties(new TreeMap<String, Object>(src)).getProperties();
 //        return src.entrySet().stream()
 //                .collect(CollectorsEx.toTreeMap(Map.Entry::getKey, e -> e.getValue().toString()));
 //        return new TreeSet<>(src.keySet()).stream()

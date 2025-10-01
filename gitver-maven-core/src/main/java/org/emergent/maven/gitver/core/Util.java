@@ -279,7 +279,7 @@ public class Util {
     }
 
     public static GitverConfig newGitverConfig(Map<String, String> props) {
-        return PropCodec.fromProperties(props, GitverConfig.class);
+        return PropCodec.toGitverConfig(FlatProperties.from(props));
     }
 
     public static GitverConfig newGitverConfig(Path currentDir) {
@@ -288,15 +288,15 @@ public class Util {
     }
 
     public static ResolvedData newResolvedData(Map<String, String> props) {
-        return PropCodec.fromProperties(props, ResolvedData.class);
+        return PropCodec.toResolvedData(FlatProperties.from(props));
     }
 
     public static PatternStrategy newPatternStrategy(Map<String, String> props) {
-        return PropCodec.fromProperties(props, PatternStrategy.class);
+        return PropCodec.toPatternStrategy(FlatProperties.from(props));
     }
 
     public static OverrideStrategy newOverrideStrategy(Map<String, String> props) {
-        return PropCodec.fromProperties(props, OverrideStrategy.class);
+        return PropCodec.toOverrideStrategy(FlatProperties.from(props));
     }
 
     private static class MemoizingSupplier<T> implements Supplier<T>, Serializable {

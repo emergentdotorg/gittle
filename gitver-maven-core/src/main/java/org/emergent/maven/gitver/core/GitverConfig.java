@@ -1,12 +1,13 @@
 package org.emergent.maven.gitver.core;
 
 import lombok.AccessLevel;
-import lombok.NonNull;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.experimental.SuperBuilder;
+import org.eclipse.jgit.api.Git;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -20,10 +21,15 @@ import static org.emergent.maven.gitver.core.Constants.VERSION_PATTERN_DEF;
 
 @Value
 @NonFinal
+@NoArgsConstructor
+@AllArgsConstructor
 @lombok.experimental.FieldDefaults(level = AccessLevel.PROTECTED)
 @lombok.experimental.Accessors(fluent = false)
 @SuperBuilder(toBuilder = true)
-public class GitverConfig implements PropCodec.Codable {
+public class GitverConfig {
+
+    @lombok.Builder.Default
+    String basePath = ".";
 
     @lombok.Builder.Default
     String newVersion = "";
@@ -38,7 +44,7 @@ public class GitverConfig implements PropCodec.Codable {
     String versionPattern = VERSION_PATTERN_DEF;
 
     public Map<String, String> asMap() {
-        return PropCodec.toProperties(this);
+        return PropCodec.toProperties(this).getProperties();
     }
 
     public Set<String> getReleaseBranchesSet() {
@@ -46,18 +52,4 @@ public class GitverConfig implements PropCodec.Codable {
         return Arrays.stream(branchesString.split(","))
                 .map(String::trim).collect(Collectors.toCollection(TreeSet::new));
     }
-
-    @SuppressWarnings("unchecked")
-    public static <T> T acquireDefault(Class<?> type) {
-//        return gsonUtil.rebuild(Map.of(), src.getClass());
-        try {
-            Object builder = type.getDeclaredMethod("builder").invoke(null);
-            Class<?> builderClass = builder.getClass();
-            Method buildMethod = builderClass.getMethod("build");
-            return (T)buildMethod.invoke(builder);
-        } catch (ReflectiveOperationException e) {
-            throw new GitverException(e.getMessage(), e);
-        }
-    }
-
 }

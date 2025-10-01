@@ -1,19 +1,24 @@
 package org.emergent.maven.gitver.core.version;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
-import lombok.NonNull;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.experimental.SuperBuilder;
 import org.emergent.maven.gitver.core.GitverConfig;
+import org.emergent.maven.gitver.core.PropCodec;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Value
 @NonFinal
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor
+@AllArgsConstructor
 @lombok.experimental.FieldDefaults(level = AccessLevel.PROTECTED)
 @lombok.experimental.Accessors(fluent = false)
 public class ResolvedData extends GitverConfig {
@@ -43,5 +48,10 @@ public class ResolvedData extends GitverConfig {
                 .tagNamePattern(getTagNamePattern())
                 .versionPattern(getVersionPattern())
                 .build();
+    }
+
+    @Override
+    public Map<String, String> asMap() {
+        return PropCodec.toProperties(this).getProperties();
     }
 }

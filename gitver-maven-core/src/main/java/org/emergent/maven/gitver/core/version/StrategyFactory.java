@@ -8,8 +8,6 @@ public class StrategyFactory {
 
     public static VersionStrategy getVersionStrategy(File basePath, GitverConfig config) {
         return OverrideStrategy.getOverrideStrategy(config)
-                .orElseGet(() -> {
-                    return PatternStrategy.getPatternStrategy(config, basePath);
-                });
+                .orElseGet(() -> PatternStrategy.getPatternStrategy(config, basePath));
     }
 }

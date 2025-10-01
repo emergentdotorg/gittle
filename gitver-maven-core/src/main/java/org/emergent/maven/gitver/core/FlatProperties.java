@@ -25,8 +25,12 @@ public class FlatProperties {
         this(Collections.emptyMap());
     }
 
-    public FlatProperties(Map<String, String> props) {
+    private FlatProperties(Map<String, String> props) {
         this.properties = new LinkedHashMap<>(props);
+    }
+
+    public static FlatProperties from(Map<String, String> props) {
+        return new FlatProperties(props);
     }
 
     public static class GsonAdapter implements
@@ -49,14 +53,14 @@ public class FlatProperties {
         @Override
         public JsonElement serialize(FlatProperties src, Type type, JsonSerializationContext ctx) {
             JsonElement flatEl = gson.toJsonTree(src.properties, GsonUtil.STR_STR_MAP_TT.getType());
-            return GsonUtil.rebuild(flatEl);
+            return PropCodec.rebuild(flatEl);
         }
 
         @Override
         public FlatProperties deserialize(JsonElement json, Type type, JsonDeserializationContext ctx)
                 throws JsonParseException {
-            JsonElement flatEl = GsonUtil.flatten(json);
-            return new FlatProperties(gson.fromJson(flatEl, GsonUtil.STR_STR_MAP_TT.getType()));
+            JsonElement flatEl = PropCodec.flatten(json);
+            return from(gson.fromJson(flatEl, GsonUtil.STR_STR_MAP_TT.getType()));
         }
     }
 }

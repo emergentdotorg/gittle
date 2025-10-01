@@ -16,7 +16,6 @@ import java.util.logging.Level;
 import static org.apache.maven.shared.utils.logging.MessageUtils.buffer;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Log
 public class PropsMojoTest extends AbstractMojoTest {
 
     public static class TestLog extends SilentLog {
@@ -29,6 +28,12 @@ public class PropsMojoTest extends AbstractMojoTest {
         }
 
         @Override
+        public void warn(CharSequence content) {
+            super.warn(content);
+            messages.add(content.toString());
+        }
+
+        @Override
         public boolean isInfoEnabled() {
             return true;
         }
@@ -37,6 +42,12 @@ public class PropsMojoTest extends AbstractMojoTest {
         public void info(CharSequence content) {
             super.info(content);
             messages.add(content.toString());
+        }
+
+        @Override
+        public void info(String message) {
+            super.info(message);
+            messages.add(message);
         }
 
         public List<String> getMessages() {
@@ -54,6 +65,8 @@ public class PropsMojoTest extends AbstractMojoTest {
         propsMojo.setLog(testLog);
         assertThat(propsMojo).isNotNull();
         propsMojo.execute();
+        //String gav = "";
+        //String gitverVersion = "";
         MavenProject proj = propsMojo.getMavenProject();
         String gitverVersion = proj.getProperties().getProperty("gittle.resolved.version");
         Coordinates gav = Coordinates.builder()
@@ -61,19 +74,19 @@ public class PropsMojoTest extends AbstractMojoTest {
           .setArtifactId(proj.getArtifactId())
           .setVersion(proj.getVersion())
           .build();
-        log.log(Level.WARNING, buffer()
-                .a("--- ")
-                        .mojo(gav)
-                        .a(" ")
-                        .strong("[core-extension]")
-                        .a(" ---")
-                .a(Util.join(proj.getProperties()))
-                .a("--- ")
-                        .strong("properties" )
-                .a(" ---")
-                .build());
+        //testLog.warn(buffer()
+        //        .a("--- ")
+        //                .mojo(gav)
+        //                .a(" ")
+        //                .strong("[core-extension]")
+        //                .a(" ---")
+        //        .a(Util.join(proj.getProperties()))
+        //        .a("--- ")
+        //                .strong("properties" )
+        //        .a(" ---")
+        //        .build());
         assertThat(testLog.getMessages()).isNotEmpty()
-          .allMatch(s -> s.startsWith("Adding properties to project " + gav))
-          .allMatch(s -> s.contains("gittle.resolved.version=" + gitverVersion + "\n"));
+                .allMatch(s -> s.startsWith("Adding properties to project " + gav))
+                .allMatch(s -> s.contains("gittle.resolved.version=" + gitverVersion + "\n"));
     }
 }
