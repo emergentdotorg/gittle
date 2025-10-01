@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.emergent.maven.plugins</groupId>
-  <artifactId>gitver-maven-tools</artifactId>
+  <artifactId>gittle-parent</artifactId>
   <version>Z-LATEST-SNAPSHOT</version>
   <packaging>pom</packaging>
 
@@ -41,15 +41,15 @@
   </modules>
 
   <scm>
-    <connection>scm:git:https://github.com/emergentdotorg/gitver-maven-tools</connection>
-    <developerConnection>scm:ssh:git@github.com:emergentdotorg/gitver-maven-tools</developerConnection>
+    <connection>scm:git:https://github.com/emergentdotorg/gittle</connection>
+    <developerConnection>scm:ssh:git@github.com:emergentdotorg/gittle</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/emergentdotorg/gitver-maven-tools</url>
+    <url>https://github.com/emergentdotorg/gittle</url>
   </scm>
 
   <issueManagement>
     <system>github.com</system>
-    <url>https://github.com/emergentdotorg/gitver-maven-tools/issues</url>
+    <url>https://github.com/emergentdotorg/gittle/issues</url>
   </issueManagement>
 
   <properties>
