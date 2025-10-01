@@ -35,9 +35,9 @@
   </developers>
 
   <modules>
-    <module>gitver-maven-core</module>
-    <module>gitver-maven-extension</module>
-    <module>gitver-maven-plugin</module>
+    <module>gittle-core</module>
+    <module>gittle-maven-extension</module>
+    <module>gittle-maven-plugin</module>
   </modules>
 
   <scm>

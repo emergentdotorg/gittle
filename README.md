@@ -16,7 +16,7 @@ It then computes the version number upto current commit.
 The extension supports generating Semantic Versions `x.y.z` format. The format pattern is configurable to use
 values such as Git hash, branch name etc.
 
-See https://github.com/emergentdotorg/gitver-maven-extension-examples[manikmagar/gitver-maven-extension-examples]
+See https://github.com/emergentdotorg/gittle-maven-extension-examples[manikmagar/gittle-maven-extension-examples]
  for examples of using this extension.
 
 ## Acknowledgements
@@ -64,14 +64,14 @@ NOTE: The artifact id is *gitver-maven-_extension_*.
                       http://maven.apache.org/xsd/core-extensions-1.0.0.xsd">
     <extension>
         <groupId>org.emergent.maven.plugins</groupId>
-        <artifactId>gitver-maven-extension</artifactId>
+        <artifactId>gittle-maven-extension</artifactId>
         <version>${latest-version-here}</version>
     </extension>
 </extensions>
 ```
 
 See an example test project
-at [project-with-extension](gitver-maven-extension/src/test/resources/project-with-extension/).
+at [project-with-extension](gittle-maven-extension/src/test/resources/project-with-extension/).
 
 With just that configuration, next time your project runs any maven goals, you should see version from this module
 is used by Maven reactor. Try running `mvn package` on your project.
@@ -80,7 +80,7 @@ is used by Maven reactor. Try running `mvn package` on your project.
 It is possible that your project is already released with a certain version.
 In that case, you can configure the initial version to start counting versions from.
 
-You can add following properties to `.mvn/gitver-maven-extension.properties` file -
+You can add following properties to `.mvn/gittle-maven-extension.properties` file -
 
 .Example configuration for initial version for extension mode
 
@@ -135,7 +135,7 @@ git commit --allow-empty -m "chore: [<keyword>] release"
 
 The default version pattern used is `major.minor.patch(-commit)` where `(-commit)` is skipped if commit count is 0.
 
-This pattern can be canged by setting a property in `.mvn/gitver-maven-extension.properties`.
+This pattern can be canged by setting a property in `.mvn/gittle-maven-extension.properties`.
 
 The following example will generate versions as `major.minor.patch+shorthash`, eg. `1.2.3+a5a29f8`.
 
@@ -161,7 +161,7 @@ Available Tokens for Version Pattern
 
 The default [version keywords](#version-keywords) `[major]`, `[minor]`, and `[patch]` can be customized by overriding
 the configuration. To use different keywords, you can add following properties to the
-`.mvn/gitver-maven-extension.properties` file.
+`.mvn/gittle-maven-extension.properties` file.
 
 Example configuration for initial version for extension mode
 
@@ -177,7 +177,7 @@ You can also use regex to match version keywords. This is useful when you want t
 only be matched when it is the first word in the commit message. So if for example you have a merge commit message
 which contains the messages of the merged commits, you can use a regex to match only the first commit message.
 
-To use regex for version keywords, you can add following properties to `.mvn/gitver-maven-extension.properties` file -
+To use regex for version keywords, you can add following properties to `.mvn/gittle-maven-extension.properties` file -
 
 Example configuration for regex version keywords
 
@@ -229,7 +229,7 @@ Git Tag Goal with default configuration parameters
 ```xml
 <plugin>
   <groupId>org.emergent.maven</groupId>
-  <artifactId>gitver-maven-plugin</artifactId>
+  <artifactId>gittle-maven-plugin</artifactId>
   <executions>
     <execution>
       <id>tag</id>
