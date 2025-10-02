@@ -50,7 +50,7 @@ import static java.util.regex.Pattern.quote;
 @lombok.experimental.FieldDefaults(level = AccessLevel.PROTECTED)
 @lombok.experimental.Accessors(fluent = false)
 public class PatternStrategy extends ResolvedData implements VersionStrategy {
-    public static final String VERSION_PATTERN_DEF = "%t(-%B)(-%c)(-%S)+%h(.%d)";
+    public static final String VERSION_PATTERN_DEF = "%t(-%B)(-%c)(-%S)(+%h)(.%d)";
 
     private static final String STANDARD_PREFIX = "gittle.resolved.";
     private static final String VERSION_STRING = "version";
@@ -146,10 +146,12 @@ public class PatternStrategy extends ResolvedData implements VersionStrategy {
     private static Map<String, String> getReplacementMap(ResolvedData resolved) {
         Set<String> releaseSet = resolved.getReleaseBranchesSet();
         String branch = Optional.ofNullable(resolved.getBranch()).orElse(releaseSet.stream().findFirst().orElse("unknown"));
-        String devBranch = releaseSet.contains(branch) ? "" : branch;
+        boolean isReleaseBranch = releaseSet.contains(branch);
+        String devBranch = isReleaseBranch ? "" : branch;
         int commits = resolved.getCommits();
         String hash = resolved.getHash();
         boolean dirty = resolved.isDirty();
+        boolean omitHash = isReleaseBranch && commits == 0 && !dirty;
         return Arrays.stream(PatternToken.values())
                 .collect(Collectors.toMap(
                         PatternToken::id,
@@ -160,8 +162,8 @@ public class PatternStrategy extends ResolvedData implements VersionStrategy {
                                     case SNAPSHOT -> commits > 0 ? "SNAPSHOT" : "";
                                     case BRANCH -> branch;
                                     case DEV_BRANCH -> devBranch;
-                                    case HASH_SHORT -> resolved.getHashShort();
-                                    case HASH -> hash;
+                                    case HASH_SHORT -> omitHash ? "" : resolved.getHashShort();
+                                    case HASH -> omitHash ? "" : hash;
                                     case DIRTY -> dirty ? "dirty" : "";
                                 }
                         )

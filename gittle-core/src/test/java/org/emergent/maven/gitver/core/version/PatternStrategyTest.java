@@ -18,7 +18,7 @@ public class PatternStrategyTest {
     public void testReleaseSansCommits() {
         PatternStrategy strategy = getPatternStrategy();
         assertThat(strategy.toVersionString()).isNotNull()
-                .isEqualTo("1.2.3+c9f54782");
+                .isEqualTo("1.2.3");
     }
 
     @Test
@@ -141,7 +141,7 @@ public class PatternStrategyTest {
                 .newVersion("0.1.2")
                 .releaseBranches("release,stable")
                 .tagNamePattern("v?([0-9]+\\.[0-9]+\\.[0-9]+)")
-                .versionPattern("%t(-%B)(-%c)(-%S)+%h(.%d)")
+                .versionPattern("%t(-%B)(-%c)(-%S)(+%h)(.%d)")
                 .build();
     }
 }

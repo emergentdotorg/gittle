@@ -123,7 +123,7 @@ class PropCodecTest {
                   <newVersion>0.1.2</newVersion>
                   <releaseBranches>release,stable</releaseBranches>
                   <tagNamePattern>v?([0-9]+\\.[0-9]+\\.[0-9]+)</tagNamePattern>
-                  <versionPattern>%t(-%B)(-%c)(-%S)+%h(.%d)</versionPattern>
+                  <versionPattern>%t(-%B)(-%c)(-%S)(+%h)(.%d)</versionPattern>
                 </configuration>
                 """));
         assertThat(PropCodec.toXml(getGitverConfig())).isNotNull().isEqualTo(expected);
@@ -208,7 +208,7 @@ class PropCodecTest {
                 .newVersion("0.1.2")
                 .releaseBranches("release,stable")
                 .tagNamePattern("v?([0-9]+\\.[0-9]+\\.[0-9]+)")
-                .versionPattern("%t(-%B)(-%c)(-%S)+%h(.%d)")
+                .versionPattern("%t(-%B)(-%c)(-%S)(+%h)(.%d)")
                 .build();
     }
 
