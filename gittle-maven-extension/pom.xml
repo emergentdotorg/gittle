@@ -220,7 +220,7 @@
                   <resources>
                     <resource>
                       <filtering>false</filtering>
-                      <directory>${project.build.directory}/local-invoker-repo</directory>
+                      <directory>${project.build.directory}/local-invoker-home/repo</directory>
                     </resource>
                   </resources>
                 </configuration>
