@@ -168,22 +168,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-invoker-plugin</artifactId>
-            <configuration>
-              <pomIncludes>
-                <pomInclude>*/pom.xml</pomInclude>
-              </pomIncludes>
-              <scope>test</scope>
-              <cloneClean>true</cloneClean>
-              <showErrors>true</showErrors>
-              <streamLogs>true</streamLogs>
-              <parallelThreads>1C</parallelThreads>
-              <projectsDirectory>src/it</projectsDirectory>
-              <preBuildHookScript>setup</preBuildHookScript>
-              <postBuildHookScript>verify</postBuildHookScript>
-              <settingsFile>src/it/settings.xml</settingsFile>
-              <cloneProjectsTo>${project.build.directory}/its</cloneProjectsTo>
-              <localRepositoryPath>${project.build.directory}/local-invoker-repo</localRepositoryPath>
-            </configuration>
             <executions>
               <execution>
                 <id>integration-test</id>
@@ -192,6 +176,32 @@
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
+                <configuration>
+                  <goals>
+                    <goal>-ntp</goal>
+                    <goal>verify</goal>
+                  </goals>
+                  <pomIncludes>
+                    <pomInclude>*/pom.xml</pomInclude>
+                  </pomIncludes>
+                  <scope>test</scope>
+                  <cloneClean>true</cloneClean>
+                  <showErrors>true</showErrors>
+                  <streamLogs>true</streamLogs>
+                  <parallelThreads>1C</parallelThreads>
+                  <timeoutInSeconds>60</timeoutInSeconds>
+                  <preBuildHookScript>setup</preBuildHookScript>
+                  <postBuildHookScript>verify</postBuildHookScript>
+                  <settingsFile>src/it/settings.xml</settingsFile>
+                  <cloneProjectsTo>${project.build.directory}/its</cloneProjectsTo>
+                  <localRepositoryPath>${project.build.directory}/local-invoker-home/repo</localRepositoryPath>
+                  <environmentVariables>
+                    <HOME>${project.build.directory}/local-invoker-home</HOME>
+                  </environmentVariables>
+                  <properties>
+                    <user.home>${project.build.directory}/local-invoker-home</user.home>
+                  </properties>
+                </configuration>
               </execution>
             </executions>
           </plugin>
