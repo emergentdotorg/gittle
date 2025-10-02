@@ -16,4 +16,4 @@ String version = tools.getGitverPomVersion(gitverPom)
 assert version == expectedVersion
 String gitverPomBody = tools.readFile(gitverPom)
 assert gitverPomBody.contains(s("<revision>$version</revision>"))
-assert tools.verifyTextInLog("Building gitver-extension-test $version")
+assert tools.verifyTextInLog("Building gittle-extension-test $version")

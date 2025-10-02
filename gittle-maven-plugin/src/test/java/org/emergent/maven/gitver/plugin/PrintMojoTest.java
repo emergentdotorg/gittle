@@ -49,7 +49,7 @@ public class PrintMojoTest extends AbstractMojoTest {
         printVersionMojo.execute();
         Coordinates gav = Coordinates.builder()
           .setGroupId("org.emergent.maven")
-          .setArtifactId("gitver-plugin-test")
+          .setArtifactId("gittle-plugin-test")
           .setVersion(printVersionMojo.getMavenProject().getVersion())
           .build();
         assertThat(testLog.getMessages()).isNotEmpty()

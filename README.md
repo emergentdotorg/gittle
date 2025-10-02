@@ -1,4 +1,4 @@
-# gitver-maven-tools
+# gittle
 
 Tools for generating and manipulating maven project versions from Git logs.
 
@@ -52,7 +52,7 @@ To use as a maven build extension,
 Create (or modify) `extensions.xml` file in `${project.baseDir}/.mvn/`
 to have the following entry -
 
-NOTE: The artifact id is *gitver-maven-_extension_*.
+NOTE: The artifact id is *gittle-maven-_extension_*.
 
 .mvn/extensions.xml
 
@@ -103,9 +103,9 @@ Now that you have extension configured, you can continue with your regular devel
 When it is time to increment version, you may use one of the following three goals
 to add an *_empty commit_* with an appropriate [Version Keyword](#version-keywords) -
 
-- `gitver:commit-major`: Adds a git commit with a commit message containing *Major* version keyword
-- `gitver:commit-minor`: Adds a git commit with a commit message containing *Minor* version keyword
-- `gitver:commit-patch`: Adds a git commit with a commit message containing *Patch* version keyword
+- `gittle:commit-major`: Adds a git commit with a commit message containing *Major* version keyword
+- `gittle:commit-minor`: Adds a git commit with a commit message containing *Minor* version keyword
+- `gittle:commit-patch`: Adds a git commit with a commit message containing *Patch* version keyword
 
 CAUTION: Use `--non-recursive` flag when running commit goal in a multi-module maven project to avoid adding one commit
 per included module.
@@ -113,13 +113,13 @@ per included module.
 The default message pattern is `chore(release): [%k]` where `[%k]` is the keyword token. To change the default message
 pattern, you could pass `-gittle.commitMessage=<message>` argument when running the goal.
 
-NOTE: When this extension is configured, it automatically makes `gitver` plugin goals available
+NOTE: When this extension is configured, it automatically makes `gittle` plugin goals available
 with *NO* any additional configuration.
 
 .Example commit patch with a custom message
 
 ```shell
-mvn gitver:commit-patch "-Dgittle.commitMessage=chore: [%k] release" --non-recursive
+mvn gittle:commit-patch "-Dgittle.commitMessage=chore: [%k] release" --non-recursive
 ```
 
 Of course, you can also add commits manually with appropriate version keywords.
@@ -195,34 +195,34 @@ This extension adds all version properties to *Maven properties* during build cy
 Example of Injected maven properties (demo values)
 
 ```properties
-gitver.commitNumber=0
-gitver.major=0
-gitver.minor=0
-gitver.patch=1
-gitver.version=0.0.1
-gitver.branch=main
-gitver.hash=67550ad6a64fe4e09bf9e36891c09b2f7bdc52f9
-gitver.hash.short=67550ad
+gittle.resolved.commitNumber=0
+gittle.resolved.major=0
+gittle.resolved.minor=0
+gittle.resolved.patch=1
+gittle.resolved.version=0.0.1
+gittle.resolved.branch=main
+gittle.resolved.hash=67550ad6a64fe4e09bf9e36891c09b2f7bdc52f9
+gittle.resolved.hash.short=67550ad
 ```
 
 You may use these properties in maven pom file, for example as `${git.branch}` to access git branch name.
 
 ## Git Tag Creation
 
-You can use `gitver:tag` goal to create a git tag for current version in local git repository.
+You can use `gittle:tag` goal to create a git tag for current version in local git repository.
 
 NOTE: This does not push tag to remote repository.
 
 Tag goal with default parameter values
 
 ```shell
-mvn gitver:tag \
+mvn gittle:tag \
   "-Dtag.failWhenTagExist=true" \
   "-Dtag.messagePattern=Release version %v" \
   "-Dtag.namePattern=v%v"
 ```
 
-For Tag goal, it is possible to configure pom.xml to contain the gitver plugin with required execution configuration.
+For Tag goal, it is possible to configure pom.xml to contain the gittle plugin with required execution configuration.
 
 Git Tag Goal with default configuration parameters
 

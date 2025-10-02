@@ -68,7 +68,7 @@
         <filtering>true</filtering>
         <directory>src/main/resources</directory>
         <includes>
-          <include>**/gitver.properties</include>
+          <include>**/gittle.properties</include>
         </includes>
       </resource>
     </resources>

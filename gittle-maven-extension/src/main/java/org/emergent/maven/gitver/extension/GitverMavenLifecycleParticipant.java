@@ -24,7 +24,7 @@ import static org.emergent.maven.gitver.extension.ExtensionUtil.REVISION;
 /**
  * Handles creating the updated pom file, and assigning it to the project model.
  */
-@Named("gitver-lifecycle-participant")
+@Named("gittle-lifecycle-participant")
 @Singleton
 public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 
@@ -50,16 +50,16 @@ public class GitverMavenLifecycleParticipant extends AbstractMavenLifecycleParti
         }
         Model originalModel = project.getModel();
         Path originalPomFile = originalModel.getPomFile().toPath().toAbsolutePath();
-        Path gitverPomFile = originalPomFile.resolveSibling(GITVER_POM_XML);
+        Path gittlePomFile = originalPomFile.resolveSibling(GITVER_POM_XML);
         try {
             Model gitverModel = ExtensionUtil.readModelFromPom(originalPomFile);
             copyVersions(originalModel, gitverModel);
             // Now write the updated model out to a file so we can point the project to it.
-            ExtensionUtil.writeModelToPom(gitverModel, gitverPomFile);
-            project.setPomFile(gitverPomFile.toFile());
-            LOGGER.debug("Updated project with newly generated gitver pom {}", gitverPomFile);
+            ExtensionUtil.writeModelToPom(gitverModel, gittlePomFile);
+            project.setPomFile(gittlePomFile.toFile());
+            LOGGER.debug("Updated project with newly generated gittle pom {}", gittlePomFile);
         } catch (Exception e) {
-            LOGGER.error("Failed creating new gitver pom at {}", gitverPomFile, e);
+            LOGGER.error("Failed creating new gittle pom at {}", gittlePomFile, e);
         }
     }
 

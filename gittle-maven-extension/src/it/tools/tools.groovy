@@ -122,7 +122,7 @@ static File getGitverPomFile(File file) {
   if ('pom.xml' == path.fileName.toString()) {
     path = path.getParent();
   }
-  path = path.resolve('.gitver.pom.xml')
+  path = path.resolve('.gittle.pom.xml')
   return path.toFile()
 }
 

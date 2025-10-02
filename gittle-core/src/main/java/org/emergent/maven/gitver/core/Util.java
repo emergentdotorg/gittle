@@ -33,11 +33,11 @@ public class Util {
     public static final String DISABLED_ENV_VAR = "GV_EXTENSION_DISABLED";
     public static final String DISABLED_SYSPROP = "gittle.extension.disabled";
 
-    public static final String GITVER_POM_XML = ".gitver.pom.xml";
+    public static final String GITVER_POM_XML = ".gittle.pom.xml";
 
     public static final String GITVER_EXTENSION_PROPERTIES = "gittle-maven-extension.properties";
 
-    public static final String GITVER_PROPERTIES = "gitver.properties";
+    public static final String GITTLE_PROPERTIES = "gittle.properties";
 
     public static final Pattern UBER_REGEX = Pattern.compile("^" + "(?<prefix>refs/tags/)?"
             + "(?<version>"
@@ -161,7 +161,7 @@ public class Util {
     }
 
     public static Coordinates getCoreCoordinates() {
-        try (InputStream is = Util.class.getResourceAsStream(GITVER_PROPERTIES)) {
+        try (InputStream is = Util.class.getResourceAsStream(GITTLE_PROPERTIES)) {
             Properties props = new Properties();
             props.load(is);
             return Coordinates.builder()
@@ -177,14 +177,14 @@ public class Util {
     public static Coordinates getExtensionCoordinates() {
         Coordinates core = getCoreCoordinates();
         return core.toBuilder()
-                .setArtifactId(core.getArtifactId().replace("-core", "-extension"))
+                .setArtifactId(core.getArtifactId().replace("-core", "-maven-extension"))
                 .build();
     }
 
     public static Coordinates getPluginCoordinates() {
         Coordinates core = getCoreCoordinates();
         return core.toBuilder()
-                .setArtifactId(core.getArtifactId().replace("-core", "-plugin"))
+                .setArtifactId(core.getArtifactId().replace("-core", "-maven-plugin"))
                 .build();
     }
 
