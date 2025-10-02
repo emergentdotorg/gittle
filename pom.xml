@@ -2,80 +2,332 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>org.emergent.maven.parent</groupId>
+    <artifactId>emergent-parent</artifactId>
+    <version>0.5.12</version>
+  </parent>
+
   <groupId>org.emergent.maven.plugins</groupId>
-  <artifactId>gitver-maven-tools</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <artifactId>gittle-parent</artifactId>
+  <version>${revision}</version>
   <packaging>pom</packaging>
 
-  <name>Git Semantic Versioning Maven Tools</name>
-  <description>Tools for generating and manipulating maven project versions from Git logs</description>
-  <url>https://github.com/emergentdotorg/gitver-maven-tools</url>
+  <name>Gittle</name>
+  <description>Tools for generating and manipulating maven project versions from Git</description>
+  <url>https://github.com/emergentdotorg/gittle</url>
   <inceptionYear>2025</inceptionYear>
-
-  <licenses>
-    <license>
-      <name>MIT</name>
-      <url>https://spdx.org/licenses/MIT.html</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
 
   <organization>
     <name>Emergent.org</name>
     <url>https://github.com/emergentdotorg</url>
   </organization>
 
-  <developers>
-    <developer>
-      <id>pwoodworth</id>
-      <name>Patrick Woodworth</name>
-      <email>patrick@woodworth.org</email>
-    </developer>
-  </developers>
-
   <modules>
-    <module>gitver-maven-core</module>
-    <module>gitver-maven-extension</module>
-    <module>gitver-maven-plugin</module>
+    <module>gittle-core</module>
+    <module>gittle-maven-extension</module>
+    <module>gittle-maven-plugin</module>
   </modules>
 
   <scm>
-    <connection>scm:git:https://github.com/emergentdotorg/gitver-maven-tools.git</connection>
-    <developerConnection>scm:ssh:git@github.com:emergentdotorg/gitver-maven-tools.git</developerConnection>
-    <url>https://github.com/emergentdotorg/gitver-maven-tools/</url>
+    <connection>scm:git:https://github.com/emergentdotorg/gittle</connection>
+    <developerConnection>scm:ssh:git@github.com:emergentdotorg/gittle</developerConnection>
     <tag>HEAD</tag>
+    <url>https://github.com/emergentdotorg/gittle</url>
   </scm>
 
   <issueManagement>
     <system>github.com</system>
-    <url>https://github.com/emergentdotorg/gitver-maven-tools/issues</url>
+    <url>https://github.com/emergentdotorg/gittle/issues</url>
   </issueManagement>
 
   <properties>
+    <revision>Z-LATEST-SNAPSHOT</revision>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <surefire.version>3.5.3</surefire.version>
+    <version.central-publishing-maven-plugin>0.8.0</version.central-publishing-maven-plugin>
+    <version.exec-maven-plugin>3.5.1</version.exec-maven-plugin>
+    <version.flatten-maven-plugin>1.7.3</version.flatten-maven-plugin>
     <version.lombok>1.18.38</version.lombok>
     <version.maven>3.9.9</version.maven>
+    <version.maven-compiler-plugin>3.14.0</version.maven-compiler-plugin>
+    <version.maven-enforcer-plugin>3.5.0</version.maven-enforcer-plugin>
+    <version.maven-gpg-plugin>3.2.7</version.maven-gpg-plugin>
+    <version.maven-invoker-plugin>3.9.0</version.maven-invoker-plugin>
+    <version.maven-jar-plugin>3.4.2</version.maven-jar-plugin>
+    <version.maven-javadoc-plugin>3.11.2</version.maven-javadoc-plugin>
+    <version.maven-resources-plugin>3.3.1</version.maven-resources-plugin>
+    <version.maven-shade-plugin>3.6.0</version.maven-shade-plugin>
+    <version.maven-source-plugin>3.3.1</version.maven-source-plugin>
+    <version.maven-surefire>${surefire.version}</version.maven-surefire>
     <version.plugintools>3.15.1</version.plugintools>
+    <version.sortpom-maven-plugin>4.0.0</version.sortpom-maven-plugin>
   </properties>
+
+  <build>
+    <resources>
+      <resource>
+        <filtering>true</filtering>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>**/gittle.properties</include>
+        </includes>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <filtering>true</filtering>
+        <directory>src/test/resources</directory>
+      </testResource>
+    </testResources>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.github.ekryd.sortpom</groupId>
+          <artifactId>sortpom-maven-plugin</artifactId>
+          <version>${version.sortpom-maven-plugin}</version>
+          <configuration>
+            <createBackupFile>false</createBackupFile>
+            <expandEmptyElements>false</expandEmptyElements>
+            <lineSeparator>\n</lineSeparator>
+            <sortDependencies>scope,groupId,artifactId</sortDependencies>
+            <sortDependencyExclusions>groupId,artifactId</sortDependencyExclusions>
+            <sortDependencyManagement>groupId,artifactId</sortDependencyManagement>
+            <sortExecutions>true</sortExecutions>
+            <sortModules>true</sortModules>
+            <sortOrderFile>emergent-sortpom-order.xml</sortOrderFile>
+            <sortPlugins>groupId,artifactId</sortPlugins>
+            <sortProperties>true</sortProperties>
+            <spaceBeforeCloseEmptyElement>false</spaceBeforeCloseEmptyElement>
+          </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.emergent.maven.parent</groupId>
+              <artifactId>emergent-parent</artifactId>
+              <version>0.5.12</version>
+              <classifier>resources</classifier>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${version.maven-compiler-plugin}</version>
+          <configuration>
+            <release>17</release>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>${version.maven-enforcer-plugin}</version>
+          <executions>
+            <execution>
+              <id>enforce-requireUpperBoundDeps</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${version.maven-surefire}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>${version.maven-gpg-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-invoker-plugin</artifactId>
+          <version>${version.maven-invoker-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${version.maven-jar-plugin}</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              </manifest>
+            </archive>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${version.maven-javadoc-plugin}</version>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>${version.maven-resources-plugin}</version>
+          <configuration>
+            <delimiters>
+              <delimiter>@</delimiter>
+            </delimiters>
+            <useDefaultDelimiters>false</useDefaultDelimiters>
+            <propertiesEncoding>ISO-8859-1</propertiesEncoding>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>${version.maven-shade-plugin}</version>
+        </plugin>
+        <!--
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>${version.maven-source-plugin}</version>
+        </plugin>
+        -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${version.maven-surefire}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>${version.exec-maven-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>flatten-maven-plugin</artifactId>
+          <version>${version.flatten-maven-plugin}</version>
+          <executions>
+            <execution>
+              <id>flatten-clean</id>
+              <goals>
+                <goal>clean</goal>
+              </goals>
+              <phase>clean</phase>
+            </execution>
+            <execution>
+              <id>flatten-flatten</id>
+              <goals>
+                <goal>flatten</goal>
+              </goals>
+              <phase>process-resources</phase>
+              <configuration>
+                <flattenMode>resolveCiFriendliesOnly</flattenMode>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>${version.versions-maven-plugin}</version>
+          <configuration>
+            <generateBackupPoms>false</generateBackupPoms>
+            <processAllModules>true</processAllModules>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>${version.central-publishing-maven-plugin}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>${version.maven-source-plugin}</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>exec</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>java</executable>
+              <classpathScope>provided</classpathScope>
+              <arguments>
+                <argument>-cp</argument>
+                <classpath/>
+                <argument>org.apache.maven.artifact.versioning.ComparableVersion</argument>
+              </arguments>
+              <environmentVariables>
+                <LANG>en_US</LANG>
+              </environmentVariables>
+            </configuration>
+          </execution>
+          <execution>
+            <id>java</id>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>org.apache.maven.artifact.versioning.ComparableVersion</mainClass>
+              <classpathScope>provided</classpathScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <id>flatten-flatten</id>
+            <configuration>
+              <pomElements>
+                <parent>flatten</parent>
+              </pomElements>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.assertj</groupId>
-        <artifactId>assertj-bom</artifactId>
-        <version>3.27.3</version>
-        <type>pom</type>
-        <scope>import</scope>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.13.2</version>
       </dependency>
       <dependency>
-        <groupId>org.junit</groupId>
-        <artifactId>junit-bom</artifactId>
-        <version>5.13.3</version>
-        <type>pom</type>
-        <scope>import</scope>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>33.4.8-jre</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.inject</groupId>
+        <artifactId>guice</artifactId>
+        <version>5.1.0</version>
       </dependency>
       <dependency>
         <groupId>commons-io</groupId>
@@ -83,14 +335,19 @@
         <version>2.5</version>
       </dependency>
       <dependency>
+        <groupId>javax.inject</groupId>
+        <artifactId>javax.inject</artifactId>
+        <version>1</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>3.18.0</version>
       </dependency>
       <dependency>
-        <groupId>javax.inject</groupId>
-        <artifactId>javax.inject</artifactId>
-        <version>1</version>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-artifact</artifactId>
+        <version>${version.maven}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
@@ -143,6 +400,13 @@
         <version>1.8.0</version>
       </dependency>
       <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-bom</artifactId>
+        <version>3.27.3</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
         <groupId>org.codehaus.plexus</groupId>
         <artifactId>plexus-utils</artifactId>
         <version>3.2.1</version>
@@ -161,6 +425,13 @@
         <groupId>org.eclipse.sisu</groupId>
         <artifactId>org.eclipse.sisu.plexus</artifactId>
         <version>0.3.4</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>5.13.3</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.projectlombok</groupId>
@@ -217,153 +488,7 @@
     </dependency>
   </dependencies>
 
-  <build>
-    <resources>
-      <resource>
-        <filtering>true</filtering>
-        <directory>src/main/resources</directory>
-        <includes>
-          <include>**/gitver.properties</include>
-        </includes>
-      </resource>
-    </resources>
-    <testResources>
-      <testResource>
-        <filtering>true</filtering>
-        <directory>src/test/resources</directory>
-      </testResource>
-    </testResources>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.14.0</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.8.1</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <version>3.5.3</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>3.2.7</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-invoker-plugin</artifactId>
-          <version>3.9.0</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.11.2</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.1</version>
-          <configuration>
-            <delimiters>
-              <delimiter>@</delimiter>
-            </delimiters>
-            <useDefaultDelimiters>false</useDefaultDelimiters>
-            <propertiesEncoding>ISO-8859-1</propertiesEncoding>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-shade-plugin</artifactId>
-          <version>3.6.0</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>3.3.1</version>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>flatten-maven-plugin</artifactId>
-          <version>1.7.2</version>
-        </plugin>
-        <plugin>
-          <groupId>org.sonatype.central</groupId>
-          <artifactId>central-publishing-maven-plugin</artifactId>
-          <version>0.8.0</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-
   <profiles>
-
-    <profile>
-      <id>run-its</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>integration-test</goal>
-                  <goal>verify</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <systemPropertyVariables>
-                <maven.repo.local>${project.build.directory}/local-repo</maven.repo.local>
-              </systemPropertyVariables>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-invoker-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>integration-test</id>
-                <goals>
-                  <goal>install</goal>
-                  <goal>integration-test</goal>
-                  <goal>verify</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <debug>false</debug>
-              <pomIncludes>
-                <pomInclude>*/pom.xml</pomInclude>
-              </pomIncludes>
-              <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
-              <scope>test</scope>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
     <profile>
       <id>deploy</id>
       <activation>
@@ -446,44 +571,39 @@
     </profile>
 
     <profile>
-      <id>maven-compiler-release</id>
-      <activation>
-        <jdk>[9,)</jdk>
-      </activation>
-      <properties>
-        <maven.compiler.release>${maven.compiler.target}</maven.compiler.release>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>flatten</id>
+      <id>groovy</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.groovy</groupId>
+          <artifactId>groovy-all</artifactId>
+          <version>5.0.0</version>
+          <type>pom</type>
+        </dependency>
+      </dependencies>
       <build>
         <plugins>
           <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>flatten-maven-plugin</artifactId>
+            <groupId>org.codehaus.gmavenplus</groupId>
+            <artifactId>gmavenplus-plugin</artifactId>
+            <version>1.13.1</version>
+            <configuration>
+              <scripts>
+                <script>src/it/tools/tools.groovy</script>
+              </scripts>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.groovy</groupId>
+                <artifactId>groovy</artifactId>
+                <version>5.0.0</version>
+                <scope>runtime</scope>
+              </dependency>
+            </dependencies>
             <executions>
               <execution>
-                <id>flatten.clean</id>
-                <phase>clean</phase>
                 <goals>
-                  <goal>clean</goal>
+                  <goal>execute</goal>
                 </goals>
-              </execution>
-              <execution>
-                <id>flatten</id>
-                <inherited>false</inherited>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>flatten</goal>
-                </goals>
-                <configuration>
-                  <flattenMode>resolveCiFriendliesOnly</flattenMode>
-                  <flattenDependencyMode>inherited</flattenDependencyMode>
-                  <pomElements>
-                    <parent>flatten</parent>
-                  </pomElements>
-                </configuration>
               </execution>
             </executions>
           </plugin>

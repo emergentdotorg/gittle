@@ -1,4 +1,4 @@
-# gitver-maven-tools
+# gittle
 
 Tools for generating and manipulating maven project versions from Git logs.
 
@@ -16,12 +16,13 @@ It then computes the version number upto current commit.
 The extension supports generating Semantic Versions `x.y.z` format. The format pattern is configurable to use
 values such as Git hash, branch name etc.
 
-See https://github.com/emergentdotorg/gitver-maven-extension-examples[manikmagar/gitver-maven-extension-examples]
+See https://github.com/emergentdotorg/gittle-maven-extension-examples[manikmagar/gittle-maven-extension-examples]
  for examples of using this extension.
 
 ## Acknowledgements
 
 This project was inspired by and borrows heavily from the following:
+
 * [git-versioner-maven-extension](https://github.com/manikmagar/git-versioner-maven-extension).
 * [maven-git-versioning-extension](https://github.com/qoomon/maven-git-versioning-extension)
 
@@ -51,7 +52,7 @@ To use as a maven build extension,
 Create (or modify) `extensions.xml` file in `${project.baseDir}/.mvn/`
 to have the following entry -
 
-NOTE: The artifact id is *gitver-maven-_extension_*.
+NOTE: The artifact id is *gittle-maven-_extension_*.
 
 .mvn/extensions.xml
 
@@ -63,14 +64,14 @@ NOTE: The artifact id is *gitver-maven-_extension_*.
                       http://maven.apache.org/xsd/core-extensions-1.0.0.xsd">
     <extension>
         <groupId>org.emergent.maven.plugins</groupId>
-        <artifactId>gitver-maven-extension</artifactId>
+        <artifactId>gittle-maven-extension</artifactId>
         <version>${latest-version-here}</version>
     </extension>
 </extensions>
 ```
 
 See an example test project
-at [project-with-extension](gitver-maven-extension/src/test/resources/project-with-extension/).
+at [project-with-extension](gittle-maven-extension/src/test/resources/project-with-extension/).
 
 With just that configuration, next time your project runs any maven goals, you should see version from this module
 is used by Maven reactor. Try running `mvn package` on your project.
@@ -79,14 +80,14 @@ is used by Maven reactor. Try running `mvn package` on your project.
 It is possible that your project is already released with a certain version.
 In that case, you can configure the initial version to start counting versions from.
 
-You can add following properties to `.mvn/gitver-maven-extension.properties` file -
+You can add following properties to `.mvn/gittle-maven-extension.properties` file -
 
 .Example configuration for initial version for extension mode
 
 ```properties
-gitver.initial.major=1
-gitver.initial.minor=3
-gitver.initial.patch=4
+gittle.initial.major=1
+gittle.initial.minor=3
+gittle.initial.patch=4
 ```
 
 With above initial version configuration, the first version calculated by this extension will be -
@@ -102,23 +103,23 @@ Now that you have extension configured, you can continue with your regular devel
 When it is time to increment version, you may use one of the following three goals
 to add an *_empty commit_* with an appropriate [Version Keyword](#version-keywords) -
 
-- `gitver:commit-major`: Adds a git commit with a commit message containing *Major* version keyword
-- `gitver:commit-minor`: Adds a git commit with a commit message containing *Minor* version keyword
-- `gitver:commit-patch`: Adds a git commit with a commit message containing *Patch* version keyword
+- `gittle:commit-major`: Adds a git commit with a commit message containing *Major* version keyword
+- `gittle:commit-minor`: Adds a git commit with a commit message containing *Minor* version keyword
+- `gittle:commit-patch`: Adds a git commit with a commit message containing *Patch* version keyword
 
 CAUTION: Use `--non-recursive` flag when running commit goal in a multi-module maven project to avoid adding one commit
 per included module.
 
 The default message pattern is `chore(release): [%k]` where `[%k]` is the keyword token. To change the default message
-pattern, you could pass `-Dgitver.commit.message=<message>` argument when running the goal.
+pattern, you could pass `-gittle.commitMessage=<message>` argument when running the goal.
 
-NOTE: When this extension is configured, it automatically makes `gitver` plugin goals available
+NOTE: When this extension is configured, it automatically makes `gittle` plugin goals available
 with *NO* any additional configuration.
 
 .Example commit patch with a custom message
 
 ```shell
-mvn gitver:commit-patch "-Dgitver.commit.message=chore: [%k] release" --non-recursive
+mvn gittle:commit-patch "-Dgittle.commitMessage=chore: [%k] release" --non-recursive
 ```
 
 Of course, you can also add commits manually with appropriate version keywords.
@@ -134,42 +135,40 @@ git commit --allow-empty -m "chore: [<keyword>] release"
 
 The default version pattern used is `major.minor.patch(-commit)` where `(-commit)` is skipped if commit count is 0.
 
-This pattern can be canged by setting a property in `.mvn/gitver-maven-extension.properties`.
+This pattern can be canged by setting a property in `.mvn/gittle-maven-extension.properties`.
 
 The following example will generate versions as `major.minor.patch+shorthash`, eg. `1.2.3+a5a29f8`.
 
 .Example configuration for version pattern in extension mode
 
 ```properties
-gitver.version.pattern=%M.%m.%p+%h
+gittle.versionPattern=%t+%h
 ```
 
 Available Tokens for Version Pattern
 
-| Token          | Description                    | Example                                                                                                                          |
-|----------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| %M             | Major Version                  | **1**.y.z                                                                                                                        |
-| %m             | Minor Version                  | x.**1**.z                                                                                                                        |
-| %p             | Patch Version                  | x.y.**1**                                                                                                                        |
-| %P             | Non-Zero Commit adjusted patch | Given _%M.%m.%P(-SNAPSHOT)_ with _%M=1_, _%m=2_, _%p=3_ <br/>when c == 0 -> _1.2.3_ <br/>when c > 0, = 5 -> _1.2.**4-SNAPSHOT**_ |
-| %c             | Commit count                   | x.y.z-**4**                                                                                                                      |
-| ([anything]%c) | Non-Zero Commit count          | Given _%M.%m.%p(-%c)_ with _%M=1_, _%m=2_, _%p=3_ <br/>when c == 0 -> _1.2.3_ <br/>when c > 0, = 5 -> _1.2.3-**5**_              |
-| %b             | Branch name                    | _%M.%m.%p+%b_ -> _1.2.3+**main**_                                                                                                |
-| %H             | Long Hash Ref                  | _%M.%m.%p+%H_ -> _1.2.3+**b5f600c40f362d9977132e8bf7398d2cdc745c28**_                                                            |
-| %h             | Short Hash Ref                 | _%M.%m.%p+%H_ -> _1.2.3+**a5a29f8**_                                                                                             |
+| Token          | Description             | Example                                                                                                      |
+|----------------|-------------------------|--------------------------------------------------------------------------------------------------------------|
+| %t             | Major, minor and patch  | **1.2.3**                                                                                                    |
+| %c             | Commit count            | x.y.z-**4**                                                                                                  |
+| ([anything]%c) | Non-zero commit count   | Given _%t(-%c)_ with _%t=1.2.3_ <br/>when c == 0 -> _1.2.3_ <br/>when c > 0, = 5 -> _1.2.3-**5**_            |
+| %b             | Branch name             | _%t+%b_ -> _1.2.3+**main**_                                                                                  |
+| %B             | Non-release branch name | Given _%t(-%B)_ with _%t=1.2.3_ <br/>when B == main -> _1.2.3_ <br/>when B = devel, = 5 -> _1.2.3-**devel**_ |
+| %H             | Long hash ref           | _%t+%H_ -> _1.2.3+**b5f600c40f362d9977132e8bf7398d2cdc745c28**_                                              |
+| %h             | Short hash ref          | _%t+%H_ -> _1.2.3+**a5a29f8**_                                                                               |
 
 ## Keyword Customization
 
 The default [version keywords](#version-keywords) `[major]`, `[minor]`, and `[patch]` can be customized by overriding
 the configuration. To use different keywords, you can add following properties to the
-`.mvn/gitver-maven-extension.properties` file.
+`.mvn/gittle-maven-extension.properties` file.
 
 Example configuration for initial version for extension mode
 
 ```properties
-gitver.keywords.major=[BIG]
-gitver.keywords.minor=[SMALL]
-gitver.keywords.patch=[FIX]
+gittle.keywords.major=[BIG]
+gittle.keywords.minor=[SMALL]
+gittle.keywords.patch=[FIX]
 ```
 
 ## Keyword Regex
@@ -178,15 +177,15 @@ You can also use regex to match version keywords. This is useful when you want t
 only be matched when it is the first word in the commit message. So if for example you have a merge commit message
 which contains the messages of the merged commits, you can use a regex to match only the first commit message.
 
-To use regex for version keywords, you can add following properties to `.mvn/gitver-maven-extension.properties` file -
+To use regex for version keywords, you can add following properties to `.mvn/gittle-maven-extension.properties` file -
 
 Example configuration for regex version keywords
 
 ```properties
-gitver.keywords.regex=true
-gitver.keywords.major=^\\[major\\].*
-gitver.keywords.minor=^\\[minor\\].*
-gitver.keywords.patch=^\\[patch\\].*
+gittle.keywords.regex=true
+gittle.keywords.major=^\\[major\\].*
+gittle.keywords.minor=^\\[minor\\].*
+gittle.keywords.patch=^\\[patch\\].*
 ```
 
 ## Generated Version Access
@@ -196,41 +195,41 @@ This extension adds all version properties to *Maven properties* during build cy
 Example of Injected maven properties (demo values)
 
 ```properties
-gitver.commitNumber=0
-gitver.major=0
-gitver.minor=0
-gitver.patch=1
-gitver.version=0.0.1
-gitver.branch=main
-gitver.hash=67550ad6a64fe4e09bf9e36891c09b2f7bdc52f9
-gitver.hash.short=67550ad
+gittle.resolved.commitNumber=0
+gittle.resolved.major=0
+gittle.resolved.minor=0
+gittle.resolved.patch=1
+gittle.resolved.version=0.0.1
+gittle.resolved.branch=main
+gittle.resolved.hash=67550ad6a64fe4e09bf9e36891c09b2f7bdc52f9
+gittle.resolved.hash.short=67550ad
 ```
 
 You may use these properties in maven pom file, for example as `${git.branch}` to access git branch name.
 
 ## Git Tag Creation
 
-You can use `gitver:tag` goal to create a git tag for current version in local git repository.
+You can use `gittle:tag` goal to create a git tag for current version in local git repository.
 
 NOTE: This does not push tag to remote repository.
 
 Tag goal with default parameter values
 
 ```shell
-mvn gitver:tag \
+mvn gittle:tag \
   "-Dtag.failWhenTagExist=true" \
   "-Dtag.messagePattern=Release version %v" \
   "-Dtag.namePattern=v%v"
 ```
 
-For Tag goal, it is possible to configure pom.xml to contain the gitver plugin with required execution configuration.
+For Tag goal, it is possible to configure pom.xml to contain the gittle plugin with required execution configuration.
 
 Git Tag Goal with default configuration parameters
 
 ```xml
 <plugin>
   <groupId>org.emergent.maven</groupId>
-  <artifactId>gitver-maven-plugin</artifactId>
+  <artifactId>gittle-maven-plugin</artifactId>
   <executions>
     <execution>
       <id>tag</id>
