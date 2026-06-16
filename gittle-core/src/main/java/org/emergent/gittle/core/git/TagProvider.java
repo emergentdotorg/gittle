@@ -128,8 +128,7 @@ public class TagProvider {
   }
 
   public ObjectId getObjectIdImmediate(Ref ref) {
-    Util.check(ref.isPeeled() == (ref.getPeeledObjectId() != null));
-    return ref.isPeeled() ? ref.getPeeledObjectId() : ref.getObjectId();
+    return Optional.ofNullable(ref.getPeeledObjectId()).orElseGet(ref::getObjectId);
   }
 
   private static LinkedList<RevObject> getTargetRevObject(RevObject revObj) {
