@@ -4,9 +4,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.emergent.parent</groupId>
-    <artifactId>maven-parent</artifactId>
-    <version>0.0.2</version>
+    <groupId>org.emergent.maven.parent</groupId>
+    <artifactId>java-parent</artifactId>
+    <version>1.0.0</version>
   </parent>
 
   <groupId>org.emergent.gittle</groupId>
@@ -44,8 +44,10 @@
     <module>gittle-core</module>
     <module>gittle-maven-extension</module>
     <module>gittle-maven-plugin</module>
+    <!--
     <module>jgitver</module>
     <module>maven-git-version</module>
+    -->
   </modules>
 
   <scm>
@@ -61,8 +63,7 @@
   </issueManagement>
 
   <properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <revision>Z-LATEST-SNAPSHOT</revision>
@@ -89,6 +90,7 @@
     </testResources>
     <pluginManagement>
       <plugins>
+        <!--
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -96,6 +98,7 @@
             <release>17</release>
           </configuration>
         </plugin>
+        -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
@@ -167,6 +170,13 @@
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
         <version>5.13.3</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-bom</artifactId>
+        <version>4.11.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

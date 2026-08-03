@@ -100,7 +100,7 @@ Or an equally valid version may simply be a normal version, e.g.
 
     4.5.6
  
-See `example/simple-module-git` for a more detailed example on usage of this strategy.
+See `../example/simple-module-git` for a more detailed example on usage of this strategy.
 
 ### Usage
 

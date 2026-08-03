@@ -14,6 +14,25 @@
   <name>Gittle Core</name>
 
   <dependencies>
+    <!--
+    <dependency>
+      <groupId>fr.brouillard.oss</groupId>
+      <artifactId>jgitver</artifactId>
+      <version>0.10.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.zafarkhaja</groupId>
+      <artifactId>java-semver</artifactId>
+      <version>0.9.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-core</artifactId>
+      <version>3.2.5</version>
+    </dependency>
+    -->
+
+
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
