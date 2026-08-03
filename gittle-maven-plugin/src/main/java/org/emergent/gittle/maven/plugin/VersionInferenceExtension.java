@@ -71,16 +71,16 @@ public class VersionInferenceExtension extends AbstractMavenLifecycleParticipant
     private ModelProvider modelProvider;
 
     @Override
-    public void afterProjectsRead(final MavenSession session) throws MavenExecutionException {
+    public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
         init();
 
-        for (final MavenProject mavenProject : session.getAllProjects()) {
+        for (MavenProject mavenProject : session.getAllProjects()) {
             setProjectVersion(mavenProject);
         }
 
         // Need to do a second pass here since our projectGavs map is populated now
-        for (final MavenProject mavenProject : session.getAllProjects()) {
-            final PluginConfig pluginConfig = pluginConfigProvider.getForProject(mavenProject);
+        for (MavenProject mavenProject : session.getAllProjects()) {
+            PluginConfig pluginConfig = pluginConfigProvider.getForProject(mavenProject);
             if (pluginConfig != null) {
                 if (pluginConfig.shouldUpdateDependencies) {
                     setDependencyVersions(mavenProject);
@@ -109,21 +109,21 @@ public class VersionInferenceExtension extends AbstractMavenLifecycleParticipant
         }
     }
 
-    private void setProjectVersion(final MavenProject mavenProject) throws MavenExecutionException {
+    private void setProjectVersion(MavenProject mavenProject) throws MavenExecutionException {
         // Get the plugin config
-        final PluginConfig pluginConfig = pluginConfigProvider.getForProject(mavenProject);
+        PluginConfig pluginConfig = pluginConfigProvider.getForProject(mavenProject);
 
         if (pluginConfig != null) {
             // Store the old version before changing it
-            final String oldVersion = mavenProject.getVersion();
+            String oldVersion = mavenProject.getVersion();
 
             // Now use the strategy to figure out the new version
-            final String newVersion = getNewVersion(pluginConfig.versionStrategy, mavenProject);
+            String newVersion = getNewVersion(pluginConfig.versionStrategy, mavenProject);
 
             logger.info("Inferred project version: " + newVersion);
 
-            final String oldFinalName = mavenProject.getBuild().getFinalName();
-            final String newFinalName = oldFinalName.replaceFirst(Pattern.quote(oldVersion), newVersion);
+            String oldFinalName = mavenProject.getBuild().getFinalName();
+            String newFinalName = oldFinalName.replaceFirst(Pattern.quote(oldVersion), newVersion);
             logger.info("Inferred project.build.finalName: " + newFinalName);
 
             // Now that we have the new version, we update the project versions.
@@ -133,7 +133,7 @@ public class VersionInferenceExtension extends AbstractMavenLifecycleParticipant
             mavenProject.getArtifact().setVersionRange(versionRange);
             mavenProject.getBuild().setFinalName(newFinalName);
 
-            final GroupArtifactVersion oldProjectVersion =
+            GroupArtifactVersion oldProjectVersion =
                     GroupArtifactVersion.of(mavenProject.getGroupId(), mavenProject.getArtifactId(), oldVersion);
             projectGavs.put(oldProjectVersion, newVersion);
         }
@@ -147,8 +147,8 @@ public class VersionInferenceExtension extends AbstractMavenLifecycleParticipant
      * on the latest version of itself). If a dependency is a project of this
      * POM, we update its version to the latest inferred version.
      */
-    private void setDependencyVersions(final MavenProject mavenProject) {
-        final GroupArtifactVersion projectGav = GroupArtifactVersion.fromMavenProject(mavenProject);
+    private void setDependencyVersions(MavenProject mavenProject) {
+        GroupArtifactVersion projectGav = GroupArtifactVersion.fromMavenProject(mavenProject);
         mavenProject.getDependencies().forEach(dependency -> {
             final GroupArtifactVersion dependencyGav = GroupArtifactVersion.of(
                     dependency.getGroupId(),
@@ -166,19 +166,19 @@ public class VersionInferenceExtension extends AbstractMavenLifecycleParticipant
         });
     }
 
-    private void setParentVersion(final MavenProject mavenProject) throws MavenExecutionException {
+    private void setParentVersion(MavenProject mavenProject) throws MavenExecutionException {
         // Update model version. The project's version has been updated so we can just use it here.
-        final Model model = modelProvider.getModel(mavenProject);
+        Model model = modelProvider.getModel(mavenProject);
         model.setVersion(mavenProject.getVersion());
 
         // Update model parent version
         if (model.getParent() != null) {
-            final GroupArtifactVersion parentGav = GroupArtifactVersion.of(
+            GroupArtifactVersion parentGav = GroupArtifactVersion.of(
                     model.getParent().getGroupId(),
                     model.getParent().getArtifactId(),
                     model.getParent().getVersion()
             );
-            final String newVersionForParent = projectGavs.get(parentGav);
+            String newVersionForParent = projectGavs.get(parentGav);
             if (newVersionForParent != null) {
                 model.getParent().setVersion(newVersionForParent);
             }
@@ -254,27 +254,27 @@ public class VersionInferenceExtension extends AbstractMavenLifecycleParticipant
      * The following setters are primarily used to facilitate testing. Probably not used in practice.
      */
     @SuppressWarnings("unused")
-    public void setLogger(final Logger logger) {
+    public void setLogger(Logger logger) {
         this.logger = logger;
     }
 
     @SuppressWarnings("unused")
-    public void setContainer(final PlexusContainer container) {
+    public void setContainer(PlexusContainer container) {
         this.container = container;
     }
 
     @SuppressWarnings("unused")
-    public void setProjectGavs(final Map<GroupArtifactVersion, String> projectGavs) {
+    public void setProjectGavs(Map<GroupArtifactVersion, String> projectGavs) {
         this.projectGavs = projectGavs;
     }
 
     @SuppressWarnings("unused")
-    public void setPluginConfigProvider(final PluginConfigProvider pluginConfigProvider) {
+    public void setPluginConfigProvider(PluginConfigProvider pluginConfigProvider) {
         this.pluginConfigProvider = pluginConfigProvider;
     }
 
     @SuppressWarnings("unused")
-    public void setModelProvider(final ModelProvider modelProvider) {
+    public void setModelProvider(ModelProvider modelProvider) {
         this.modelProvider = modelProvider;
     }
 }
