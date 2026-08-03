@@ -44,6 +44,8 @@
     <module>gittle-core</module>
     <module>gittle-maven-extension</module>
     <module>gittle-maven-plugin</module>
+    <module>jgitver</module>
+    <module>maven-git-version</module>
   </modules>
 
   <scm>
@@ -292,6 +294,11 @@
         <groupId>org.twdata.maven</groupId>
         <artifactId>mojo-executor</artifactId>
         <version>2.4.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jspecify</groupId>
+        <artifactId>jspecify</artifactId>
+        <version>1.0.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
