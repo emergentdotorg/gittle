@@ -1,0 +1,10 @@
+.settings/
+target/
+.classpath
+.project
+.checkstyle
+.idea/
+.okhttpcache/
+*.iml
+**/.flattened-pom.xml
+.factorypath
