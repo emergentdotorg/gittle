@@ -1,6 +1,6 @@
-package me.ccampo.maven.git.version.plugin.util;
+package org.emergent.gittle.maven.plugin.util;
 
-import me.ccampo.maven.git.version.core.strategy.VersionStrategy;
+import org.emergent.gittle.maven.plugin.core.strategy.VersionStrategy;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;

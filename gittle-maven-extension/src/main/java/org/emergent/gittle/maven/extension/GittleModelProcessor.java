@@ -1,32 +1,13 @@
 package org.emergent.gittle.maven.extension;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.maven.building.Source;
-import org.apache.maven.model.Build;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.Parent;
-import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginManagement;
-import org.apache.maven.model.building.DefaultModelProcessor;
-import org.apache.maven.model.building.ModelProcessor;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.eclipse.sisu.Priority;
-import org.eclipse.sisu.Typed;
-import org.emergent.gittle.core.Config;
-import org.emergent.gittle.core.Coordinates;
-import org.emergent.gittle.core.Util;
-import org.emergent.gittle.core.strategy.StrategyFactory;
-import org.emergent.gittle.core.strategy.VersionStrategy;
+import static org.apache.maven.shared.utils.logging.MessageUtils.buffer;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,11 +18,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.apache.maven.shared.utils.logging.MessageUtils.buffer;
-import static org.emergent.gittle.core.Constants.GITTLE_PREFIX;
-import static org.emergent.gittle.core.Util.join;
-import static org.emergent.gittle.maven.extension.ExtensionUtil.REVISION;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.maven.building.Source;
+import org.apache.maven.model.Build;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Parent;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginManagement;
+import org.apache.maven.model.building.DefaultModelProcessor;
+import org.apache.maven.model.building.ModelProcessor;
+import org.eclipse.sisu.Priority;
+import org.eclipse.sisu.Typed;
+import org.emergent.gittle.core.Coordinates;
+import org.emergent.gittle.core.Util;
+import org.emergent.gittle.core.strategy.GitVersionStrategy;
+import org.emergent.gittle.core.strategy.VersionStrategy;
 
 /**
  * Handles calculating version properties from the Git history.
@@ -113,16 +106,16 @@ public class GittleModelProcessor extends DefaultModelProcessor {
   }
 
   private VersionStrategy getVersionStrategy(Model projectModel) {
-    if (Util.useExistingRevision()) {
-      String revision = relatedPoms.stream()
-          .sorted(Comparator.comparing(p -> p.toString().length()))
-          .map(ExtensionUtil::readModelFromPom)
-          .map(m -> m.getProperties().getProperty(REVISION))
-          .filter(Objects::nonNull).findFirst()
-          .orElseGet(() -> System.getProperty(REVISION));
-      return StrategyFactory.getInstance(revision);
-    }
-    Config config = loadConfig(projectModel);
+    // if (Util.useExistingRevision()) {
+    //   String revision = relatedPoms.stream()
+    //       .sorted(Comparator.comparing(p -> p.toString().length()))
+    //       .map(ExtensionUtil::readModelFromPom)
+    //       .map(m -> m.getProperties().getProperty(REVISION))
+    //       .filter(Objects::nonNull).findFirst()
+    //       .orElseGet(() -> System.getProperty(REVISION));
+    //   return VerStrategy.getInstance(revision);
+    // }
+    // Config config = loadConfig(projectModel);
     Coordinates extensionGAV = Util.getExtensionCoordinates();
     log.info(buffer().a("--- ")
         .mojo(extensionGAV)
@@ -131,22 +124,18 @@ public class GittleModelProcessor extends DefaultModelProcessor {
         .a(" ---")
         .build());
     File basedir = projectModel.getProjectDirectory();
-    return StrategyFactory.getInstance(config, basedir);
+    return new GitVersionStrategy();
   }
 
-  private Config loadConfig(Model projectModel) {
-    Path currentDir = projectModel.getProjectDirectory().toPath().toAbsolutePath();
-    Path extConfigFile = Util.getExtensionPropsFile(currentDir);
-    Map<String, String> fileProps = Util.toMap(Util.loadPropsFromFile(extConfigFile));
-    log.info("Loaded configuration from file {}:{}", extConfigFile, join(fileProps));
-    //Map<String, String> normalized = Util.removePrefix(GITTLE_PREFIX, fileProps);
-    Config config = Config.from(fileProps);
-    if (!fileProps.equals(config.asMap())) {
-      log.warn("Round-trip configuration to properties:{}",
-          join(Util.appendPrefix(GITTLE_PREFIX, config.asMap())));
-    }
-    return config;
-  }
+  // private Config loadConfig(Model projectModel) {
+  //   Path currentDir = projectModel.getProjectDirectory().toPath().toAbsolutePath();
+  //   Path extConfigFile = Util.getExtensionPropsFile(currentDir);
+  //   Map<String, String> fileProps = Util.toMap(Util.loadPropsFromFile(extConfigFile));
+  //   log.info("Loaded configuration from file {}:{}", extConfigFile, join(fileProps));
+  //   //Map<String, String> normalized = Util.removePrefix(GITTLE_PREFIX, fileProps);
+  //   Config config = Config.builder().build();
+  //   return config;
+  // }
 
   private static Set<Path> findRelatedProjects(Model model) {
     Set<Path> relatedPoms = new HashSet<>();
@@ -166,7 +155,7 @@ public class GittleModelProcessor extends DefaultModelProcessor {
   }
 
   private void processRelatedProjects(Model model, VersionStrategy strategy) {
-    String versionString = strategy.version();
+    String versionString = strategy.getVersion(model);
 
     Path modelPomPath = Optional.ofNullable(model.getPomFile()).map(File::toPath).orElse(null);
     if (modelPomPath == null || !relatedPoms.contains(modelPomPath)) {
@@ -188,11 +177,11 @@ public class GittleModelProcessor extends DefaultModelProcessor {
 
     ExtensionUtil.replaceRevision(model, versionString);
 
-    if (addProperties) {
-      Map<String, String> newProps = strategy.asMap();
-      log.debug("Adding properties to project {}", buffer().mojo(projectGav).a(join(newProps)));
-      model.getProperties().putAll(newProps);
-    }
+    // if (addProperties) {
+    //   Map<String, String> newProps = model.getProperties();
+    //   log.debug("Adding properties to project {}", buffer().mojo(projectGav).a(join(newProps)));
+    //   model.getProperties().putAll(newProps);
+    // }
     if (addPlugin) {
       addBuildPlugin(model, strategy);
     }
@@ -237,19 +226,19 @@ public class GittleModelProcessor extends DefaultModelProcessor {
         .build()));
 
     if (found.isEmpty()) {
-      if (configurePlugin) {
-        addPluginConfiguration(plugin, strategy.config());
-      }
+      // if (configurePlugin) {
+      //   addPluginConfiguration(plugin, strategy.config());
+      // }
       pluginMgmt.getPlugins().add(0, plugin);
     }
   }
 
-  private static void addPluginConfiguration(Plugin plugin, Config config) {
-    Xpp3Dom dom = ExtensionUtil.toXml(config);
-    if (dom.getChildCount() != 0 || Util.isNotEmpty(dom.getValue())) {
-      plugin.setConfiguration(dom);
-    }
-  }
+  // private static void addPluginConfiguration(Plugin plugin, Config config) {
+    // Xpp3Dom dom = ExtensionUtil.toXml(config);
+    // if (dom.getChildCount() != 0 || Util.isNotEmpty(dom.getValue())) {
+    //   plugin.setConfiguration(dom);
+    // }
+  // }
 
   private static Optional<String> getGroupId(Model projectModel) {
     Optional<String> groupId = Optional.ofNullable(projectModel.getGroupId());

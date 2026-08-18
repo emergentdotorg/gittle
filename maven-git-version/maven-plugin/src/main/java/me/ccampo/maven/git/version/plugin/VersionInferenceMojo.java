@@ -22,10 +22,10 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-import static me.ccampo.maven.git.version.plugin.util.PluginConfig.GENERATE_TEMPORARY_FILE;
-import static me.ccampo.maven.git.version.plugin.util.PluginConfig.PROPERTY_PREFIX;
-import static me.ccampo.maven.git.version.plugin.util.PluginConfig.DELETE_TEMPORARY_FILE;
-import static me.ccampo.maven.git.version.plugin.util.PluginConfig.UPDATE_DEPENDENCIES;
+import static org.emergent.gittle.maven.plugin.util.PluginConfig.GENERATE_TEMPORARY_FILE;
+import static org.emergent.gittle.maven.plugin.util.PluginConfig.PROPERTY_PREFIX;
+import static org.emergent.gittle.maven.plugin.util.PluginConfig.DELETE_TEMPORARY_FILE;
+import static org.emergent.gittle.maven.plugin.util.PluginConfig.UPDATE_DEPENDENCIES;
 
 /**
  * External Version extension configuration Mojo.  This mojo is ONLY used to configure the extension.

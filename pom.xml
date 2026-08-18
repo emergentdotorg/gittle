@@ -41,8 +41,8 @@
   </licenses>
 
   <modules>
-    <module>gittle-core</module>
-    <module>gittle-maven-extension</module>
+    <!--<module>gittle-core</module>-->
+    <!--<module>gittle-maven-extension</module>-->
     <module>gittle-maven-plugin</module>
     <!--
     <module>jgitver</module>
@@ -66,7 +66,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <revision>Z-LATEST-SNAPSHOT</revision>
+    <revision>0.0.1</revision>
     <version.lombok>1.18.46</version.lombok>
     <version.maven>3.9.9</version.maven>
     <version.plugintools>3.15.2</version.plugintools>
@@ -90,15 +90,21 @@
     </testResources>
     <pluginManagement>
       <plugins>
-        <!--
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
+          <version>${version.maven-compiler-plugin}</version>
           <configuration>
             <release>17</release>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${version.lombok}</version>
+              </path>
+            </annotationProcessorPaths>
           </configuration>
         </plugin>
-        -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
@@ -187,6 +193,43 @@
         </plugin>
       </plugins>
     </pluginManagement>
+    <plugins>
+      <!--
+      <plugin>
+        <groupId>org.emergent.maven.plugins</groupId>
+        <artifactId>gittle-maven-plugin</artifactId>
+        <version>0.0.1</version>
+        <extensions>true</extensions>
+        <configuration>
+          <strategy hint="git">
+          </strategy>
+        </configuration>
+      </plugin>
+      -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>1.7.3</version>
+        <executions>
+          <execution>
+            <id>clean</id>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>flatten</id>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+            <phase>process-resources</phase>
+            <configuration>
+              <flattenMode>resolveCiFriendliesOnly</flattenMode>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 
   <dependencyManagement>
@@ -208,7 +251,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-bom</artifactId>
-        <version>4.11.0</version>
+        <version>5.23.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

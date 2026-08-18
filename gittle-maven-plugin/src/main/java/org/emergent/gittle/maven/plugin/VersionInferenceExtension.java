@@ -16,12 +16,18 @@
  */
 package org.emergent.gittle.maven.plugin;
 
-import me.ccampo.maven.git.version.core.strategy.VersionException;
-import me.ccampo.maven.git.version.core.strategy.VersionStrategy;
-import me.ccampo.maven.git.version.plugin.util.GroupArtifactVersion;
-import me.ccampo.maven.git.version.plugin.util.ModelProvider;
-import me.ccampo.maven.git.version.plugin.util.PluginConfig;
-import me.ccampo.maven.git.version.plugin.util.PluginConfigProvider;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.inject.Named;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.artifact.versioning.VersionRange;
@@ -29,20 +35,12 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.regex.Pattern;
+import org.emergent.gittle.maven.plugin.strategy.VersionStrategy;
+import org.emergent.gittle.maven.plugin.util.GroupArtifactVersion;
+import org.emergent.gittle.maven.plugin.util.ModelProvider;
+import org.emergent.gittle.maven.plugin.util.PluginConfig;
+import org.emergent.gittle.maven.plugin.util.PluginConfigProvider;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Maven Extension that will update all the projects in the reactor with an externally managed version.
@@ -51,91 +49,75 @@ import java.util.regex.Pattern;
  * <p>
  * 'strategy' - The configuration for an ExternalVersionStrategy.
  * 'hint' -  A component hint to load the ExternalVersionStrategy.
- *
- * @author <a href="mailto:bdemers@apache.org">Brian Demers</a>
- * @author <a href="mailto:ccampo.progs@gmail.com">Chris Campo</a>
  */
-@Component(role = AbstractMavenLifecycleParticipant.class, hint = "version-inference")
+@Slf4j
+@Setter
+@Named("gittle-verinf")
 public class VersionInferenceExtension extends AbstractMavenLifecycleParticipant {
 
-    @Requirement
-    private Logger logger;
+    @Inject
+    private ModelProvider modelProvider;
 
-    @Requirement
-    private PlexusContainer container;
+    @Inject
+    private PluginConfigProvider pluginConfigProvider;
 
     private Map<GroupArtifactVersion, String> projectGavs = new HashMap<>();
 
-    private PluginConfigProvider pluginConfigProvider;
-
-    private ModelProvider modelProvider;
-
     @Override
     public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
-        init();
+        updateProjects(session);
+    }
 
+    private void updateProjects(MavenSession session) throws MavenExecutionException {
+        log.warn("Updating project versions");
+
+        // session.getAllProjects().forEach(this::updateProject);
         for (MavenProject mavenProject : session.getAllProjects()) {
             setProjectVersion(mavenProject);
         }
 
         // Need to do a second pass here since our projectGavs map is populated now
         for (MavenProject mavenProject : session.getAllProjects()) {
-            PluginConfig pluginConfig = pluginConfigProvider.getForProject(mavenProject);
-            if (pluginConfig != null) {
-                if (pluginConfig.shouldUpdateDependencies) {
-                    setDependencyVersions(mavenProject);
-                }
-                setParentVersion(mavenProject);
-                createNewVersionPom(mavenProject);
-            }
+            updateProject(mavenProject);
         }
     }
 
-    // This is a clutch to work around Plexus's complete lack of constructor injection
-    private void init() {
-        Objects.requireNonNull(logger);
-        Objects.requireNonNull(container);
-
-        if (pluginConfigProvider == null) {
-            pluginConfigProvider = new PluginConfigProvider(container);
-        }
-
-        if (modelProvider == null) {
-            modelProvider = new ModelProvider();
-        }
-
-        if (projectGavs == null) {
-            projectGavs = new HashMap<>();
-        }
-    }
-
-    private void setProjectVersion(MavenProject mavenProject) throws MavenExecutionException {
+    private void setProjectVersion(MavenProject project) throws MavenExecutionException {
         // Get the plugin config
-        PluginConfig pluginConfig = pluginConfigProvider.getForProject(mavenProject);
+        PluginConfig pluginConfig = pluginConfigProvider.getForProject(project);
+        if (pluginConfig == null) {
+            return;
+        }
 
+        // Store the old version before changing it
+        String oldVersion = project.getVersion();
+        GroupArtifactVersion gav = GroupArtifactVersion.of(project.getGroupId(), project.getArtifactId(), oldVersion);
+        // Now use the strategy to figure out the new version
+        String newVersion = getNewVersion(pluginConfig.versionStrategy, project);
+        log.info("Inferred project version: " + newVersion);
+        projectGavs.put(gav, newVersion);
+
+        String oldFinalName = project.getBuild().getFinalName();
+        String newFinalName = oldFinalName.replaceFirst(Pattern.quote(oldVersion), newVersion);
+        log.info("Inferred project.build.finalName: " + newFinalName);
+
+        VersionRange versionRange = VersionRange.createFromVersion(newVersion);
+
+        // Now that we have the new version, we update the project versions.
+        project.setVersion(newVersion);
+        project.getArtifact().setVersion(newVersion);
+        project.getArtifact().setVersionRange(versionRange);
+        project.getBuild().setFinalName(newFinalName);
+    }
+
+    private void updateProject(MavenProject project) throws MavenExecutionException {
+        PluginConfig pluginConfig = pluginConfigProvider.getForProject(project);
         if (pluginConfig != null) {
-            // Store the old version before changing it
-            String oldVersion = mavenProject.getVersion();
-
-            // Now use the strategy to figure out the new version
-            String newVersion = getNewVersion(pluginConfig.versionStrategy, mavenProject);
-
-            logger.info("Inferred project version: " + newVersion);
-
-            String oldFinalName = mavenProject.getBuild().getFinalName();
-            String newFinalName = oldFinalName.replaceFirst(Pattern.quote(oldVersion), newVersion);
-            logger.info("Inferred project.build.finalName: " + newFinalName);
-
-            // Now that we have the new version, we update the project versions.
-            mavenProject.setVersion(newVersion);
-            mavenProject.getArtifact().setVersion(newVersion);
-            VersionRange versionRange = VersionRange.createFromVersion(newVersion);
-            mavenProject.getArtifact().setVersionRange(versionRange);
-            mavenProject.getBuild().setFinalName(newFinalName);
-
-            GroupArtifactVersion oldProjectVersion =
-                    GroupArtifactVersion.of(mavenProject.getGroupId(), mavenProject.getArtifactId(), oldVersion);
-            projectGavs.put(oldProjectVersion, newVersion);
+            if (pluginConfig.shouldUpdateDependencies) {
+                setDependencyVersions(project);
+            }
+            setParentVersion(project);
+            createNewVersionPom(project);
         }
     }
 
@@ -150,19 +132,15 @@ public class VersionInferenceExtension extends AbstractMavenLifecycleParticipant
     private void setDependencyVersions(MavenProject mavenProject) {
         GroupArtifactVersion projectGav = GroupArtifactVersion.fromMavenProject(mavenProject);
         mavenProject.getDependencies().forEach(dependency -> {
-            final GroupArtifactVersion dependencyGav = GroupArtifactVersion.of(
-                    dependency.getGroupId(),
-                    dependency.getArtifactId(),
-                    dependency.getVersion()
-            );
-            if (!projectGav.equals(dependencyGav) && projectGavs.containsKey(dependencyGav)) {
-                final String newVersion = projectGavs.get(dependencyGav);
-                dependency.setVersion(newVersion);
-                if (logger.isInfoEnabled()) {
-                    logger.info("Setting project " + projectGav + " dependency " + dependencyGav + " to version " +
-                            newVersion);
-                }
-            }
+            GroupArtifactVersion dGav = GroupArtifactVersion.from(dependency);
+            Optional.of(dGav)
+                    .filter(g -> !g.equals(projectGav))
+                    .map(projectGavs::get)
+                    .ifPresent(newVersion -> {
+                        dependency.setVersion(newVersion);
+                        log.info(
+                                "Setting project " + projectGav + " dependency " + dGav + " to version " + newVersion);
+                    });
         });
     }
 
@@ -172,109 +150,111 @@ public class VersionInferenceExtension extends AbstractMavenLifecycleParticipant
         model.setVersion(mavenProject.getVersion());
 
         // Update model parent version
-        if (model.getParent() != null) {
-            GroupArtifactVersion parentGav = GroupArtifactVersion.of(
-                    model.getParent().getGroupId(),
-                    model.getParent().getArtifactId(),
-                    model.getParent().getVersion()
-            );
-            String newVersionForParent = projectGavs.get(parentGav);
-            if (newVersionForParent != null) {
-                model.getParent().setVersion(newVersionForParent);
-            }
-        }
-
-        // Nothing else to do.
-        if (mavenProject.getParent() == null) {
-            return;
-        }
+        Optional.ofNullable(model.getParent()).ifPresent(parent -> {
+            GroupArtifactVersion parentGav = GroupArtifactVersion.from(parent);
+            Optional.ofNullable(projectGavs.get(parentGav)).ifPresent(parent::setVersion);
+        });
 
         /*
          * At this point, we've only updated the versions of the individual projects.
          * Now we need to update the references between the updated projects.
          */
-        final MavenProject parent = mavenProject.getParent();
-        if (projectGavs.containsKey(GroupArtifactVersion.fromMavenProject(parent))) {
-            // We need to update the parent
-            //TODO: implement -ccampo 2019-01-16
-            logger.warn("Need to update parent (not implemented)");
-        }
+        Optional.ofNullable(mavenProject.getParent()).ifPresent(parent -> {
+            if (projectGavs.containsKey(GroupArtifactVersion.from(parent))) {
+                // We need to update the parent
+                //TODO: implement
+                log.warn("Need to update parent (not implemented)");
+            }
+        });
     }
 
-    private String getNewVersion(final VersionStrategy strategy, final MavenProject mavenProject)
-            throws MavenExecutionException {
-        final Optional<String> newVersion;
+    @NullMarked
+    private String getNewVersion(VersionStrategy strategy, MavenProject project) throws MavenExecutionException {
+        Optional<String> newVersion;
         try {
-            newVersion = Optional.ofNullable(strategy.getVersion(mavenProject));
-        } catch (final VersionException e) {
+            newVersion = Optional.ofNullable(strategy.getVersion(project));
+        } catch (VersionException e) {
             throw new MavenExecutionException(e.getMessage(), e);
         }
 
         return newVersion.orElseThrow(() -> {
-            final String msg = "Unable to infer new version; strategy returned null.";
-            return new MavenExecutionException(msg, mavenProject.getFile());
+            String msg = "Unable to infer new version; strategy returned null.";
+            return new MavenExecutionException(msg, project.getFile());
         }).trim();
     }
 
-    private void createNewVersionPom(final MavenProject mavenProject) throws MavenExecutionException {
-        final PluginConfig pluginConfig = pluginConfigProvider.getForProject(mavenProject);
+    private void createNewVersionPom(MavenProject mavenProject) throws MavenExecutionException {
+        PluginConfig pluginConfig = pluginConfigProvider.getForProject(mavenProject);
 
-        final File newPom;
-        try {
-            if (pluginConfig.shouldGenerateTemporaryFile) {
-                newPom = File.createTempFile("pom", ".version-inference");
-            } else {
-                newPom = new File(mavenProject.getBasedir(), "pom.xml.new-version");
-            }
-        } catch (final IOException e) {
-            throw new MavenExecutionException(e.getMessage(), e);
-        }
+        File newPom = getNewPomFile(mavenProject, pluginConfig);
 
         if (pluginConfig.shouldDeleteTemporaryFile) {
             newPom.deleteOnExit();
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(VersionInferenceExtension.class.getSimpleName() + ": using new pom file => " + newPom);
+        if (log.isDebugEnabled()) {
+            log.debug(VersionInferenceExtension.class.getSimpleName() + ": using new pom file => " + newPom);
         }
 
-        final Model model = modelProvider.getModel(mavenProject);
+        Model model = modelProvider.getModel(mavenProject);
 
         // Write the new pom to disk
-        try (final Writer fileWriter = new FileWriter(newPom)) {
+        try (Writer fileWriter = new FileWriter(newPom)) {
             new MavenXpp3Writer().write(fileWriter, model);
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new MavenExecutionException(e.getMessage(), e);
         }
 
         mavenProject.setFile(newPom);
     }
 
-    /*
-     * The following setters are primarily used to facilitate testing. Probably not used in practice.
-     */
-    @SuppressWarnings("unused")
-    public void setLogger(Logger logger) {
-        this.logger = logger;
+    private static File getNewPomFile(MavenProject project, PluginConfig pluginConfig) throws MavenExecutionException {
+        try {
+            if (pluginConfig.shouldGenerateTemporaryFile) {
+                return File.createTempFile("pom", ".verinf");
+            } else {
+                return new File(project.getBasedir(), "pom.xml.new-version");
+            }
+        } catch (IOException e) {
+            throw new MavenExecutionException(e.getMessage(), e);
+        }
     }
 
-    @SuppressWarnings("unused")
-    public void setContainer(PlexusContainer container) {
-        this.container = container;
-    }
-
-    @SuppressWarnings("unused")
-    public void setProjectGavs(Map<GroupArtifactVersion, String> projectGavs) {
-        this.projectGavs = projectGavs;
-    }
-
-    @SuppressWarnings("unused")
-    public void setPluginConfigProvider(PluginConfigProvider pluginConfigProvider) {
-        this.pluginConfigProvider = pluginConfigProvider;
-    }
-
-    @SuppressWarnings("unused")
-    public void setModelProvider(ModelProvider modelProvider) {
-        this.modelProvider = modelProvider;
-    }
+    // private void updateProjectx(MavenProject project) throws MavenExecutionException {
+    //
+    //     // if (Util.isDisabled()) {
+    //     //     if (initialized.compareAndSet(false, true)) {
+    //     //         logger.debug(String.format("%s is disabled", getClass().getSimpleName()));
+    //     //     }
+    //     //     return;
+    //     // }
+    //
+    //     // Get the plugin config
+    //     PluginConfig pluginConfig = pluginConfigProvider.getForProject(project);
+    //     if (pluginConfig == null) {
+    //         return;
+    //     }
+    //
+    //     // Store the old version before changing it
+    //     String oldVersion = project.getVersion();
+    //
+    //     // Now use the strategy to figure out the new version
+    //     String newVersion = getNewVersion(pluginConfig.versionStrategy, project);
+    //
+    //     log.info("Inferred project version: " + newVersion);
+    //
+    //     Model originalModel = project.getModel();
+    //     Path originalPomFile = originalModel.getPomFile().toPath().toAbsolutePath();
+    //     Path gittlePomFile = originalPomFile.resolveSibling(GITTLE_POM_XML);
+    //     try {
+    //         Model gittleModel = ExtensionUtil.readModelFromPom(originalPomFile);
+    //         ExtensionUtil.copyVersions(originalModel, gittleModel);
+    //         // Now write the updated model out to a file so we can point the project to it.
+    //         ExtensionUtil.writeModelToPom(gittleModel, gittlePomFile);
+    //         project.setPomFile(gittlePomFile.toFile());
+    //         log.debug("Updated project with newly generated gittle pom " + gittlePomFile);
+    //     } catch (Exception e) {
+    //         log.error("Failed creating new gittle pom at " + gittlePomFile, e);
+    //     }
+    // }
 }

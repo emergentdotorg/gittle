@@ -5,7 +5,6 @@ import lombok.Setter;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.emergent.gittle.core.GittleException;
 
 import java.util.Objects;
 

@@ -1,6 +1,17 @@
 package org.emergent.gittle.maven.extension;
 
-import com.google.gson.JsonElement;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.Strings;
 import org.apache.maven.model.Build;
@@ -10,32 +21,12 @@ import org.apache.maven.model.Parent;
 import org.apache.maven.model.PluginManagement;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.emergent.gittle.core.Config;
 import org.emergent.gittle.core.GittleException;
-import org.emergent.gittle.core.PropCodec;
 import org.emergent.gittle.core.Util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
-import static org.emergent.gittle.core.gson.GsonUtil.OBJ_MAP_TT;
-
 @Slf4j
-class ExtensionUtil {
+public class ExtensionUtil {
   public static final String REVISION = "revision";
   public static final String $_REVISION = "${revision}";
 
@@ -57,29 +48,29 @@ class ExtensionUtil {
     }
   }
 
-  public static Xpp3Dom toXml(Config src) {
-    JsonElement json = PropCodec.toJsonTree(src, Config.class);
-    Map<String, Object> map = PropCodec.fromJsonTree(json, OBJ_MAP_TT.getType());
-    return toXml("configuration", map);
-  }
-
-  private static Xpp3Dom toXml(String name, Object value) {
-    Xpp3Dom dom = new Xpp3Dom(name);
-    if (value instanceof Map<?, ?> m) {
-      toXml(m).forEach(dom::addChild);
-    } else if (value != null) {
-      dom.setValue(String.valueOf(value));
-    }
-    return dom;
-  }
-
-  private static List<Xpp3Dom> toXml(Map<?, ?> map) {
-    return map.entrySet().stream()
-        .filter(e -> e.getKey() instanceof String)
-        .filter(e -> Objects.nonNull(e.getValue()))
-        .map(e -> toXml((String) e.getKey(), e.getValue()))
-        .toList();
-  }
+  // public static Xpp3Dom toXml(Config src) {
+  //   JsonElement json = PropCodec.toJsonTree(src, Config.class);
+  //   Map<String, Object> map = PropCodec.fromJsonTree(json, OBJ_MAP_TT.getType());
+  //   return toXml("configuration", map);
+  // }
+  //
+  // private static Xpp3Dom toXml(String name, Object value) {
+  //   Xpp3Dom dom = new Xpp3Dom(name);
+  //   if (value instanceof Map<?, ?> m) {
+  //     toXml(m).forEach(dom::addChild);
+  //   } else if (value != null) {
+  //     dom.setValue(String.valueOf(value));
+  //   }
+  //   return dom;
+  // }
+  //
+  // private static List<Xpp3Dom> toXml(Map<?, ?> map) {
+  //   return map.entrySet().stream()
+  //       .filter(e -> e.getKey() instanceof String)
+  //       .filter(e -> Objects.nonNull(e.getValue()))
+  //       .map(e -> toXml((String) e.getKey(), e.getValue()))
+  //       .toList();
+  // }
 
   public static boolean copyVersions(Model src, Model tgt) {
     String versionString = Optional.ofNullable(src.getProperties().getProperty(REVISION))

@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package me.ccampo.maven.git.version.core.strategy;
+package org.emergent.gittle.maven.plugin.core.strategy;
 
 import me.ccampo.maven.git.version.core.VersionException;
 import org.apache.maven.project.MavenProject;

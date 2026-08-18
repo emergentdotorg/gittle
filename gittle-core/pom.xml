@@ -14,23 +14,26 @@
   <name>Gittle Core</name>
 
   <dependencies>
-    <!--
     <dependency>
       <groupId>fr.brouillard.oss</groupId>
       <artifactId>jgitver</artifactId>
-      <version>0.10.1</version>
+      <version>0.14.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.zafarkhaja</groupId>
       <artifactId>java-semver</artifactId>
-      <version>0.9.0</version>
+      <version>0.10.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-core</artifactId>
-      <version>3.2.5</version>
     </dependency>
-    -->
+    <dependency>
+      <groupId>nl.jqno.equalsverifier</groupId>
+      <artifactId>equalsverifier</artifactId>
+      <version>3.1.4</version>
+      <scope>test</scope>
+    </dependency>
 
 
     <dependency>
@@ -63,5 +66,26 @@
       <artifactId>guava</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

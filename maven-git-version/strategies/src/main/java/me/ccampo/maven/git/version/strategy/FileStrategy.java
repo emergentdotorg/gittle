@@ -14,10 +14,10 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package me.ccampo.maven.git.version.strategy;
+package org.emergent.gittle.maven.plugin.strategy;
 
 import me.ccampo.maven.git.version.core.VersionException;
-import me.ccampo.maven.git.version.core.strategy.VersionStrategy;
+import org.emergent.gittle.maven.plugin.core.strategy.VersionStrategy;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Configuration;

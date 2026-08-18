@@ -1,10 +1,10 @@
-package me.ccampo.maven.git.version.strategy;
+package org.emergent.gittle.maven.plugin.strategy;
 
 import com.github.zafarkhaja.semver.Version;
 import fr.brouillard.oss.jgitver.GitVersionCalculator;
 import fr.brouillard.oss.jgitver.metadata.Metadatas;
 import me.ccampo.maven.git.version.core.VersionException;
-import me.ccampo.maven.git.version.core.strategy.VersionStrategy;
+import org.emergent.gittle.maven.plugin.core.strategy.VersionStrategy;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Configuration;

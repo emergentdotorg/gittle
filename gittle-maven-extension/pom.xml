@@ -14,10 +14,12 @@
   <name>Gittle Maven Extension</name>
 
   <dependencies>
+    <!--
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
     </dependency>
+    -->
     <dependency>
       <groupId>org.emergent.gittle</groupId>
       <artifactId>gittle-core</artifactId>
@@ -114,6 +116,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-invoker-plugin</artifactId>
+            <version>3.10.1</version>
             <executions>
               <execution>
                 <id>integration-test</id>
@@ -153,6 +156,13 @@
                 </configuration>
               </execution>
             </executions>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>4.0.31</version>
+              </dependency>
+            </dependencies>
           </plugin>
         </plugins>
       </build>

@@ -17,11 +17,11 @@
 package me.ccampo.maven.git.version.plugin;
 
 import me.ccampo.maven.git.version.core.VersionException;
-import me.ccampo.maven.git.version.core.strategy.VersionStrategy;
-import me.ccampo.maven.git.version.plugin.util.GroupArtifactVersion;
-import me.ccampo.maven.git.version.plugin.util.ModelProvider;
-import me.ccampo.maven.git.version.plugin.util.PluginConfig;
-import me.ccampo.maven.git.version.plugin.util.PluginConfigProvider;
+import org.emergent.gittle.maven.plugin.core.strategy.VersionStrategy;
+import org.emergent.gittle.maven.plugin.util.GroupArtifactVersion;
+import org.emergent.gittle.maven.plugin.util.ModelProvider;
+import org.emergent.gittle.maven.plugin.util.PluginConfig;
+import org.emergent.gittle.maven.plugin.util.PluginConfigProvider;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.artifact.versioning.VersionRange;

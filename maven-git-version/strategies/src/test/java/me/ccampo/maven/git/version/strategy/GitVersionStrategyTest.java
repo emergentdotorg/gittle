@@ -1,4 +1,4 @@
-package me.ccampo.maven.git.version.strategy;
+package org.emergent.gittle.maven.plugin.strategy;
 
 import fr.brouillard.oss.jgitver.GitVersionCalculator;
 import fr.brouillard.oss.jgitver.Version;

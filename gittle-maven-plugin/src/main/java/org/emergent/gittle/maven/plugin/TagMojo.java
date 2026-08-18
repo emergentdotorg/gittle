@@ -4,9 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.emergent.gittle.core.GittleException;
-import org.emergent.gittle.core.git.GitUtil;
-import org.emergent.gittle.core.strategy.VersionStrategy;
 
 @Getter
 @Setter
@@ -27,21 +24,21 @@ public class TagMojo extends AbstractGittleMojo {
 
   @Override
   protected void execute0() {
-    VersionStrategy versionStrategy = getVersionStrategy();
-    String tagName = replaceTokens(getNamePattern(), versionStrategy);
-    String tagMessage = replaceTokens(getMessagePattern(), versionStrategy);
-    getLog().info("Current Version: " + versionStrategy.version());
-    getLog().info(String.format("Tag Version '%s' with message '%s'", tagName, tagMessage));
-    GitUtil gitutil = getGitUtil();
-    if (!force && gitutil.tagExists(tagName)) {
-      getLog().error(String.format("Tag already exist: %s", tagName));
-      if (failWhenExists) {
-        throw new GittleException("Tag already exist: " + tagName);
-      } else {
-        return;
-      }
-    }
-    String tagId = gitutil.createTag(tagName, tagMessage, force);
-    getLog().info(String.format("Created tag: '%s'", tagId));
+    // VerStrategy versionStrategy = getVersionStrategy();
+    // String tagName = replaceTokens(getNamePattern(), versionStrategy);
+    // String tagMessage = replaceTokens(getMessagePattern(), versionStrategy);
+    // getLog().info("Current Version: " + versionStrategy.version());
+    // getLog().info(String.format("Tag Version '%s' with message '%s'", tagName, tagMessage));
+    // GitUtil gitutil = getGitUtil();
+    // if (!force && gitutil.tagExists(tagName)) {
+    //   getLog().error(String.format("Tag already exist: %s", tagName));
+    //   if (failWhenExists) {
+    //     throw new GittleException("Tag already exist: " + tagName);
+    //   } else {
+    //     return;
+    //   }
+    // }
+    // String tagId = gitutil.createTag(tagName, tagMessage, force);
+    // getLog().info(String.format("Created tag: '%s'", tagId));
   }
 }

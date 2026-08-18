@@ -1,4 +1,4 @@
-package me.ccampo.maven.git.version.plugin.util;
+package org.emergent.gittle.maven.plugin.util;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;

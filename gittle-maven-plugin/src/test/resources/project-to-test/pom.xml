@@ -17,6 +17,11 @@
         <groupId>@project.groupId@</groupId>
         <artifactId>gittle-maven-plugin</artifactId>
         <version>@project.version@</version>
+        <extensions>true</extensions>
+        <configuration>
+          <strategy hint="git">
+          </strategy>
+        </configuration>
       </plugin>
     </plugins>
   </build>
